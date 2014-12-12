@@ -8,9 +8,9 @@ coming soon... please wait
 
 ##Motivation
 
-There was too many angularJS CRUD open source project in the real, angularJS has received significant recognition since recently years but we are still uncertainty what angularJS can and how much it can. Over the years, numerous CRUD sample have been made, focus on routeProvider, angularJS <--> Java, angularJS <--> PHP. A vast amount of related work have been created by thousands of people from all over the world.
+There were too many angularJS CRUD open source project in the real, angularJS has received significant recognition since recent years but we are still uncertainty what angularJS can and how much it can. Over the years, the numerous CRUD sample has been made, focus on routeProvider, angularJS <--> Java, angularJS <--> PHP. A vast amount of related work have been created by thousands of people from all over the world.
 
-It is vert limiting of my needs(may be also yours). One day when a project need to provide CRUD on more than one table on one single page. But implement of such sample was copy and edit many lines of HTML. It was so tired and easy to made mistake. I just want a simple and lite angularJS controller to help us to develop on the small project.
+It is very limiting of my needs(maybe also yours). One day when a project need to provide CRUD on more than one table on one single page. But implement of such sample was copy and edit many lines of HTML. It was so tired and easy to make mistakes. I just want a simple and a lite angularJS controller to help us to develop on the small project.
 
 <!--
 ##Features
@@ -67,6 +67,12 @@ Download [ZIP](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip
 ```
 `js/controllerCRUD.js`
 ```
+    $rootScope.webRoot = "//www.example.com/";
 ```
-		$rootScope.webRoot = "//www.example.com/";
-```
+
+##Contributing
+Please do not hesitate to perform your professional on PULL requests when you found out some current insufficient. I am  apologise in advance for my working places not convenient to use GitHub frequently, my work may sticking around a month or waiting a great enhancement and then will batch update at here. For any good ideas who would nice reduce the user configuration, reduce the implementation coding, minimize the back end coding with a better algorithm, improve this little project are much welcome. I will follow the action on pull requests and issues at once.
+
+## License
+This project is licensed under the MIT license. [View license file](https://github.com/keithbox/AngularJS-CRUD-PHP/blob/master/license)
+=]
