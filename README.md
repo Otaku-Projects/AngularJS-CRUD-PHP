@@ -74,5 +74,5 @@ Download [ZIP](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip
 Please do not hesitate to perform your professional on PULL requests when you found out some current insufficient. I am  apologise in advance for my working places not convenient to use GitHub frequently, my work may sticking around a month or waiting a great enhancement and then will batch update at here. For any good ideas who would nice reduce the user configuration, reduce the implementation coding, minimize the back end coding with a better algorithm, improve this little project are much welcome. I will follow the action on pull requests and issues at once.
 
 ## License
-This project is licensed under the MIT license. [View license file](https://github.com/keithbox/AngularJS-CRUD-PHP/blob/master/license)
+This project is licensed under the MIT license. [View license file](https://github.com/keithbox/AngularJS-CRUD-PHP/blob/master/LICENSE)
 =]
