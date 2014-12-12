@@ -1,0 +1,295 @@
+<!-- Use .container-fluid for a full width container, spanning the entire width of your viewport. -->
+<div class="container-fluid">
+  <div style="display:none;">
+  {{
+  	systemFields = [
+  		"createDate",
+  		"createUser",
+  		"lastUpdateDate",
+  		"lastUpdateUser",
+  		"systemUpdateDate",
+  		"systemUpdateUser",
+  		"systemUpdateProgram"
+  	];
+  }}
+  </div>
+  <div>
+    <div class="form-horizontal" role="form">
+	<div class="form-group has-feedback">
+	  <div class="col-sm-6 col-sm-offset-2">
+	  <input type="text" name="searchInCreate" class="form-control" ng-model="searchInCreate">
+	  <span class="glyphicon glyphicon glyphicon-search form-control-feedback" aria-hidden="true"></span>
+	  </div>
+	  <div class="col-sm-2">
+	    <button type="button" class="btn btn-default {{table.name}}-refresh-data refresh-data" id="{{table.name}}-refresh-data" 
+		ng-click="RefreshData();" 
+		ng-disabled="updateStatus.disableRefresh"
+		>
+	  	<span class="glyphicon glyphicon glyphicon-refresh"
+			ng-class="{'fa-spin':updateStatus.refreshingData}"></span>
+	  	<span class="sr-only">Refresh</span>
+	    </button>
+	  </div>
+	  <div class="col-sm-2">
+		<div class="panel panel-default">
+		<div class="panel-heading" style="padding: 0px;" ng-init="showHidePanel=false">
+		<!-- show/hide column -->
+	    <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false" ng-click="showHidePanel=!showHidePanel" style="width: 100%;">
+	  	  Show / Hide Column
+	    </button>
+		</div>
+		<!-- Single button -->
+		<div class="panel-body" style="padding:0px;" ng-show="showHidePanel">
+		<div>
+		  <div
+		    ng-repeat="field in dataSchema"
+		    ng-init="name=field.Field;label=definition.label[name] ? definition.label[name] : name;">
+			  <div ng-if="definition.hidden.indexOf(name) == -1 && systemFields.indexOf(name)==-1">
+				<button 
+					type="button" 
+					class="btn btn-link showOrHideColumn" 
+					ng-init="showCol[name] = true" 
+					ng-click="showCol[name]=!showCol[name]" 
+					ng-class="{hideColOnTable:showCol[name]==false}"
+					style="width: 100%;text-align: left;">
+				<i class="fa fa-eye" ng-show="showCol[name]"></i>
+				<i class="fa fa-eye-slash" ng-show="!showCol[name]"></i>
+				{{label}}</button>
+			  </div>
+		  </div>
+		</div>
+		</div>
+		</div>
+	  </div>
+  <!--<pre>Sorting predicate = {{sort.predicate}}; reverse = {{sort.reverse}}</pre>
+  <hr/>
+  [ <a href="" ng-click="predicate=''">unsorted</a> ] -->
+	</div>
+	</div>
+  </div>
+  <div class="table-entities table-responsive" ng-init="Update='N'; sort.reverse=false; sort.predicate=''">
+    <table class="table" ng-hide="Update!='N'">
+  	<thead>
+  	  <tr>
+	    <th>Edit</th>
+  		<th 
+		ng-repeat="field in dataSchema" 
+		ng-init="name=field.Field" 
+		ng-if="definition.hidden.indexOf(field.Field) == -1 && systemFields.indexOf(name)==-1"
+		ng-show="showCol[field.Field]" 
+		style="position: relative;" >
+  		  <a href ng-click="sort.predicate=name; sort.reverse=!sort.reverse" style="margin-right: 14px;">{{definition.label[name] || name}}</a>
+  		  <span class="glyphicon glyphicon-chevron-up"
+  		  ng-show="sort.predicate==name && !sort.reverse"
+  		  style="position: absolute;
+  			right: 0px;
+  			top: 11.5px;"></span>
+  		  <span class="glyphicon glyphicon-chevron-down" ng-show="sort.predicate==name && sort.reverse"
+  		  style="position: absolute;
+  			right: 0px;
+  			top: 11.5px;"></span>
+  		</th>
+  	  </tr>
+  	</thead>
+  	
+  	<tbody>
+  	  <tr ng-repeat="dataRecord in displayData | filter:searchInCreate | 
+  		orderBy:sort.predicate:sort.reverse">
+		<td>
+	    <button type="button" class="btn btn-default btn-sm" ng-click="CloneForUpdate(dataRecord);"
+			ng-disabled="updateStatus.refreshingData" >
+		  <!--<span class="glyphicon glyphicon-edit"></span>-->
+		  <i class="fa fa-pencil-square-o"</i>
+		  <span class="sr-only">Edit</span>
+	    </button></td>
+  		<td ng-repeat="field in dataSchema" ng-if="definition.hidden.indexOf(field.Field) == -1 && systemFields.indexOf(name)==-1"
+		ng-show="showCol[field.Field]" >{{dataRecord[field.Field]}}</td>
+  	  </tr>
+  	</tbody>
+  	<!--
+  	<tfoot>
+  	</tfoot>
+  	-->
+    </table>
+  </div>
+  <div
+    ng-hide="Update!='Y'"
+	ng-init="entityClass='form-control'; row='form-group'">
+	<div class="panel panel-default">
+	  <div class="panel-heading">
+		<button type="button" class="btn btn-default btn-sm" 
+			ng-click="Update='N'" 
+			ng-disabled="submitStatus.lockControl" 
+			id="{{table.name}}-back-to-table"><i class="fa fa-reply"></i> Back</button>
+		<button type="submit" class="btn btn-default btn-sm"
+			ng-disabled="{{table.type}}_{{table.name}}.$invalid || 
+				!{{table.type}}_{{table.name}}.$dirty || 
+				isFormUnchange() || 
+				submitStatus.lockControl">
+			<i class="fa fa-floppy-o"></i> Save
+		</button>
+		<span ng-show="submitStatus.isSubmitSuccess"><strong>Success!</strong> Record updated.
+        </span>
+		<button type="button" class="btn btn-default btn-sm" ng-click="test()">Test</button>
+	  </div>
+      <div class="panel-body">
+        <fieldset ng-disabled="submitStatus.lockControl">
+		<div class="{{row}} form-group-sm"
+        ng-init="name=field.Field"
+        ng-repeat="field in dataSchema">
+		
+	    <div style="display: none;">
+		{{
+			name = field.Field;
+			type = fields[name].type;
+			length = fields[name].length;
+			isRequire = fields[name].null;
+			default = fields[name].default;
+			label = definition.label[name] ? definition.label[name] : name;
+			entityName = name;
+			textareaCol = 60;
+			textareaRow = 10;
+			id = "update_"+table.name+"_"+name;
+		}}
+		</div>
+		<div class="" ng-if="definition.key.indexOf(name)!=-1">
+			<label for="{{id}}" class="col-sm-2 control-label">{{label}}</label>
+			<div class="col-sm-6">
+				<input type="text"
+				name="update[{{entityName}}]"
+				class="{{entityClass}}"
+				id="{{id}}"
+				class="form-control-static"
+				readonly
+				value="{{updateTo[name]}}">
+			</div>
+		</div>
+		<div class="ignore-hidden-fields" ng-if="definition.hidden.indexOf(name) == -1 && systemFields.indexOf(name)==-1">
+		  <!--
+		  <span ng-show="definition.label[name] != ''" ng-init="temp = definition.label[name]+''">{{definition.label[name]}}</span>
+		  <span ng-show="temp == ''">{{name}}</span>-->
+			<label for="{{id}}" class="col-sm-2 control-label">{{label}}</label>
+			<div class="col-sm-6">
+			<!-- int -->
+			  <div class="" ng-if="type=='int'">
+				<input
+					type="number"
+					name="update[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire"
+					integer>
+			  </div>
+			<!-- double / decimal / float -->
+			  <div class="" ng-if="type=='double' || type=='decimal' || type=='float'">
+				<input
+					type="number"
+					name="update[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire">
+			  </div>
+			<!-- date / datetime / timestamp / time -->
+			  <div class="" ng-if="type=='date'">
+			    <input
+					type="number"
+					name="updateTo[{{entityName}}]['year']"
+					class="{{entityClass}}"
+					id="{{id}}_year"
+					maxlength="4"
+					ng-model="updateTo[name]['year']"
+					>
+					
+			  </div>
+			  <div class="" ng-if="type=='datetime' || type=='timestamp'">
+				<input
+					type="datetime-local"
+					id = "{{id}}"
+					class = "{{entityClass}}"
+					ng-model="tempDate['dateObject'][name]"
+					ng-change="convertDateToString(tempDate['dateObject'][name], name, type)"
+					ng-required="isRequire">
+				<input
+					type = "text"
+					name = "create[{{name}}]"
+					class = "{{entityClass}}"
+					readonly = "readonly"
+					ng-model="updateTo[name]"
+					>
+			  </div>
+			  <div class="" ng-if="type=='time'">
+			  </div>
+			  <!--
+			  <div class="" ng-if="type=='date'">
+				<input
+					type="date"
+					name="updateTo[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire">
+			  </div>
+			  <div class="" ng-if="type=='datetime' || type=='timestamp'">
+				<input
+					type="datetime-local"
+					name="updateTo[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire">
+			  </div>
+			  <div class="" ng-if="type=='time'">
+				<input
+					type="time"
+					name="update[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire">
+			  </div>
+			  -->
+			<!-- string [char/varchar/text/mediumtext/longtext] -->
+			  <div class="" ng-if="type=='char' || type=='varchar' ">
+				<input 
+					type="text"
+					name="update[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire">
+			  </div>
+			  <div class="" ng-if="type=='text' || type=='mediumtext' || type=='longtext'">
+				<textarea 
+					name="update[{{entityName}}]"
+					class="{{entityClass}}"
+					id="{{id}}"
+					maxlength="{{length}}"
+					rows="{{textareaRow}}"
+					cols="{{textareaCol}}"
+					ng-model="updateTo[name]"
+					ng-value="{{default}}"
+					ng-required="isRequire"></textarea>
+			  </div>
+			</div>
+	      </div>
+	    </div>
+	    </fieldset>
+      </div><!-- panel body end -->
+    </div><!-- panel end -->
+	  <!--</form>-->
+  </div>
+</div>
