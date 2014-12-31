@@ -152,6 +152,7 @@
 			id = "update_"+table.name+"_"+name;
 		}}
 		</div>
+		<!--
 		<div class="" ng-if="definition.key.indexOf(name)!=-1">
 			<label for="{{id}}" class="col-sm-2 control-label">{{label}}</label>
 			<div class="col-sm-6">
@@ -164,6 +165,7 @@
 				value="{{updateTo[name]}}">
 			</div>
 		</div>
+		-->
 		<div class="ignore-hidden-fields" ng-if="definition.hidden.indexOf(name) == -1 && systemFields.indexOf(name)==-1">
 		  <!--
 		  <span ng-show="definition.label[name] != ''" ng-init="temp = definition.label[name]+''">{{definition.label[name]}}</span>
@@ -197,15 +199,20 @@
 			  </div>
 			<!-- date / datetime / timestamp / time -->
 			  <div class="" ng-if="type=='date'">
-			    <input
-					type="number"
-					name="updateTo[{{entityName}}]['year']"
-					class="{{entityClass}}"
-					id="{{id}}_year"
-					maxlength="4"
-					ng-model="updateTo[name]['year']"
+				<input
+					type="date"
+					class = "{{entityClass}}"
+					id = "{{id}}"
+					ng-model="tempDate['dateObject'][name]"
+					ng-change="convertDateToString(tempDate['dateObject'][name], name, type)"
+					ng-required="isRequire">
+				<input
+					type = "text"
+					name = "create[{{name}}]"
+					class = "{{entityClass}}"
+					readonly = "readonly"
+					ng-model="updateTo[name]"
 					>
-					
 			  </div>
 			  <div class="" ng-if="type=='datetime' || type=='timestamp'">
 				<input

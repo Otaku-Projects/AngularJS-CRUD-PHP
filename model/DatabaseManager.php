@@ -29,9 +29,9 @@ class DatabaseManager {
 	protected $double = "double";
 	protected $date = "date";
     protected		$hostname_fyp = "localhost";
-    protected		$database_fyp = "acgni308_anime-comic-db";
-    protected		$username_fyp = "acgni308_root";
-    protected		$password_fyp = "achniDB2015";
+    protected		$database_fyp = "acgni308_keithbox";
+    protected		$username_fyp = "acgni308_kbuser";
+    protected		$password_fyp = "Demo-DB3.2";
 	
 	private	$reserved_fields = array();
 	private $responseArray = array("data"=>null, "sql"=>null);
@@ -404,6 +404,31 @@ class DatabaseManager {
 			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
 		}
 		
+		/*
+		if($isSpecifiesColumn){
+			// cut the trailing commas.
+			$tableColumnSQL = rtrim($tableColumnSQL, " , ");
+			$valuesSQL = rtrim($valuesSQL, " , ");
+			
+			$sql_str = sprintf("INSERT into %s ( %s ) values ( %s )",
+				$this->table,
+				$tableColumnSQL,
+        		$valuesSQL);
+		}else{
+			
+		}
+		*/
+
+		$sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
+			$this->database_fyp,
+			$this->table,
+			$this->reserved_fields["lastUpdateDate"]);
+		$resultData = $this->queryForDataArray($sql_str);
+		if($resultData['num_rows'] > 0){
+			$tableColumnSQL .= $this->reserved_fields['lastUpdateDate']." , ";
+			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
+		}
+		
 		if($isSpecifiesColumn){
 			// cut the trailing commas.
 			$tableColumnSQL = rtrim($tableColumnSQL, " , ");
@@ -523,9 +548,9 @@ class DatabaseManager {
 		if($isLastUpdateDateFound){
 			$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
 			$updateWhereColumn .= $this->reserved_fields["lastUpdateDate"] . 
-				"=" . 
+				"='" . 
 				$this->GetSQLValueString($this->reserved_fields["lastUpdateDate"]) . 
-				" AND ";
+				"' AND ";
 		}
 		//// END - check the lastUpdateDate column
 		
@@ -692,9 +717,9 @@ class DatabaseManager {
 		if($isLastUpdateDateFound){
 			//$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
 			$deleteWhereColumn .= $this->reserved_fields["lastUpdateDate"] . 
-				"=" . 
+				"='" . 
 				$this->GetSQLValueString($this->reserved_fields["lastUpdateDate"]) . 
-				" AND ";
+				"' AND ";
 		}
 		//// END - check the lastUpdateDate column
 		
@@ -1049,8 +1074,13 @@ class DatabaseManager {
 				//if(is_string($columnValue)){
 				//	$returnValue = $columnValue;
 				//}else{
-					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
+					//$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
 				//}
+				if(is_string($columnValue)){
+					$returnValue = $columnValue;
+				}else{
+					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
+				}
 				$typeCaseAs = "date";
 				break;
 			case $type==="datetime":
@@ -1072,8 +1102,13 @@ class DatabaseManager {
 				//if(is_string($columnValue)){
 				//	$returnValue = $columnValue;
 				//}else{
-					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
+					//$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
 				//}
+				if(is_string($columnValue)){
+					$returnValue = $columnValue;
+				}else{
+					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
+				}
 				$typeCaseAs = "datetime";
 				break;
 		}

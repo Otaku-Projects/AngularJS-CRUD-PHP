@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Create RUD</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, minmum-scale=1">
+<link rel="stylesheet" type="text/css" href="third-party/bootstrap-3.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="third-party/font-awesome-4.2.0/css/font-awesome.min.css">
+<script type="text/javascript" src="third-party/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="third-party/angular.min.js"></script>
+<script type="text/javascript" src="third-party/bootstrap-3.3.0/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/controllerCRUD.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-create.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-read.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-update.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-delete.js"></script>
+<style>
+.crud-container {
+	max-width: 1280px;
+	margin-left: 20px;
+}
+.hideColOnTable, .hideColOnTable:hover, .hideColOnTable:active, .hideColOnTable:focus {
+	color: black;
+	text-decoration: none;
+}
+</style>
+<script>
+/*
+app.controller('crud-container', function($scope, $rootScope, $http, $element, $attrs) {
+	$scope.create = {};
+	$scope.create.dateOfBirth = new Date();
+})
+*/
+/*
+app.controller('crud-container', function($scope, $rootScope, $http, $element, $attrs) {
+	$scope.updateTo = {};
+	$scope.updateTo.dateOfBirth = new Date();
+	
+	$scope.updateFrom = {};
+	$scope.updateFrom.dateOfBirth = new Date();
+})
+*/
+app.controller('CRUD-create-container', function($scope, $rootScope, $http, $element, $attrs) {
+	//$scope.create.dateOfBirth = $filter("date")(Date.now(), 'yyyy-MM-dd HH:mm:ss');
+});
+</script>
+</head>
+
+<body ng-app="myApp">
+	<h3>Create RUD</h3>
+    <!-- create -->
+	<div ng-controller="CRUD-container" class="crud-container" style="max-width: 780px;">
+		<div>
+		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
+		  ID:'Identify Code',
+		  FullName:'Full Name',
+		  Gender:'Gender',
+		  DateOfBirth:'Date of Birth',
+		  Address:'Correspondence Address'
+		  }
+		  }">
+		  </textarea>
+		  <br>
+		  <form name="cProfile" class="form-horizontal" role="form" ng-submit="Submit()">
+			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-createTableRecord.php'">
+			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
+			<crud type="create" table="profile" default-path="default" controller="CRUD-create-controller">
+			</crud>
+			  <div class="form-group form-entity">
+				<div class="col-sm-2 control-label">
+              <button
+				type="submit"
+				class="btn btn-primary"
+				ng-disabled="cProfile.$invalid || !cProfile.$dirty || submitStatus.lockControl">Create</button>
+				</div>
+				<div class="col-sm-10">
+				<span style="display:none;">{{cProfile.$error | json}}</span>
+				<div class="alert alert-success" role="alert" style="margin-bottom: 0px;" ng-show="submitStatus.isSubmitSuccess">
+                  <strong>Success!</strong> Table '{{table.name}}', {{submitStatus.keyValue[0]}} record created.
+                </div>
+				</div>
+			  </div>
+		  </form>
+		</div>
+	</div>
+	<hr>
+	<h3>C Read UD</h3>
+    <!-- read -->
+    <!---->
+	<div ng-controller="CRUD-container" class="crud-container">
+		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
+		  ID:'Identify Code',
+		  FullName:'Full Name',
+		  Gender:'Gender',
+		  DateOfBirth:'Date of Birth',
+		  Address:'Correspondence Address'
+		  }
+		  }">
+		  </textarea>
+		  <br>
+		<div>
+		  <crud type="read" table="profile" default-path="default" controller="CRUD-read-controller">
+		  </crud>
+		</div>
+    </div>
+    <!---->
+	<hr>
+	<h3>CR Update D</h3>
+    <!-- Update -->
+	<div ng-controller="CRUD-container" class="crud-container" style="">
+		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
+		  ID:'Identify Code',
+		  FullName:'Full Name',
+		  Gender:'Gender',
+		  DateOfBirth:'Date of Birth',
+		  Address:'Correspondence Address'
+		  }
+		  }">
+		  </textarea>
+		  <br>
+		  <form class="form-horizontal form-group-sm" role="form" name="{{table.type}}_{{table.name}}" ng-submit="Submit()">
+			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-updateTableRecord.php'">
+			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
+		<div>
+		  <crud type="update" table="profile" default-path="default" controller="CRUD-update-controller">
+		  </crud>
+		</div>
+		</form>
+    </div>
+	<hr>
+	<h3>CRU Delete</h3>
+    <!-- Delete -->
+    <div ng-controller="CRUD-container" class="crud-container" style="">
+		  <textarea ng-bind="definition | json" ng-init="definition={hidden:['ID'],key:['ID'],label:{
+		  ID:'Identify Code',
+		  FullName:'Full Name',
+		  Gender:'Gender',
+		  DateOfBirth:'Date of Birth',
+		  Address:'Correspondence Address'
+		  }
+		  }">
+		  </textarea>
+		  <br>
+		  <form class="form-horizontal form-group-sm" role="form" name="{{table.type}}_{{table.name}}">
+			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-deleteTableRecord.php'">
+			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
+			<div>
+			  <crud type="delete" table="profile" default-path="default" controller="CRUD-delete-controller">
+			  </crud>
+			</div>
+		  </form>
+    </div>
+</body>
+</html>

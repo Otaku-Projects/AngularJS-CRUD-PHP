@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Create RUD</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, minmum-scale=1">
+<link rel="stylesheet" type="text/css" href="third-party/bootstrap-3.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="third-party/font-awesome-4.2.0/css/font-awesome.min.css">
+<link href="http://alexgorbatchev.com/pub/sh/current/styles/shCore.css" rel="stylesheet" type="text/css"></link>
+<link href="http://alexgorbatchev.com/pub/sh/current/styles/shThemeDefault.css" rel="stylesheet" type="text/css"></link>
+<script type="text/javascript" src="third-party/angular.js"></script>
+<script type="text/javascript" src="third-party/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="third-party/bootstrap-3.3.0/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/controllerCRUD.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-create.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-read.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-update.js"></script>
+<script type="text/javascript" src="js/controllerCRUD-delete.js"></script>
+
+<!--
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shCore.js" type="text/javascript"></script>
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushXml.js" type="text/javascript"></script>
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushPhp.js" type="text/javascript"></script>
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushJScript.js" type="text/javascript"></script>
+<script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushSql.js" type="text/javascript"></script>
+<script>
+SyntaxHighlighter.all();
+</script>
+-->
+<style>
+body {
+	max-width: 1080px;
+	margin-left: auto;
+	margin-right: auto;
+}
+.crud-container {
+	max-width: 1280px;
+	margin-left: 20px;
+}
+.hideColOnTable, .hideColOnTable:hover, .hideColOnTable:active, .hideColOnTable:focus {
+	color: black;
+	text-decoration: none;
+}
+</style>
+
+</head>
+
+<body ng-app="myApp">
+	<h3><strong>Create</strong> RUD</h3>
+	<h4>Step 1 - create a container</h4>
+	create a div container or a block element or anythink you would like to enclose the create form.<br>
+	the container must assign "CRUD-container" as the value of ng-controller.
+	<pre class="brush: html;">&lt;div ng-controller=&quot;CRUD-container&quot; class=&quot;crud-container&quot;&gt;
+&lt;/div&gt;</pre>
+	<h4>Step 2 - a &lt;crud&gt; tag</h4>
+	create a crud tag element in the container from the previous step.<br>
+	type = [create | read | update | delete]<br>
+	table = <em>TableName</em>
+	default-path = [default | custom]<br>
+	controller = "CRUD-create-controller"<br>
+	<pre class="brush: html">&lt;crud type=&quot;create&quot; table=&quot;profile&quot; default-path=&quot;default&quot; controller=&quot;CRUD-create-controller&quot;&gt;
+&lt;/crud&gt;</pre>
+	After that, now the create from will generate automatically according to the root/Templates/crud-create.html template.<br>
+	The create from label default as the column name from database.<br>
+	<h4>Step 3 - a ng variable 'definition'</h4>
+	create definition variable in the "CRUD-container" controller, you may move it to anywhere within the controller.<br>
+	you may hidden by CSS, or embed into different element node e.g span.<br>
+	definition is a important thing allow you replace the default label name with your own words.<br>
+	you may also hidden some column in the create form, e.g a column which is integer data type and auto increased during the insertation by database.<br>
+	definition = {hidden:['hiddenThisColumn', ...], label:{columnName:'display label name', ...}}<br>
+	<pre class="brush: html">&lt;span ng-init=&quot;definition=
+	{
+		hidden : ['ID'],
+		label : { 
+			ID:'帳號編號', 
+			FullName:'全名', 
+			Gender:'性別', 
+			DateOfBirth:'出生日期', 
+			Address:'住址' 
+		} 
+	}&quot;&gt;
+&lt;/span&gt;</pre>
+	<h4>Step 4 - move crud tag into a form</h4>
+	Use a form and enclose the crud tag.<br>
+	bind the submit target to ng-model="action"<br>
+	bind the submit method to ng-model="method"<br>
+	make sure ng-submit="Submit()" as one of a form attribute.<br>
+	final add a submit button then table insertation avaiable now.<br>
+	<pre>&lt;form name="cProfile" class="form-horizontal" role="form" ng-submit="Submit()"&gt;
+	&lt;input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-createTableRecord.php'"&gt;
+	&lt;input hidden type="text" ng-model="method" ng-init="method = 'POST'"&gt;
+
+	&lt;!-- move the crud tag here --&gt;
+	&lt;crud type="create" table="profile" default-path="default" controller="CRUD-create-controller"&gt;&lt;/crud&gt;
+		
+	&lt;!-- create a submit button here --&gt;
+	&lt;button
+		type="submit"
+		class="btn btn-primary"
+		ng-disabled="cProfile.$invalid || !cProfile.$dirty || submitStatus.lockControl"&gt;Create&lt;/button&gt;
+	
+	&lt;!-- custom your insert successful message here --&gt;
+	&lt;div class="alert alert-success" role="alert" style="margin-bottom: 0px;" ng-show="submitStatus.isSubmitSuccess"&gt;
+		&lt;strong&gt;Success!&lt;/strong&gt; Record created.
+	&lt;/div&gt;
+&lt;/form&gt;</pre>
+	Highly recommanding you given a name to form tag, like above form name name as 'cProfile',<br>
+	now you may use <code>cProfile.$invalid</code>, <code>cProfile.$dirty</code> to control your DOM.<br><br>
+	<h5><code>formName.$invalid</code></h5>
+	the create form are auto gen by the database schema, all the form controls will mark required if database schema set as not null.<br>
+	When your leave the form controls(input box, textarea) empty if it is required, the cProfile.$invalid will be true.<br><br>
+	<h5><code>formName.$dirty</code></h5>
+	cProfile.$dirty will be true if your/user has already interacted with the form.<br><br>
+	<h5><code>submitStatus.lockControl</code></h5>
+	please notice that there are no $ sign in submitStatus.lockControl<br>
+	During the form submition, it will make as true, otherwise false.<br>
+	When the server response recevide, Whether an insertation is success or not, it will make as false.<br>
+	<em>For demo more effective, php response are sleep in three seconds. with <code>sleep(3);</code></em>
+	<br><br>
+	<h5><code>submitStatus.isSubmitSuccess</code></h5>
+	When the server response the insertation is success, it will make as true.<br>
+	You may display any notice to user by checking this flag, this flag will reset to false after 3 seconds.
+    <!-- create -->
+    <h4>Live</h4>
+	<div ng-controller="CRUD-container" class="crud-container" style="max-width: 780px;">
+		<div>
+		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
+		  ID:'Identify Code',
+		  FullName:'Full Name',
+		  Gender:'Gender',
+		  DateOfBirth:'Date of Birth',
+		  Address:'Correspondence Address'
+		  }
+		  }">
+		  </textarea>
+		  <br>
+		  <form name="cProfile" class="form-horizontal" role="form" ng-submit="Submit()">
+			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-createTableRecord.php'">
+			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
+			<crud type="create" table="profile" default-path="custom" controller="CRUD-create-controller">
+			</crud>
+			  <div class="form-group form-entity">
+				<div class="col-sm-2 control-label">
+              <button
+				type="submit"
+				class="btn btn-primary"
+				ng-disabled="cProfile.$invalid || !cProfile.$dirty || submitStatus.lockControl">Create</button>
+				</div>
+				<div class="col-sm-10">
+				<span style="display:none;">{{cProfile.$error | json}}</span>
+				<div class="alert alert-success" role="alert" style="margin-bottom: 0px;" ng-show="submitStatus.isSubmitSuccess">
+                  <strong>Success!</strong> Table '{{table.name}}', {{submitStatus.keyValue[0]}} record created.
+                </div>
+				</div>
+			  </div>
+		  </form>
+		</div>
+	</div>
+</body>
+</html>

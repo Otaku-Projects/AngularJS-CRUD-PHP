@@ -4,7 +4,7 @@ A simple idea for Rapid application development
 
 ##Demo
 
-coming soon... please wait
+Go To [DEMO](http://localhost/DemoBox/create.html)
 
 ##Motivation
 
