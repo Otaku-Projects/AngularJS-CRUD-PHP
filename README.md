@@ -4,7 +4,7 @@ A simple idea for Rapid application development
 
 ##Demo
 
-Go To [DEMO](http://localhost/DemoBox/create.html)
+Go To [DEMO](http://kb.acgni.net/create.html)
 
 ##Motivation
 
