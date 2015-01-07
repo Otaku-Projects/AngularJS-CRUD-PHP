@@ -12,6 +12,13 @@
   	];
   }}
   </div>
+  <!-- header -->
+  <!--
+  		search bar | [View Switcher] btn | [Refresh] btn | [Show/Hide Columns]
+  -->
+  <!--<pre>
+  {{definition.label | json}}
+</pre>-->
   <div>
     <form class="form-horizontal" role="form">
 	<div class="form-group">
@@ -74,6 +81,9 @@
 	</div>
 	</form>
   </div>
+  <!-- End - header -->
+
+  <!-- table -->
   <div class="table-entities table-responsive" ng-init="view='T'">
     <table class="table">
   	<thead>
@@ -122,6 +132,9 @@
   	-->
     </table>
   </div>
+  <!-- End - table -->
+
+  <!-- Read in details -->
   <div class="row"
     ng-hide="view!='G'">
 	  <form class="form-horizontal col-lg-3 col-md-4 col-sm-6 form-group-sm" role="form"
@@ -144,4 +157,5 @@
         </div>
 	  </form>
   </div>
+  <!-- End - Read in details -->
 </div>

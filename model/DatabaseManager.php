@@ -548,9 +548,9 @@ class DatabaseManager {
 		if($isLastUpdateDateFound){
 			$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
 			$updateWhereColumn .= $this->reserved_fields["lastUpdateDate"] . 
-				"='" . 
+				"=" . 
 				$this->GetSQLValueString($this->reserved_fields["lastUpdateDate"]) . 
-				"' AND ";
+				" AND ";
 		}
 		//// END - check the lastUpdateDate column
 		
@@ -717,9 +717,9 @@ class DatabaseManager {
 		if($isLastUpdateDateFound){
 			//$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
 			$deleteWhereColumn .= $this->reserved_fields["lastUpdateDate"] . 
-				"='" . 
+				"=" . 
 				$this->GetSQLValueString($this->reserved_fields["lastUpdateDate"]) . 
-				"' AND ";
+				" AND ";
 		}
 		//// END - check the lastUpdateDate column
 		
@@ -1071,11 +1071,6 @@ class DatabaseManager {
 				}
 				$returnValue = "'" . $returnValue . "'";
 				*/
-				//if(is_string($columnValue)){
-				//	$returnValue = $columnValue;
-				//}else{
-					//$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
-				//}
 				if(is_string($columnValue)){
 					$returnValue = $columnValue;
 				}else{
@@ -1085,30 +1080,32 @@ class DatabaseManager {
 				break;
 			case $type==="datetime":
 			case $type==="timestamp":
-			/*
 				if($this->IsNullOrEmptyString($columnValue)){
 					$returnValue = date("Y-m-d H:i:s");
 				}else{
 					// convert string to date
 					$tmpDate = date_parse($columnValue);
-					if(!$tmpDate["errors"] == 0 && checkdate($tmpDate["month"], $tmpDate["day"], $tmpDate["year"]))
+					if(count($tmpDate["errors"]) > 0)
 						$returnValue = date("Y-m-d H:i:s"); // if convert with error, use the current date
 					else
-						$returnValue = $tmpDate->format("Y-m-d H:i:s");
+						//$returnValue = $tmpDate->format("Y-m-d H:i:s");
+						// mktime(hour,minute,second,month,day,year)
+						$returnValue = date("Y-m-d H:i:s", mktime(
+							$tmpDate["hour"], 
+							$tmpDate["minute"], 
+							$tmpDate["second"], 
+							$tmpDate["month"], 
+							$tmpDate["day"], 
+							$tmpDate["year"])
+					);
 				}
 				$returnValue = "'" . $returnValue . "'";
-				*/
 				//return $columnValue;
 				//if(is_string($columnValue)){
 				//	$returnValue = $columnValue;
 				//}else{
 					//$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
 				//}
-				if(is_string($columnValue)){
-					$returnValue = $columnValue;
-				}else{
-					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
-				}
 				$typeCaseAs = "datetime";
 				break;
 		}
