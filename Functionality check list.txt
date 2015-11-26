@@ -1,0 +1,32 @@
+PHP core
+Insert
+Select
+Update
+Delete
+
+Front End
+Template
+default
+HTML5
+
+HTML5 create template
+Support data type
+tinyint
+smallint
+mediumint
+int
+bigint
+decimal
+float
+double
+date
+datetime
+timestamp
+year
+char
+varchar
+tinytext
+text
+mediumtext
+longtext
+
