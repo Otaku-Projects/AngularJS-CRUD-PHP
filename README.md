@@ -44,9 +44,12 @@ It is very limiting of my needs(maybe also yours). One day when a project need t
 
 This project is divided into three parts, PHP core, angularJS and HTML template. PHP core handle the mysql query execution and return a json response, the core is develop under MVC model, view is jQuery+HTML+angularJS.
 
+##Ideally Design
 AngulasJS provides the \<entry\> \<pageview\> \<screen\> \<editbox\> \<import-export\> directive, entry directive handle the action of [Create | View | Update | Delete] of any entries.
 
-This project provide Create, Read, Update, Delete html page in default render template, the forms, the form controls are auto generate according to the table structure. You are enable to create and use your tailor template for specified table and CRUD action.
+This project design for the function base, a page can be a function, a directive can be a function, a page allowed to provide multi directive. \<screen\> directive is a template directive for reuseable \<pageview\>, \<screen\> also work for \<entry\>. \<editbox\> is control set to handle foreign key, to popup a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the entry, the FK record details may display in the \<editbox\>.
+
+In the future, \<pageview\> can be a selection range for the search criteria selection. Better handling for one to many relationship between the parent and the child table.
 
 ```
  Root
