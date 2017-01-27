@@ -41,12 +41,25 @@ This project is divided into three parts, PHP core, angularJS and HTML template.
 
 AngulasJS provides the \<entry\> \<pageview\> \<screen\> \<editbox\> \<import-export\> directive, entry directive handle the action of [Create | View | Update | Delete] of any entries.
 
-This project design for the function base, a page can be a function, a directive can be a function, a page allowed to provide multi directive. \<screen\> directive is a template directive for reuseable \<pageview\>, \<screen\> also work for \<entry\>. \<editbox\> is control set to handle foreign key, to popup a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the entry, the FK record details may display in the \<editbox\>.
+This project design for the function base, a page can be a function, a directive can be a function, a page allowed to provide multi directive.
+\<pageview\> directive is a directive used to display a records set.
+\<screen\> directive is a template directive for reuseable \<pageview\>, \<screen\> also work for \<entry\>.
+\<editbox\> to handle foreign key on the \<entry\>, allowed to open a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
+
+Functional Implementation
+- [x] \<entry>\ provide CRUD action
+- [x] \<pageview>\ display the records set in pagination
+- [x] \<screen>\ as a template directive for reuseable \<pageview\>, \<entry>\
+- [x] \<editbox>\ is a control set to handle foreign key, click to popup a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
+- [x] \<export>\ convert the responsed Base64 to a Blob object and download to the client
+- [x] \<upload>\ send one or more file to the server
+- [x] \<import>\ send the uploaded file location with specify action to do some process
+- [x] \<message>\ separate the process result message from CRUD, import, or export directive, centralize to display in here
 
 In the future, some existing problems must be solved
-- \<pageview\> can be a selection range for the search criteria selection.
-- Better handling for one to many relationship between the parent and the child table.
-- Using ngRoute so that the user can point to single one record by a unique URL.
+- [ ]  \<pageview\> can be a selection range for the search criteria selection.
+- [ ]  Better handling for one to many relationship between the parent and the child table.
+- [ ]  Using ngRoute so that the user can point to single one record by a unique URL.
 
 ```
  Root
