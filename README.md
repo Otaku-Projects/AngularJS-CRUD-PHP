@@ -47,14 +47,14 @@ This project design for the function base, a page can be a function, a directive
 \<editbox\> to handle foreign key on the \<entry\>, allowed to open a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
 
 Functional Implementation
-- [x] \<entry>\ provide CRUD action
-- [x] \<pageview>\ display the records set in pagination
-- [x] \<screen>\ as a template directive for reuseable \<pageview\>, \<entry>\
-- [x] \<editbox>\ is a control set to handle foreign key, click to popup a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
-- [x] \<export>\ convert the responsed Base64 to a Blob object and download to the client
-- [x] \<upload>\ send one or more file to the server
-- [x] \<import>\ send the uploaded file location with specify action to do some process
-- [x] \<message>\ separate the process result message from CRUD, import, or export directive, centralize to display in here
+- [x] \<entry\> provide CRUD action
+- [x] \<pageview\> display the records set in pagination
+- [x] \<screen\> as a template directive for reuseable \<pageview\>, \<entry>\
+- [x] \<editbox\> is a control set to handle foreign key, click to popup a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
+- [x] \<export\> convert the responsed Base64 to a Blob object and download to the client
+- [x] \<upload\> send one or more file to the server
+- [x] \<import\> send the uploaded file location with specify action to do some process
+- [x] \<message\> separate the process result message from CRUD, import, or export directive, centralize to display in here
 
 In the future, some existing problems must be solved
 - [ ]  \<pageview\> can be a selection range for the search criteria selection.
