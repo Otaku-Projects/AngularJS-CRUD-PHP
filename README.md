@@ -85,7 +85,8 @@ In the future, some existing problems must be solved
 ```
 
 ##Download
-Download [ZIP](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip) from GitHub
+Download ~~[ZIP](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip) from GitHub~~
+I will upload the standable version as soon as I can
 
 ##Config
 `model/config.php`
