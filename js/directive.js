@@ -931,7 +931,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
                 }
                 BackupNgModel();
                 if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
-                $scope.UnLockAllControls();
+					$scope.UnLockAllControls();
             });
         }
 
@@ -1714,6 +1714,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
                     var globalCriteria = $rootScope.globalCriteria;
                     if(scope.editMode == globalCriteria.editMode.None || 
                         scope.editMode == globalCriteria.editMode.Null ||
+                        scope.editMode == globalCriteria.editMode.Create ||
                         scope.editMode == globalCriteria.editMode.View ||
                         scope.editMode == globalCriteria.editMode.Delete 
                     ){
