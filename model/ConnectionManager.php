@@ -5,6 +5,8 @@ require_once 'Core.php';
 require_once 'FormSubmitManager.php';
 require_once 'ManagerLoader.php';
 
+header('Content-Type: application/json', true, 200);
+
 // $currentFilename = basename(__FILE__);
 
 // foreach (scandir(dirname(__FILE__)) as $filename) {
@@ -102,7 +104,6 @@ if(!$isFileExists){
 
 if($action == "Login" || $action == "CheckLogin" || $action == "Logout"){
 	$responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
-	
 	//echo json_encode($responseData);
 	return;
 }
@@ -233,8 +234,11 @@ try{
 		case 'ImportData':
 			break;
 		case 'ExportData':
-			$sqlResultData['ActionResult'] = array();
-			$sqlResultData['ActionResult']['access_status'] = "OK";
+			// $sqlResultData['ActionResult'] = array();
+			// $sqlResultData['ActionResult']['access_status'] = "OK";
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			//$sqlResultData['ActionResult'] = call_user_func($funcName);
+			// print_r(call_user_func($funcName));
 			break;
 		case 'IsKeyExists':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
@@ -320,11 +324,10 @@ $responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData
 		// 	break;
 		case 'ImportData':
 			break;
-		case 'ExportData':
-			break;
+		// case 'ExportData':
+		// 	break;
 		default:
-			header('Content-Type: application/json', true, 200);
-echo json_encode($responseData);
+			echo json_encode($responseData);
 			break;
 	}
 

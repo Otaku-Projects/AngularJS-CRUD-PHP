@@ -56,6 +56,7 @@ define("BASE_TEMPORARY", BASE_ROOT."temp/");
 define("BASE_WORD_TEMPLATE", BASE_RESOURCE."word-template/");
 
 define("BASE_UPLOAD", BASE_TEMPORARY."upload/");
+define("BASE_EXPORT", BASE_TEMPORARY."export/");
 
 define("INCLUDE_PHPMAILER", BASE_3RD."PHPMailer-5.2.9/PHPMailerAutoload.php");
 

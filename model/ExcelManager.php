@@ -17,22 +17,20 @@ class ExcelManager extends DatabaseManager {
     		"pdf" => "pdf"
     );
     
-    protected $isTemplate;
-	protected $outputAsFileType;
-	protected $filename;
+    public $isTemplate;
+	public $outputAsFileType;
+	public $filename;
 	protected $filenamePost;
 	protected $table = "";
 	protected $tableList = array();
 	protected $excelSheetsHeader = array();
 
-	protected $isExportSequencedColumnOnly = false;
+	//public $isExportSequencedColumnOnly = true; // true, export the columns which are defined sequence by user
 	protected $processMessageList = array();
 
-	private $isColumnExportInCustomSequence = false;
-
-	private $exportColumnSequence = array();
+	private $customizeExportColumnSequence = array();
 	private $skipExportColumnScheme = array();
-	private $exportedColumnOrder = array();
+	private $proposedExportColumnSequence = array();
 
 	private $currentWorkSheetIndex = -1;
     
@@ -100,48 +98,17 @@ class ExcelManager extends DatabaseManager {
 		$tableObject->topRightToken = true;
 		$resultSet = $tableObject->select();
 
-
-		/* Start - set spreadsheet header column */
-		// 20150427, keithpoon, export column according to the sequence scheme
-		// insert all the column setted in the sequence scheme
-		$tempExportColumnSequence = $this->GetExportColumnSequence();
-		$sortedColumnName = $this->GetExportColumnSequence();
-
-		$this->exportedColumnOrder = array();
-
-		if(!array_key_exists($currentTableName, $this->exportedColumnOrder))
-			$this->exportedColumnOrder[$currentTableName] = array();
-
-		if($tempExportColumnSequence){
-			// if table name setted in the sequence scheme
-			if(array_key_exists($currentTableName, $tempExportColumnSequence)){
-				foreach ($tempExportColumnSequence[$currentTableName] as $indexNum => $sortedColumnName){
-					// skip column is Top Priority
-					if( $this->IsSkipExportThisColumn($currentTableName, $sortedColumnName))
-						continue;
-
-					array_push($this->exportedColumnOrder[$currentTableName], $sortedColumnName);
-
-					$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
-					$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $sortedColumnName);
-					$columnIndex++;
-				}
-			}
+		// Get proposed export column header sequence
+		if(!array_key_exists($currentTableName, $this->proposedExportColumnSequence)){
+			$this->proposedExportColumnSequence[$currentTableName] = array();
 		}
+		$this->proposedExportColumnSequence[$currentTableName] = $this->GetDefaultExportColumnSequence($currentTableName, $tableObject);
 
-		// 20150123, keithpoon, enhance the column name better
-		if(!$this->isExportSequencedColumnOnly)
-		foreach($tableObject->_ as $headerColumn => $defaultValue){
-			// skip column is Top Priority
-			if( $this->IsSkipExportThisColumn($currentTableName, $sortedColumnName))
-				continue;
+		$toBeExportHeaderSequence = $this->proposedExportColumnSequence[$currentTableName];
+		// echo json_encode($toBeExportHeaderSequence, JSON_PRETTY_PRINT);
 
-			// skip sorted column already inserted at above
-			if(array_key_exists($currentTableName, $tempExportColumnSequence)){
-				if(in_array($headerColumn, $tempExportColumnSequence[$currentTableName])){
-					continue;
-				}
-			}
+		// Build column header in excel engine
+		foreach ($toBeExportHeaderSequence as $key => $headerColumn) {
 
 			//$excelCellCoordinate = $this->getNameFromNumber($columnIndex).$rowCount;
 			$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
@@ -149,7 +116,8 @@ class ExcelManager extends DatabaseManager {
 				continue;
 			//$objPHPExcel->setActiveSheetIndex(0)->SetCellValue($excelCellCoordinate, $headerColumn);
 			$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $headerColumn);
-			
+
+
 			// Start - format whole column as datetime format if datetime column
 			// un like SpreadsheetGear, need to specifically hard code the format and the applied rows.
 			// PHPExcel doesn't support column or row styling: you need to set the style for a range of cells
@@ -180,9 +148,86 @@ class ExcelManager extends DatabaseManager {
 			// End - format whole column as datetime format
 			 
 			$columnIndex++;
-
-			array_push($this->exportedColumnOrder[$currentTableName], $headerColumn);
 		}
+
+		/* Start - set spreadsheet header column */
+		// 20150427, keithpoon, export column according to the sequence scheme
+		// insert all the column setted in the sequence scheme
+		// $tempExportColumnSequence = $this->GetCustomizeExportColumnSequence();
+		// $sortedColumnName = $this->GetCustomizeExportColumnSequence();
+
+		// if($tempExportColumnSequence){
+		// 	// if table name setted in the sequence scheme
+		// 	if(array_key_exists($currentTableName, $tempExportColumnSequence)){
+		// 		foreach ($tempExportColumnSequence[$currentTableName] as $indexNum => $sortedColumnName){
+		// 			// skip column is Top Priority
+		// 			if( $this->IsSkipExportThisColumn($currentTableName, $sortedColumnName))
+		// 				continue;
+
+		// 			array_push($this->proposedExportColumnSequence[$currentTableName], $sortedColumnName);
+
+		// 			$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
+		// 			$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $sortedColumnName);
+		// 			$columnIndex++;
+		// 		}
+		// 	}
+		// }
+
+
+		// 20150123, keithpoon, enhance the column name better
+		// if(!$this->isExportSequencedColumnOnly)
+		// foreach($tableObject->_ as $headerColumn => $defaultValue){
+		// 	// skip column is Top Priority
+		// 	if( $this->IsSkipExportThisColumn($currentTableName, $sortedColumnName))
+		// 		continue;
+
+		// 	// skip sorted column already inserted at above
+		// 	if(array_key_exists($currentTableName, $tempExportColumnSequence)){
+		// 		if(in_array($headerColumn, $tempExportColumnSequence[$currentTableName])){
+		// 			continue;
+		// 		}
+		// 	}
+
+		// 	//$excelCellCoordinate = $this->getNameFromNumber($columnIndex).$rowCount;
+		// 	$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
+		// 	if(parent::IsSystemField($headerColumn))
+		// 		continue;
+		// 	//$objPHPExcel->setActiveSheetIndex(0)->SetCellValue($excelCellCoordinate, $headerColumn);
+		// 	$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $headerColumn);
+			
+		// 	// Start - format whole column as datetime format if datetime column
+		// 	// un like SpreadsheetGear, need to specifically hard code the format and the applied rows.
+		// 	// PHPExcel doesn't support column or row styling: you need to set the style for a range of cells
+		// 	// http://stackoverflow.com/questions/22090978/phpexcel-how-to-change-data-type-for-whole-column-of-an-excel
+		// 	// Worksheet and workbook specifications and limits, excel max. Worksheet size: 1,048,576 rows by 16,384 columns
+		// 	/*
+		// 	$tempDataType = $this->SearchDataType($tableObject->dataSchema['data'], 'Field', $headerColumn)[0]['Type'];
+		// 	$columnIndexInString = PHPExcel_Cell::stringFromColumnIndex($columnIndex); // A/B/C
+		// 	switch ($tempDataType) {
+		// 		case $tempDataType==="date":
+		// 			$objPHPExcel->getActiveSheet()->getStyle($columnIndexInString.($rowCount+1).":".$columnIndexInString."10000")
+		// 			->getNumberFormat()
+		// 			->setFormatCode('yyyy-m-d');
+		// 			break;
+		// 		case $tempDataType==="datetime":
+		// 		case $tempDataType==="timestamp":
+		// 			$objPHPExcel->getActiveSheet()->getStyle($columnIndexInString.($rowCount+1).":".$columnIndexInString."10000")
+		// 			->getNumberFormat()
+		// 			->setFormatCode('yyyy-m-d hh:mm:ss');
+		// 			break;
+		// 		case $tempDataType==="time":
+		// 			$objPHPExcel->getActiveSheet()->getStyle($columnIndexInString.($rowCount+1).":".$columnIndexInString."10000")
+		// 			->getNumberFormat()
+		// 			->setFormatCode('hh:mm:ss');
+		// 			break;
+		// 	}
+		// 	*/
+		// 	// End - format whole column as datetime format
+			 
+		// 	$columnIndex++;
+
+		// 	// array_push($this->proposedExportColumnSequence[$currentTableName], $headerColumn);
+		// }
 		/* End - set spreadsheet header column */
 		
 
@@ -195,7 +240,7 @@ class ExcelManager extends DatabaseManager {
 					$columnIndex = 0;
 					// loop each column in $row
 					// 20150427, keithpoon, export data according to the
-					$tempExportedColumnOrder = $this->exportedColumnOrder[$currentTableName];
+					$tempExportedColumnOrder = $this->proposedExportColumnSequence[$currentTableName];
 
 					//foreach($row as $colName => $tempColValue)
 					foreach($tempExportedColumnOrder as $key => $colName)
@@ -274,7 +319,7 @@ class ExcelManager extends DatabaseManager {
 	}
 
 	function SetExportColumnSequence($tableName, $columnName, $index=NULL){
-		$exportColumnSequence = $this->exportColumnSequence;
+		$exportColumnSequence = $this->customizeExportColumnSequence;
 
 		if($this->IsSystemField($columnName))
 			return;
@@ -297,10 +342,9 @@ class ExcelManager extends DatabaseManager {
 		if (!array_key_exists($columnName, $exportColumnSequence[$tableName])){
 			//array_push($exportColumnSequence[$tableName], $columnName);
 			array_splice( $exportColumnSequence[$tableName], $index, 0, $insertThisColumn );
-			$this->isColumnExportInCustomSequence = true;
 		}
 
-		$this->exportColumnSequence = $exportColumnSequence;
+		$this->customizeExportColumnSequence = $exportColumnSequence;
 	}
 
 	function SetSkipExportColumn($tableName, $skipColumnName){
@@ -329,7 +373,7 @@ class ExcelManager extends DatabaseManager {
 		$isSkipExportThisColumn = false;
 		$skipExportColumnScheme = $this->GetSkipExportColumn();
 
-		if($skipExportColumnScheme)
+		if(!empty($skipExportColumnScheme))
 			if (array_key_exists($tableName, $skipExportColumnScheme)){
 				//if (array_key_exists($skipColName, $skipExportColumnScheme[$tableName])){
 				if (in_array($skipColName, $skipExportColumnScheme[$tableName])){
@@ -337,16 +381,51 @@ class ExcelManager extends DatabaseManager {
 				}
 			}
 
+		// echo "skip col:$skipColName in table: $tableName = ".$isSkipExportThisColumn;
+
 		return $isSkipExportThisColumn;
 	}
 
-	function GetExportColumnSequence(){
-		$exportColSequence = $this->exportColumnSequence;
+	function GetCustomizeExportColumnSequence(){
+		$exportColSequence = $this->customizeExportColumnSequence;
 
 		// if(count($exportColSequence)==0)
 		// 	return false;
 		// 	//return array();
 		return $exportColSequence;
+	}
+
+	// 20161006, keithpoon, move the code to the function
+	function GetDefaultExportColumnSequence($tableName, $tableObject){
+		$defaultColumnOrder = array();
+		$customizeColumnOrder = $this->GetCustomizeExportColumnSequence();
+
+		if($customizeColumnOrder && array_key_exists($tableName, $customizeColumnOrder)){
+			foreach ($customizeColumnOrder[$tableName] as $key => $headerColumn) {
+				array_push($defaultColumnOrder, $headerColumn);
+			}
+		}
+
+		foreach($tableObject->_ as $headerColumn => $defaultValue){
+			// skip column is Top Priority
+			if( $this->IsSkipExportThisColumn($tableName, $headerColumn))
+				continue;
+
+			// skip sorted column already inserted at above
+			if(array_key_exists($tableName, $customizeColumnOrder)){
+				if(in_array($headerColumn, $customizeColumnOrder[$tableName])){
+					continue;
+				}
+			}
+
+			// if(!$this->isExportSequencedColumnOnly){
+			array_push($defaultColumnOrder, $headerColumn);
+			// }
+		}
+
+		// $this->defaultExportColumnOrder = $defaultColumnOrder;
+
+		return $defaultColumnOrder;
 	}
 
 	function GetSkipExportColumn(){
@@ -359,8 +438,7 @@ class ExcelManager extends DatabaseManager {
 	}
 
 	function ClearExportColumnSequence(){
-		$this->exportColumnSequence = array();
-		$this->isColumnExportInCustomSequence = false;
+		$this->customizeExportColumnSequence = array();
 		return true;
 	}
 
@@ -371,11 +449,13 @@ class ExcelManager extends DatabaseManager {
 
 
 	function BeforeExportExcel(){
-		// $this->GetExportColumnSequence();
+		// $this->GetCustomizeExportColumnSequence();
 		// $this->GetSkipExportColumn();
+
+		$this->proposedExportColumnSequence = array();
 	}
 	
-	function Export(){
+	function Export($directExport = false){
 		$this->BeforeExportExcel();
 		// Instantiate a new PHPExcel object
 		$this->objPHPExcel = new PHPExcel();
@@ -398,8 +478,6 @@ class ExcelManager extends DatabaseManager {
 			foreach($this->tableList as $tableName) {
 				$this->PrepareExportingData($objPHPExcel, $tableName);
 			}
-		}else{
-			$this->PrepareExportingData($objPHPExcel, $this->table);
 		}
 
 		// assign the output file type
@@ -411,12 +489,16 @@ class ExcelManager extends DatabaseManager {
 		}
 
 		// assign the filename
+		if($this->IsNullOrEmptyString($this->filename))
 		if(count($this->tableList) == 1)
 			$this->filename = $this->tableList[0];
 		else
 			$this->filename = basename($_SERVER['PHP_SELF']);
 
-		$this->filenamePost = $this->filename.".".$this->outputAsFileType;
+		$this->filenamePost = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
+
+		// $exportFilename = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
+		$exportedPath = BASE_EXPORT.$this->filenamePost;
 
 		// echo $this->filenamePost;
 
@@ -440,6 +522,148 @@ class ExcelManager extends DatabaseManager {
 				
 		switch($this->outputAsFileType){
 			case "xlsx":
+				// // Redirect output to a client・s web browser (Excel2007)
+				// header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				// header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
+				// header('Cache-Control: max-age=0');
+				// // If you're serving to IE 9, then the following may be needed
+				// header('Cache-Control: max-age=1');
+				
+				// // If you're serving to IE over SSL, then the following may be needed
+				// header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+				// header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+				// header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+				// header ('Pragma: public'); // HTTP/1.0
+				
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+				//$objWriter->save('php://output');
+				$objWriter->save($exportedPath);
+				break;
+			case "xls":
+				// // Redirect output to a client・s web browser (Excel5)
+				// header('Content-Type: application/vnd.ms-excel');
+				// header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
+				// header('Cache-Control: max-age=0');
+				// // If you're serving to IE 9, then the following may be needed
+				// header('Cache-Control: max-age=1');
+				
+				// // If you're serving to IE over SSL, then the following may be needed
+				// header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+				// header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+				// header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+				// header ('Pragma: public'); // HTTP/1.0
+				
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+				// $objWriter->save('php://output');
+				$objWriter->save($exportedPath);
+				break;
+			case "pdf":
+
+				if (!PHPExcel_Settings::setPdfRenderer(
+						$rendererName,
+						$rendererLibraryPath
+				)) {
+					die(
+							'NOTICE: Please set the $rendererName and $rendererLibraryPath values' .
+							'<br />' .
+							'at the top of this script as appropriate for your directory structure'
+					);
+				}
+				
+				
+				// // Redirect output to a client・s web browser (PDF)
+				// header('Content-Type: application/pdf');
+				// header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
+				// header('Cache-Control: max-age=0');
+				
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'PDF');
+				// $objWriter->save('php://output');
+				$objWriter->save($exportedPath);
+				break;
+		}
+
+		$fileAsByteArray = $this->GetFileAsByteArray($exportedPath);
+		$fileAsString = $this->GetFileAsString($exportedPath);
+
+		// return $fileAsByteArray;
+		$responseArray = $this->CreateResponseArray();
+		$responseArray["FileAsByteArray"] = $fileAsByteArray;
+		$responseArray["FileAsByteString"] = $fileAsString;
+		$responseArray["FileAsBase64"] = base64_encode(file_get_contents($exportedPath));
+		$responseArray['access_status'] = $this->access_status['OK'];
+		$responseArray["filename"] = $this->filename.".".$this->outputAsFileType;
+
+		return $responseArray;
+	}
+
+	function DirectExport(){
+		$this->BeforeExportExcel();
+		// Instantiate a new PHPExcel object
+		$this->objPHPExcel = new PHPExcel();
+		$objPHPExcel = new PHPExcel();
+		// Set the active Excel worksheet to sheet 0
+		//$objPHPExcel->setActiveSheetIndex(0);
+
+		$objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
+		->setLastModifiedBy("Maarten Balliauw")
+		->setTitle("Office 2007 XLSX Test Document")
+		->setSubject("Office 2007 XLSX Test Document")
+		->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+		->setKeywords("office 2007 openxml php")
+		->setCategory("Test result file");
+		
+		$objPHPExcel->removeSheetByIndex(0);
+
+		if(count($this->tableList)>0){
+			//foreach($this->tableList as $key => $tableName) {
+			foreach($this->tableList as $tableName) {
+				$this->PrepareExportingData($objPHPExcel, $tableName);
+			}
+		}
+
+		// assign the output file type
+		if($this->IsNullOrEmptyString($this->outputAsFileType)){
+			//$this->outputAsFileType = $this->fileType["xlsx"];
+			$this->outputAsFileType = "xlsx";
+		}else if(!array_key_exists($this->outputAsFileType, $this->fileType)){
+			$this->outputAsFileType = "pdf";
+		}
+
+		// assign the filename
+		if($this->IsNullOrEmptyString($this->filename))
+		if(count($this->tableList) == 1)
+			$this->filename = $this->tableList[0];
+		else
+			$this->filename = basename($_SERVER['PHP_SELF']);
+
+		$this->filenamePost = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
+
+		// $exportFilename = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
+		$exportedPath = BASE_EXPORT.$this->filenamePost;
+
+		// echo $this->filenamePost;
+
+		//	Change these values to select the Rendering library that you wish to use
+		//		and its directory location on your server
+		//$rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+		//$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
+		$rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
+		//$rendererLibrary = 'tcPDF5.9';
+		$rendererLibrary = 'dompdf-master/';
+		//$rendererLibrary = 'domPDF0.6.0beta3';
+		//$rendererLibraryPath = dirname(__FILE__).'/../../' . $rendererLibrary;
+		//$rendererLibraryPath = dirname(__FILE__).'/../third-party/'. $rendererLibrary;
+		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
+		
+		//$rendererLibraryPath = $this->base_Path["serverHost"].$this->base_Path["thrid-party"].$rendererLibrary;
+
+		//echo "<br>$rendererLibraryPath<br>";
+		//echo "<br>".dirname(__FILE__)."<br>";
+
+		// return;
+				
+		switch($this->outputAsFileType){
+			case "xlsx":
 				// Redirect output to a client・s web browser (Excel2007)
 				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 				header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
@@ -455,6 +679,7 @@ class ExcelManager extends DatabaseManager {
 				
 				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 				$objWriter->save('php://output');
+				// $objWriter->save($exportedPath);
 				break;
 			case "xls":
 				// Redirect output to a client・s web browser (Excel5)
@@ -472,6 +697,7 @@ class ExcelManager extends DatabaseManager {
 				
 				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 				$objWriter->save('php://output');
+				// $objWriter->save($exportedPath);
 				break;
 			case "pdf":
 
@@ -494,9 +720,48 @@ class ExcelManager extends DatabaseManager {
 				
 				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'PDF');
 				$objWriter->save('php://output');
+				// $objWriter->save($exportedPath);
 				break;
 		}
+
 	}
+
+	function GetFileAsByteArray($filename){
+		// $byteArray = unpack("N*", file_get_contents($filename));
+		$handle = fopen($filename, "rb");
+		$fsize = filesize($filename);
+		$contents = fread($handle, $fsize);
+
+		// 20160927, keithpoon, i don't kown why the array index start from 1
+		$byteArray = unpack("N*",$contents);
+		$newByteArray = array();
+
+		$arrayIndex = 0;
+		foreach ($byteArray as $key => $value){
+			$newByteArray[$arrayIndex] = $value;
+			$arrayIndex++;
+		}
+		
+		return $newByteArray;
+	}
+
+	function GetFileAsString($filename){
+		// $byteArray = unpack("N*", file_get_contents($filename));
+		$handle = fopen($filename, "rb");
+		$fsize = filesize($filename);
+		$contents = fread($handle, $fsize);
+		$byteArray = unpack("N*",$contents);
+
+		$string = "";
+		foreach ($byteArray as $key => $value)
+		{ 
+			$string = $string.$value;
+		    //echo $byteArray[$n];
+		}
+		
+		return $string;
+	}
+
 
 	function Import($uploadedExcelPath, $importType = IMPORTTYPE_INSERTANDUPDATE)
 	{
