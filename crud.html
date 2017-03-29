@@ -1,156 +1,215 @@
 <!doctype html>
-<html>
+<html><!-- InstanceBegin template="/Templates/basic-bootstrap.dwt" codeOutsideHTMLIsLocked="false" -->
 <head>
 <meta charset="utf-8">
-<title>Create RUD</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, minmum-scale=1">
-<link rel="stylesheet" type="text/css" href="third-party/bootstrap-3.3.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="third-party/font-awesome-4.2.0/css/font-awesome.min.css">
-<script type="text/javascript" src="third-party/jquery-2.1.1.min.js"></script>
-<script type="text/javascript" src="third-party/angular.min.js"></script>
-<script type="text/javascript" src="third-party/bootstrap-3.3.0/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/controllerCRUD.js"></script>
-<script type="text/javascript" src="js/controllerCRUD-create.js"></script>
-<script type="text/javascript" src="js/controllerCRUD-read.js"></script>
-<script type="text/javascript" src="js/controllerCRUD-update.js"></script>
-<script type="text/javascript" src="js/controllerCRUD-delete.js"></script>
-<style>
-.crud-container {
-	max-width: 1280px;
-	margin-left: 20px;
-}
-.hideColOnTable, .hideColOnTable:hover, .hideColOnTable:active, .hideColOnTable:focus {
-	color: black;
-	text-decoration: none;
-}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Develop |</title>
+<!-- InstanceEndEditable -->
+<link rel="icon" type="image/png" href="images/logo48.png" />
+<link rel="stylesheet" type="text/css" href="css/body.css">
+<link rel="stylesheet" type="text/css" href="css/chrome.css">
+<link rel="stylesheet" type="text/css" href="third-party/bootstrap/bootstrap-3.3.6-dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="third-party/font-awesome/font-awesome-4.5.0/css/font-awesome.min.css">
+<script type="text/javascript" src="third-party/jQuery/jquery-2.2.1.min.js"></script>
+<script type="text/javascript" src="third-party/jQuery/jquery.cookie-1.4.1.min.js"></script>
+<script type="text/javascript" src="third-party/angularjs/angular-1.5.0/angular.min.js"></script>
+<script type="text/javascript" src="third-party/angularjs/angular-1.5.0/angular-animate.min.js"></script>
+<script type="text/javascript" src="third-party/angularjs/angular-1.5.0/angular-route.min.js"></script>
+<script type="text/javascript" src="third-party/angularjs/angular-1.5.0/angular-touch.min.js"></script>
+<script type="text/javascript" src="third-party/angularjs/angular-1.5.0/angular-cookies.min.js"></script>
+<script type="text/javascript" src="third-party/bootstrap/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/app.js"></script>
+<script type="text/javascript" src="js/config.js"></script>
+<script type="text/javascript" src="js/directive.js"></script>
+<script type="text/javascript" src="third-party/angularjs-ui/UI-Bootstrap/ui-bootstrap-tpls-1.3.2.js"></script>
+<!-- InstanceBeginEditable name="head" -->
 <script>
-/*
-app.controller('crud-container', function($scope, $rootScope, $http, $element, $attrs) {
-	$scope.create = {};
-	$scope.create.dateOfBirth = new Date();
-})
-*/
-/*
-app.controller('crud-container', function($scope, $rootScope, $http, $element, $attrs) {
-	$scope.updateTo = {};
-	$scope.updateTo.dateOfBirth = new Date();
+$(function() {
 	
-	$scope.updateFrom = {};
-	$scope.updateFrom.dateOfBirth = new Date();
-})
-*/
-app.controller('CRUD-create-container', function($scope, $rootScope, $http, $element, $attrs) {
-	//$scope.create.dateOfBirth = $filter("date")(Date.now(), 'yyyy-MM-dd HH:mm:ss');
 });
 </script>
+<script>
+// Override - factory domainInquiryBase
+// Overriding Core And Custom Services In AngularJS
+// http://www.bennadel.com/blog/2927-overriding-core-and-custom-services-in-angularjs.htm
+angular.module("myApp").factory('domainInquiryBase', function($rootScope, $http, $log) {
+  var domainInquiryBase = {};
+  domainInquiryBase.Initialize = function(programId){
+    console.log("Initialize() Overrided")
+    var fields = {};
+    fields.dateStart = new Date();
+    fields.staffID = "";
+    
+    return fields;
+  }
+
+  return domainInquiryBase;
+});
+
+// Override Directive
+// Overriding Directive Definitions In AngularJS
+// http://www.bennadel.com/blog/2926-overriding-directive-definitions-in-angularjs.htm
+/*
+angular.module("myApp").decorator("EntryInit",
+  function EntryInitDecorator($delegate){
+    console.log("Overrided");
+
+
+                var randomIndex = 0;
+                var randomDirective = $delegate[ randomIndex ];
+    return( [ randomDirective ] );
+    console.log("Constructor: EntryConstructor()");
+
+    $scope.name = "entryDirectiveCtrl";
+    //$scope.title = "";
+    //$scope.programId = "";
+    //$scope.screen = "";
+    $scope.defaultMode = "";
+    $scope.count = 0;
+
+    $scope.screenUrl = "";
+
+    //$log.log($scope);
+
+    console.log("Entry Constructor Override start");
+    $scope.field = $scope.ProgramInit($scope.programId);
+    console.log("Entry Constructor Overrided");
+
+  }
+);
+*/
+</script>
+<!-- InstanceEndEditable -->
 </head>
 
 <body ng-app="myApp">
-	<h3>Create RUD</h3>
-    <!-- create -->
-	<div ng-controller="CRUD-container" class="crud-container" style="max-width: 780px;">
-		<div>
-		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
-		  ID:'Identify Code',
-		  FullName:'Full Name',
-		  Gender:'Gender',
-		  DateOfBirth:'Date of Birth',
-		  Address:'Correspondence Address'
-		  }
-		  }">
-		  </textarea>
-		  <br>
-		  <form name="cProfile" class="form-horizontal" role="form" ng-submit="Submit()">
-			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-createTableRecord.php'">
-			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
-			<crud type="create" table="profile" default-path="default" controller="CRUD-create-controller">
-			</crud>
-			  <div class="form-group form-entity">
-				<div class="col-sm-2 control-label">
-              <button
-				type="submit"
-				class="btn btn-primary"
-				ng-disabled="cProfile.$invalid || !cProfile.$dirty || submitStatus.lockControl">Create</button>
-				</div>
-				<div class="col-sm-10">
-				<span style="display:none;">{{cProfile.$error | json}}</span>
-				<div class="alert alert-success" role="alert" style="margin-bottom: 0px;" ng-show="submitStatus.isSubmitSuccess">
-                  <strong>Success!</strong> Table '{{table.name}}', {{submitStatus.keyValue[0]}} record created.
-                </div>
-				</div>
-			  </div>
-		  </form>
-		</div>
-	</div>
-	<hr>
-	<h3>C Read UD</h3>
-    <!-- read -->
-    <!---->
-	<div ng-controller="CRUD-container" class="crud-container">
-		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
-		  ID:'Identify Code',
-		  FullName:'Full Name',
-		  Gender:'Gender',
-		  DateOfBirth:'Date of Birth',
-		  Address:'Correspondence Address'
-		  }
-		  }">
-		  </textarea>
-		  <br>
-		<div>
-		  <crud type="read" table="profile" default-path="default" controller="CRUD-read-controller">
-		  </crud>
-		</div>
+<div id="top">
+  <div id="topBar"> <!-- InstanceBeginEditable name="topbar" -->
+  <!-- InstanceEndEditable --> </div>
+</div>
+<!-- header start -->
+<nav class="navbar navbar-default">
+  <div class="container">
+  <!-- InstanceBeginEditable name="header" -->
+    <div class="row">
+      <div class="col-lg-8">
+        <h2>Development</h2>
+      </div>
+      <div class="col-lg-4">
+      </div>
     </div>
-    <!---->
-	<hr>
-	<h3>CR Update D</h3>
-    <!-- Update -->
-	<div ng-controller="CRUD-container" class="crud-container" style="">
-		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],label:{
-		  ID:'Identify Code',
-		  FullName:'Full Name',
-		  Gender:'Gender',
-		  DateOfBirth:'Date of Birth',
-		  Address:'Correspondence Address'
-		  }
-		  }">
-		  </textarea>
-		  <br>
-		  <form class="form-horizontal form-group-sm" role="form" name="{{table.type}}_{{table.name}}" ng-submit="Submit()">
-			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-updateTableRecord.php'">
-			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
-		<div>
-		  <crud type="update" table="profile" default-path="default" controller="CRUD-update-controller">
-		  </crud>
-		</div>
-		</form>
-    </div>
-	<hr>
-	<h3>CRU Delete</h3>
-    <!-- Delete -->
-    <!--
-    <div ng-controller="CRUD-container" class="crud-container" style="">
-		  <textarea readonly rows="10" cols="20" class="form-control" ng-bind="definition | json" ng-init="definition={hidden:['ID'],key:['ID'],label:{
-		  ID:'Identify Code',
-		  FullName:'Full Name',
-		  Gender:'Gender',
-		  DateOfBirth:'Date of Birth',
-		  Address:'Correspondence Address'
-		  }
-		  }">
-		  </textarea>
-		  <br>
-		  <form class="form-horizontal form-group-sm" role="form" name="{{table.type}}_{{table.name}}">
-			<input hidden type="text" ng-model="action" ng-init="action = 'controller/simple-deleteTableRecord.php'">
-			<input hidden type="text" ng-model="method" ng-init="method = 'POST'">
-			<div>
-			  <crud type="delete" table="profile" default-path="default" controller="CRUD-delete-controller">
-			  </crud>
-			</div>
-		  </form>
-    </div>
-    -->
+	<!-- InstanceEndEditable -->
+  </div>
+</nav>
+<!-- header end -->
+<div class="container">
+<!-- InstanceBeginEditable name="page-header" -->
+<h1 class="page-header">Heading <small>Subheading</small></h1>
+<!-- InstanceEndEditable -->
+<!-- site position start --> 
+<!-- InstanceBeginEditable name="position" -->
+<div id="site_position">
+<ul>
+  <li><a href="http://acms.acgni.net/">Home</a></li>
+</ul>
+</div>
+<!-- InstanceEndEditable --> 
+</div>
+<!-- site position end --> 
+<div class="container">
+<!-- InstanceBeginEditable name="intro" -->
+<div id="intro" class="panel panel-default">
+  <div id="intro_left" class="panel-body"></div>
+  <div id="intro_right" class="panel-body"></div>
+</div>
+<!-- InstanceEndEditable -->
+</div>
+<div class="container" id="content"> <!-- InstanceBeginEditable name="content" -->
+  <table class="table">
+    <tbody>
+      <tr>
+        <td>&nbsp;</td>
+        <td>Screen (Template)</td>
+        <td>Program (individual html page)</td>
+        <td>Master</td>
+        <td>List Win</td>
+        <td>Entry</td>
+        <td>Report</td>
+        <td>Process</td>
+        <td>Inquiry</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>he91ssc</td>
+        <td>&nbsp;</td>
+        <td>Y</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+    </tbody>
+  </table>
+  zfhzdfj
+  <unit-env>
+  testunbgn
+    <div parent-say="parentSaid(message)"></div>
+    entrystart1
+    	<entry program-id="he91ssc" title="Recal Progress">
+      <div>scope ------ {{screenUrl}}</div>
+      <div>parent ----- {{$parent.screenUrl}}</div>
+      screenstart
+        <screen ng-include="screenUrl"></screen>
+      screebend
+        <button type="button" ng-click="Submit()">Submit</button>
+        {{count || 00}}
+        <input type="text" ng-model="msg">
+        <input type="text" ng-model="title">
+        <button type="button" ng-click="count = count +1;hello('keith');say('keith');entrySay('keith')">Click Me</button>
+      </entry>
+  </unit-env>
+  <!--
+testing tab
+<hr>
+<my-tabs>
+  <my-pane title="Hello">
+    <h4>Hello</h4>
+    <p>Lorem ipsum dolor sit amet</p>
+  </my-pane>
+  <my-pane title="World">
+    <h4>World</h4>
+    <em>Mauris elementum elementum enim at suscipit.</em>
+    <p><a href ng-click="i = i + 1">counter: {{i || 0}}</a></p>
+  </my-pane>
+</my-tabs>
+<hr>
+-->
+  <!-- InstanceEndEditable -->
+  <div id="lasted_update"></div>
+</div>
+<div id="footer">
+  <footer class="text-center">
+      <div class="container">
+        <div class="row">
+          <div class="col-xs-12">
+            <p>Copyright © MyCompany. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+  </footer>
+</div>
 </body>
-</html>
+<!-- InstanceEnd --></html>

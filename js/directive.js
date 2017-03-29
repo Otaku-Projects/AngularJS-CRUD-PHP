@@ -2010,3 +2010,453 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 		},
 	};
 }]);
+
+
+//app.directive('importExport', ['Security', '$rootScope', function(Security, $rootScope, $cookies) {
+app.directive('importExport', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManager', function($rootScope, $timeout, Core, Security, LockManager) {
+    function ImportExportConstructor($scope, $element, $attrs) {
+        var constructor = this;
+        var $ctrl = $scope.imExCtrl;
+        var tagName = $element[0].tagName.toLowerCase();
+
+        var globalCriteria = $rootScope.globalCriteria;
+        function TryToCallInitDirective(){
+            if(typeof $scope.InitDirective == "function"){
+                $scope.InitDirective($scope, $element, $attrs, $ctrl);
+            }else{
+                $scope.DefaultInitDirective();
+            }
+        }
+        $scope.DefaultInitDirective = function(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        function InitializeEntry() {
+            $scope.tableStructure = {};
+            //$ctrl.ngModel = {};
+
+            // check attribute EditMode
+            $scope.editMode = FindEditModeEnum($attrs.editMode);
+
+            // check attribute programId
+            var isProgramIdFound = false;
+            if(typeof($attrs.programId) != undefined){
+                if($attrs.programId != null && $attrs.programId !=""){
+                    isProgramIdFound = true;
+                }
+            }
+            if(isProgramIdFound){
+                $scope.programId = $attrs.programId;
+            }
+            else
+                alert("<importExport> Must declare a attribute of program-id");
+
+            $scope.DisplayMessageList = [];
+        }
+
+        function ImportData(recordObj){
+            var url = $rootScope.serverHost;
+            var clientID = Security.GetSessionID();
+            var programId = $scope.programId.toLowerCase();
+
+            var tbStructure = $scope.tableStructure;
+            //var tbStructure = $scope.tableStructure.itemsColumn;
+            var itemsColumn = tbStructure.DataColumns;
+            // var itemsDatatype = tbStructure.itemsDataType;
+
+            // the key may be auto generate by server
+            // var isAllKeyExists = IsKeyInDataRow(recordObj);
+            // if(!isAllKeyExists){
+            //     alert("Key not complete in record, avoid to delete data.");
+            //     $scope.UnLockAllControls();
+            //     return;
+            // }
+
+            var importExportObj = {
+                "Header":{},
+                "Items":{}
+            }
+            // var isModelStrictWithSchema = TryToCallIsLimitModelStrictWithSchema();
+
+            // createObj.Header[1] = {}
+            // if(isModelStrictWithSchema)
+            //     createObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
+            // else
+            //     createObj.Header[1] = recordObj;
+
+            var submitData = {
+                "Session": clientID,
+                "Table": programId,
+                "Data": importExportObj,
+            };
+            submitData.Action = "ImportData";
+            var jqxhr = $.ajax({
+              type: 'POST',
+              url: url+'/model/ConnectionManager.php',
+              data: JSON.stringify(submitData),
+              //dataType: "json", // [xml, json, script, or html]
+              dataType: "json",
+            });
+
+            jqxhr.done(function (data, textStatus, jqXHR) {
+                var msg = data.Message;
+                var status = data.Status;
+                $scope.$apply(function(){
+                    $scope.DisplayMessageList.push(msg);    
+                })
+
+                if(status=="success"){
+                    RestoreNgModel();
+                }
+
+            });
+            jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+              console.error("Fail in ImportData() - "+tagName + ":"+$scope.programId)
+              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
+            });
+            jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
+                // textStatus
+                //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
+                $scope.UnLockAllControls();
+                if(textStatus == "success"){
+
+                }
+
+                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                if(typeof $scope.CustomSubmitDataResult == "function"){
+                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                        textStatus, 
+                        jqXHR_or_errorThrown, 
+                        $scope, 
+                        $element, 
+                        $attrs, 
+                        $ctrl);
+                }
+            });
+        }
+
+        function ExportData(recordObj){
+            var url = $rootScope.serverHost;
+            var clientID = Security.GetSessionID();
+            var programId = $scope.programId.toLowerCase();
+
+            var tbStructure = $scope.tableStructure;
+            //var tbStructure = $scope.tableStructure.itemsColumn;
+            var itemsColumn = tbStructure.DataColumns;
+            // var itemsDatatype = tbStructure.itemsDataType;
+
+            // the key may be auto generate by server
+            // var isAllKeyExists = IsKeyInDataRow(recordObj);
+            // if(!isAllKeyExists){
+            //     alert("Key not complete in record, avoid to delete data.");
+            //     $scope.UnLockAllControls();
+            //     return;
+            // }
+
+            var importExportObj = {
+                "Header":{},
+                "Items":{}
+            }
+            // var isModelStrictWithSchema = TryToCallIsLimitModelStrictWithSchema();
+
+            // createObj.Header[1] = {}
+            // if(isModelStrictWithSchema)
+            //     createObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
+            // else
+            //     createObj.Header[1] = recordObj;
+
+
+
+            var submitData = {
+                "Session": clientID,
+                "Table": programId,
+                "Data": importExportObj,
+            };
+            submitData.Action = "ExportData";
+
+            // var path = url+'/model/ConnectionManager.php';
+            // SendPostRequest(path, submitData);
+
+            // var jqxhr = $.ajax({
+            //   type: 'POST',
+            //   url: url+'/model/ConnectionManager.php',
+            //   data: JSON.stringify(submitData),
+            //   //dataType: "json", // [xml, json, script, or html]
+            //   dataType: "html",
+            // });
+
+            // jqxhr.done(function (data, textStatus, jqXHR) {
+            //     var msg = data.Message;
+            //     var status = data.Status;
+            //     $scope.$apply(function(){
+            //         $scope.DisplayMessageList.push(msg);    
+            //     })
+
+            //     if(status=="success"){
+            //         //RestoreNgModel();
+            //     }
+
+            // });
+            // jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+            //   console.error("Fail in ExportData() - "+tagName + ":"+$scope.programId)
+            //   Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
+            // });
+            // jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
+            //     // textStatus
+            //     //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
+            //     $scope.UnLockAllControls();
+            //     if(textStatus == "success"){
+
+            //     }
+
+            //     SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+            //     if(typeof $scope.CustomSubmitDataResult == "function"){
+            //         $scope.CustomSubmitDataResult(data_or_JqXHR, 
+            //             textStatus, 
+            //             jqXHR_or_errorThrown, 
+            //             $scope, 
+            //             $element, 
+            //             $attrs, 
+            //             $ctrl);
+            //     }
+            // });
+        }
+
+        function SendPostRequest(path, params, method) {
+            method = method || "post"; // Set method to post by default if not specified.
+
+            // The rest of this code assumes you are not using a library.
+            // It can be made less wordy if you use one.
+            var form = document.createElement("form");
+            form.setAttribute("method", method);
+            form.setAttribute("action", path);
+
+            for(var key in params) {
+                if(params.hasOwnProperty(key)) {
+                    var hiddenField = document.createElement("input");
+                    hiddenField.setAttribute("type", "hidden");
+                    hiddenField.setAttribute("name", key);
+                    hiddenField.setAttribute("value", params[key]);
+
+                    form.appendChild(hiddenField);
+                 }
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        $scope.Initialize = function(){
+            $scope.InitScope();
+            if(typeof $scope.EventListener == "function"){
+                $scope.EventListener($scope, $element, $attrs, $ctrl);
+            }else{
+                EventListener();
+            }
+            TryToCallInitDirective();
+        }
+        $scope.InitScope = function(){
+            InitializeEntry();
+        }
+
+        $scope.SubmitData = function(){
+            // console.log("<"+$element[0].tagName+"> submitting data")
+            var editMode = $scope.editMode;
+            var globalCriteria = $rootScope.globalCriteria;
+
+            $scope.LockAllControls();
+
+            // if Buffer invalid, cannot send request
+            // var isBufferValid = true;
+            // if(typeof $scope.ValidateBuffer == "function"){
+            //     isBufferValid = $scope.ValidateBuffer($scope, $element, $attrs, $ctrl);
+            // }else{
+            //     isBufferValid = ValidateBuffer();
+            // }
+            // if(!isBufferValid && editMode != globalCriteria.editMode.Delete){
+            //     if(editMode == globalCriteria.editMode.Create || 
+            //         editMode == globalCriteria.editMode.Amend)
+            //     $scope.UnLockAllControls();
+            //     return;
+            // }
+
+            // var tbStructure = ValidateTableStructure();
+
+            // if(!tbStructure)
+            //     return;
+
+            if(editMode == globalCriteria.editMode.Import){
+                if(typeof $scope.ImportData == "function"){
+                    scope.ImportData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+                }else{
+                    ImportData($ctrl.ngModel);
+                }
+            }
+            else if(editMode == globalCriteria.editMode.Export){
+                if(typeof $scope.ExportData == "function"){
+                    scope.ExportData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+                }else{
+                    ExportData($ctrl.ngModel);
+                }
+            }
+        }
+        $scope.LockAllControls = function(){
+            LockAllControls();
+        }
+        $scope.LockAllInputBox = function(){
+            LockAllInputBox();
+        }
+        $scope.UnLockSubmitButton = function(){
+            UnLockSubmitButton();
+        }
+        $scope.UnLockAllControls = function(){
+            $timeout(function(){
+                UnLockAllControls();
+                }, 2000); // (milliseconds),  1s = 1000ms
+        }
+
+        function LockAllControls(){
+            LockManager.LockAllControls($element, tagName);
+        }
+        function UnLockAllControls(){
+            LockManager.UnLockAllControls($element, tagName);
+        }
+        function LockAllInputBox(){
+            LockManager.LockAllInputBox($element, tagName);
+        }
+        function UnLockSubmitButton(){
+            LockManager.UnLockSubmitButton($element, tagName);
+        }
+
+        function InitDirective(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        function EventListener(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
+        }
+        function SetDefaultValue(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
+        }
+        function StatusChange(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
+        }
+
+        function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
+            var progID = $scope.programId;
+            //console.log("scope.$id:"+$scope.$id+", programId:"+progID+", must implement $scope.CustomGetDataResult() function in webapge");
+        }
+        function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
+
+        }
+
+        $scope.Initialize();
+    }
+
+    function FindEditModeEnum(attrEditMode){
+        var globalCriteria = $rootScope.globalCriteria;
+        var isEditModeFound = false;
+        var isEditModeNumeric = false;
+        var editMode = 0;
+
+        if(typeof(attrEditMode) != undefined){
+            if(attrEditMode != null && attrEditMode !=""){
+                isEditModeFound = true;
+            }
+        }
+        if(isEditModeFound){
+            isEditModeNumeric = !isNaN(parseInt(attrEditMode));
+        }
+        if(!isEditModeFound){
+            editMode = globalCriteria.editMode.None;
+        }else{
+            if(isEditModeNumeric){
+                editMode = attrEditMode;
+            }
+            else{
+                attrEditMode = attrEditMode.toLowerCase();
+                if(attrEditMode == "import"){
+                    editMode = globalCriteria.editMode.Import;
+                }
+                else if(attrEditMode == "export"){
+                    editMode = globalCriteria.editMode.Export;
+                }
+                else if(attrEditMode == "importExport"){
+                    editMode = globalCriteria.editMode.ImportExport;
+                }
+                // else{
+                //     if(attrEditMode.indexOf("amend") >-1 && 
+                //         attrEditMode.indexOf("delete") >-1 )
+                //         editMode = globalCriteria.editMode.AmendAndDelete;
+                // }
+            }
+        }
+        return editMode;
+    }
+    function templateFunction(tElement, tAttrs) {
+        var globalCriteria = $rootScope.globalCriteria;
+        var editModeNum = FindEditModeEnum(tAttrs.editMode);
+
+        var template = '' +
+          '<div class="custom-transclude"></div>';
+        return template;
+    }
+
+    return {
+        require: ['ngModel'],
+        restrict: 'EA', //'EA', //Default in 1.3+
+        transclude: true,
+
+        // scope: [false | true | {...}]
+        // false = use parent scope
+        // true =  A new child scope that prototypically inherits from its parent
+        // {} = create a isolate scope
+        scope: true,
+
+        controller: ImportExportConstructor,
+        controllerAs: 'imExCtrl',
+
+        //If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
+        bindToController: {
+            ngModel: '=',
+            // editMode: '=?',
+            // programId: '=',
+            // EventListener: '=',
+            // SubmitData: '=',
+            // DisplayCustomData: '=',
+            // DisplaySubmitDataResultMessage: '=',
+        },
+        template: templateFunction,
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function preLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry preLink() compile");
+                },
+                post: function postLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry postLink() compile");
+
+                    // "scope" here is the directive's isolate scope 
+                    // iElement.find('.custom-transclude').append(
+                    // );
+                    transclude(scope, function (clone, scope) {
+                        iElement.find('.custom-transclude').append(clone);
+                    })
+
+                    // lock controls should put post here, 
+                    // var globalCriteria = $rootScope.globalCriteria;
+                    // if(scope.editMode == globalCriteria.editMode.None || 
+                    //     scope.editMode == globalCriteria.editMode.Null ||
+                    //     scope.editMode == globalCriteria.editMode.View ||
+                    //     scope.editMode == globalCriteria.editMode.Delete 
+                    // ){
+                    //     console.log("Mode is [View | Delete | None | Null], lock all controls")
+                    //     iElement.ready(function() {
+                    //         if(scope.editMode == globalCriteria.editMode.Delete)
+                    //             scope.LockAllInputBox();
+                    //         else
+                    //             scope.LockAllControls();
+                    //     })
+                    // }
+                }
+            }
+        },
+    };
+}]);

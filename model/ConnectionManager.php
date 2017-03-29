@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json');
-http_response_code(200);
+date_default_timezone_set('Asia/Hong_Kong');
+
 require_once 'Core.php';
 require_once 'FormSubmitManager.php';
 require_once 'ManagerLoader.php';
@@ -132,6 +132,12 @@ switch ($action) {
 	case 'DeleteData':
 		$funcName = "DeleteData";
 		break;
+	case 'ImportData':
+		$funcName = "ImportData";
+		break;
+	case 'ExportData':
+		$funcName = "ExportData";
+		break;
 	case 'IsKeyExists':
 		$funcName = "IsKeyExists";
 		break;
@@ -224,6 +230,12 @@ try{
 			}
 			// call_user_func($funcName);
 			break;
+		case 'ImportData':
+			break;
+		case 'ExportData':
+			$sqlResultData['ActionResult'] = array();
+			$sqlResultData['ActionResult']['access_status'] = "OK";
+			break;
 		case 'IsKeyExists':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
 			// call_user_func($funcName);
@@ -291,6 +303,30 @@ function Logout(){
 
 $responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
 
+	switch ($action) {
+		// case 'GetTableStructure':
+		// 	break;
+		// case 'FindData':
+		// 	break;
+		// case 'GetData':
+		// 	break;
+		// case 'CreateData':
+		// 	break;
+		// case 'UpdateData':
+		// 	break;
+		// case 'DeleteData':
+		// 	break;
+		// case 'IsKeyExists':
+		// 	break;
+		case 'ImportData':
+			break;
+		case 'ExportData':
+			break;
+		default:
+			header('Content-Type: application/json', true, 200);
 echo json_encode($responseData);
+			break;
+	}
+
 
 ?>

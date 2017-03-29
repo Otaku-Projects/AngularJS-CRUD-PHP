@@ -1,9 +1,9 @@
 <?php
 header('Content-Type: application/json');
-require_once '../model/SimpleTableManager.php';
 require_once '../model/FormSubmitManager.php';
+require_once '../model/SimpleTableManager.php';
+//require_once '../model/SecurityManager.php';
 
-$tableManager = new SimpleTableManager();
 $errors         = array();  	// array to hold validation errors
 $data 			= array(); 		// array to pass back data
 
@@ -11,10 +11,15 @@ $tableName = FormSubmit::POST("table");
 $crudType = FormSubmit::POST("crud-type");
 
 /*
-$tableName = FormSubmit::GET("table");
-$crudType = FormSubmit::GET("crud-type");
-*/
+$securityManager = new SecurityManager();
+$securityManager->Initialize();
 
+//print_r($securityManager->isUserLoggedIn());
+
+$isUserLoggedIn = $securityManager->isUserLoggedIn()["isLogin"];
+
+unset($securityManager);
+*/
 $tableManager = new SimpleTableManager();
 $tableManager->Initialize($tableName);
 

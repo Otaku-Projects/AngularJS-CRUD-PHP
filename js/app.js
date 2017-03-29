@@ -86,7 +86,7 @@ app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 	core.RegistryConfig = function(){
 		$rootScope.globalCriteria = {};
 		
-		$rootScope.globalCriteria = config.editMode;
+		$rootScope.globalCriteria.editMode = config.editMode;
 		
 		$rootScope.serverHost = config.serverHost;
 		$rootScope.webRoot = config.webRoot;
@@ -301,8 +301,7 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', fun
   			var isUserAlreadyLogin = false;
   			if(textStatus == "success"){
 	  			var gData = data_or_JqXHR;
-			console.dir(gData)
-	  			if(gData.Status == "LoginSuccess" || gData.Status == "OK"){
+	  			if(data_or_JqXHR.Status == "LoginSuccess" || gData.Status == "OK"){
 					isUserAlreadyLogin = true;
 			       }
   			}
@@ -422,13 +421,13 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', fun
   				
   				if(textStatus == "success"){
 	  				var gData = data_or_JqXHR;
-	  				if(gData.Status == "success"){
+	  				if(gData.Status == "success" || data_or_JqXHR.Status == "LoginSuccess"){
 						$jqCookies.Save("SessionID", gData.SESSION_ID);
 						submitData.UserCode = submitData.UserCode.toUpperCase();
 						$jqCookies.Save("LoginData", JSON.stringify(submitData));
 			        }
 			        
-		  			if(gData.Status == "success"){
+		  			if(gData.Status == "success" || data_or_JqXHR.Status == "LoginSuccess"){
 						alert("login success");
 						secure.RedirectToMainPage();
 					}
@@ -566,70 +565,122 @@ app.service('CookiesManager', function($rootScope, $cookies) {
 
 /*
 // Directive Template
-app.directive('editbox', ['Security', '$rootScope', function(Security, $rootScope, $cookies) {
-    function EditboxConstructor($scope, $element, $attrs) {
-    	function Initialize() {
-    	}
-    	Initialize();
+app.directive('importExport', ['Security', '$rootScope', function(Security, $rootScope, $cookies) {
+    function ImportExportConstructor($scope, $element, $attrs) {
+        var constructor = this;
+        var $ctrl = $scope.imExCtrl;
+        var tagName = $element[0].tagName.toLowerCase();
+        
+        function TryToCallInitDirective(){
+            if(typeof $scope.InitDirective == "function"){
+                $scope.InitDirective($scope, $element, $attrs, $ctrl);
+            }else{
+                $scope.DefaultInitDirective();
+            }
+        }
+        function InitializeEntry() {
+            $scope.tableStructure = {};
+            //$ctrl.ngModel = {};
+
+            // check attribute EditMode
+            $scope.editMode = FindEditModeEnum($attrs.editMode);
+
+            // check attribute programId
+            var isProgramIdFound = false;
+            if(typeof($attrs.programId) != undefined){
+                if($attrs.programId != null && $attrs.programId !=""){
+                    isProgramIdFound = true;
+                }
+            }
+            if(isProgramIdFound){
+                $scope.programId = $attrs.programId;
+            }
+            else
+                alert("<importExport> Must declare a attribute of program-id");
+
+            $scope.DisplayMessageList = [];
+        }
+        $scope.Initialize = function(){
+            $scope.InitScope();
+            if(typeof $scope.EventListener == "function"){
+                $scope.EventListener($scope, $element, $attrs, $ctrl);
+            }else{
+                EventListener();
+            }
+            TryToCallInitDirective();
+        }
+        $scope.InitScope = function(){
+            InitializeEntry();
+        }
+        $scope.Initialize();
     }
     function templateFunction(tElement, tAttrs) {
+        var globalCriteria = $rootScope.globalCriteria;
+        var editModeNum = FindEditModeEnum(tAttrs.editMode);
+
+        var template = '' +
+          '<div class="custom-transclude"></div>';
+        return template;
     }
 
-	return {
-		require: ['ngModel'],
-		restrict: 'EA', //'EA', //Default in 1.3+
-		transclude: true,
+    return {
+        require: ['ngModel'],
+        restrict: 'EA', //'EA', //Default in 1.3+
+        transclude: true,
 
-		// scope: [false | true | {...}]
-		// false = use parent scope
-		// true =  A new child scope that prototypically inherits from its parent
-		// {} = create a isolate scope
-		scope: true,
+        // scope: [false | true | {...}]
+        // false = use parent scope
+        // true =  A new child scope that prototypically inherits from its parent
+        // {} = create a isolate scope
+        scope: true,
 
-		controller: EditboxConstructor,
-		controllerAs: 'editboxCtrl',
+        controller: ImportExportConstructor,
+        controllerAs: 'imExCtrl',
 
-		//If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
-		bindToController: {
-			ngModel: '=',
-			// editMode: '=?',
-			// programId: '=',
-			// EventListener: '=',
-			// SubmitData: '=',
-			// DisplayCustomData: '=',
-			// DisplaySubmitDataResultMessage: '=',
-		},
-		template: templateFunction,
-		compile: function compile(tElement, tAttrs, transclude) {
-		    return {
-		        pre: function preLink(scope, iElement, iAttrs, controller) {
-					// var globalCriteria = $rootScope.globalCriteria;
+        //If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
+        bindToController: {
+            ngModel: '=',
+            // editMode: '=?',
+            // programId: '=',
+            // EventListener: '=',
+            // SubmitData: '=',
+            // DisplayCustomData: '=',
+            // DisplaySubmitDataResultMessage: '=',
+        },
+        template: templateFunction,
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function preLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry preLink() compile");
+                },
+                post: function postLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry postLink() compile");
 
-					// if(scope.editMode == globalCriteria.editMode.None || 
-					// 	scope.editMode == globalCriteria.editMode.View || 
-					// 	scope.editMode == globalCriteria.editMode.Null
-					// ){
-					// 	iElement.find("input").each(function(index, element){
-					// 		//$(element).prop("readonly", true)
-					// 		$(this).prop("readonly", true)
-					// 	})
-					// }
+                    // "scope" here is the directive's isolate scope 
+                    // iElement.find('.custom-transclude').append(
+                    // );
+                    transclude(scope, function (clone, scope) {
+                        iElement.find('.custom-transclude').append(clone);
+                    })
 
-		            function EventListener(){
-		            	console.log("scope.$id:"+scope.$id+", must implement $scope.EventListener() function in webapge");
-		            }
-
-		            //process flow
-		            if(typeof scope.EventListener == "function"){
-		            	scope.EventListener(scope, iElement, iAttrs, controller);
-		            }else{
-		            	EventListener();
-		            }
-		        },
-		        post: function postLink(scope, iElement, iAttrs, controller) {
-		        }
-		    }
-		},
-	};
+                    // lock controls should put post here, 
+                    // var globalCriteria = $rootScope.globalCriteria;
+                    // if(scope.editMode == globalCriteria.editMode.None || 
+                    //     scope.editMode == globalCriteria.editMode.Null ||
+                    //     scope.editMode == globalCriteria.editMode.View ||
+                    //     scope.editMode == globalCriteria.editMode.Delete 
+                    // ){
+                    //     console.log("Mode is [View | Delete | None | Null], lock all controls")
+                    //     iElement.ready(function() {
+                    //         if(scope.editMode == globalCriteria.editMode.Delete)
+                    //             scope.LockAllInputBox();
+                    //         else
+                    //             scope.LockAllControls();
+                    //     })
+                    // }
+                }
+            }
+        },
+    };
 }]);
 */

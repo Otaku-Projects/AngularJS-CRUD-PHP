@@ -17,6 +17,9 @@ var editMode = {
 	Delete: 7,
 	View: 8,
 	AmendAndDelete: 9,
+	ImportExport: 10,
+	Import: 11,
+	Export: 12,
 	
 	Copy: 15
 }

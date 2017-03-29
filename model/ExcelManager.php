@@ -3,7 +3,6 @@
 require_once '../third-party/PHPExcel_1.8.0/PHPExcel.php';
 // require_once 'SimpleTableManager.php';
 
-date_default_timezone_set('Asia/Hong_Kong');
 class ExcelManager extends DatabaseManager {
 
 	/* 
@@ -14,7 +13,8 @@ class ExcelManager extends DatabaseManager {
     );
     protected $fileType = array(
     		"xls" => "xls",
-    		"xlsx" => "xlsx"
+    		"xlsx" => "xlsx",
+    		"pdf" => "pdf"
     );
     
     protected $isTemplate;
@@ -70,6 +70,12 @@ class ExcelManager extends DatabaseManager {
 	
 	function setFileName($name){
 		$this->filename = $name;
+	}
+
+	function AddTable($tableName){
+		$isInArray = in_array($tableName, $this->tableList);
+		if(!$isInArray)
+			array_push($this->tableList, $tableName);
 	}
 
 	/* &$objPHPExcel pass by reference */
@@ -396,7 +402,25 @@ class ExcelManager extends DatabaseManager {
 			$this->PrepareExportingData($objPHPExcel, $this->table);
 		}
 
+		// assign the output file type
+		if($this->IsNullOrEmptyString($this->outputAsFileType)){
+			//$this->outputAsFileType = $this->fileType["xlsx"];
+			$this->outputAsFileType = "xlsx";
+		}else if(!array_key_exists($this->outputAsFileType, $this->fileType)){
+			$this->outputAsFileType = "pdf";
+		}
+
+		// assign the filename
+		if(count($this->tableList) == 1)
+			$this->filename = $this->tableList[0];
+		else
+			$this->filename = basename($_SERVER['PHP_SELF']);
+
 		$this->filenamePost = $this->filename.".".$this->outputAsFileType;
+
+		// echo $this->filenamePost;
+
+		// return;
 		//	Change these values to select the Rendering library that you wish to use
 		//		and its directory location on your server
 		//$rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
@@ -413,10 +437,6 @@ class ExcelManager extends DatabaseManager {
 
 		//echo "<br>$rendererLibraryPath<br>";
 		//echo "<br>".dirname(__FILE__)."<br>";
-		
-		if(!array_key_exists($this->outputAsFileType, $this->fileType)){
-			$this->outputAsFileType = "pdf";
-		}
 				
 		switch($this->outputAsFileType){
 			case "xlsx":
