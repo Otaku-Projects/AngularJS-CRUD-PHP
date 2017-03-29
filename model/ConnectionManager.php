@@ -1,5 +1,7 @@
 <?php
 header('Content-Type: application/json');
+http_response_code(200);
+require_once 'Core.php';
 require_once 'FormSubmitManager.php';
 require_once 'ManagerLoader.php';
 
@@ -47,12 +49,16 @@ $action = $requestJson->Action;
 
 $tableManager = new stdClass();
 
+$isFileExists = false;
+
 // securityManager
-$securityManager = new SecurityManager();
 try{
 	switch ($action) {
 		case 'Login':
 			Login();
+			break;
+		case 'CheckLogin':
+			CheckLogin();
 			break;
 		case 'Logout':
 			Logout();
@@ -60,14 +66,27 @@ try{
 		default:
 			// Create Table Manager
 			try{
+				if(!isset($requestJson->Table))
+					throw new CustomException('HTTP request Table parameter was not found.');
+
 				$prgmName = $requestJson->Table;
 				$prgmPath = "../controller/$prgmName.php";
 
-				require_once $prgmPath;
+				$isFileExists = file_exists($prgmPath);
 
+				if($isFileExists){
+					require_once $prgmPath;
+				}else{
+					$responseData->Status = "PrgmNotFound";
+					array_unshift($responseData->Message, "TableManager not found, $prgmPath");
+				}
+
+			}catch (CustomException $e) {
+				$responseData->Status = "CustomException";
+				array_unshift($responseData->Message, $e->getMessage());
 			}catch (Exception $e) {
 				$responseData->Status = "PrgmNotFound";
-				array_unshift($responseData->Message, "TableManager $prgmName not found.");
+				array_unshift($responseData->Message, "TableManager not found, $prgmPath.");
 			}
 			break;
 	}
@@ -76,6 +95,19 @@ try{
 	array_unshift($responseData->Message, $e->getMessage());
 }
 
+if(!$isFileExists){
+	echo json_encode($responseData);
+	return;
+}
+
+if($action == "Login" || $action == "CheckLogin" || $action == "Logout"){
+	$responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
+	
+	//echo json_encode($responseData);
+	return;
+}
+
+// Validate Action
 $isProgramExists = false;
 $funcName = "";
 switch ($action) {
@@ -105,63 +137,118 @@ switch ($action) {
 		break;
 	default:
 		$responseData->Status = "UnkownAction";
-		array_unshift($responseData->Message, $e->getMessage());
+		array_unshift($responseData->Message, "Unkown action: $action");
 		break;
 }
 
+// Validate function exists
 $isProgramExists = function_exists($funcName);
-
 if(!$isProgramExists){
 	$responseData->Status = "FuncNotFound";
 	array_unshift($responseData->Message, "Function $funcName() not found in $prgmName");
-}else{
-	try{
-		switch ($action) {
-			// get single record
-			case 'GetTableStructure':
-				$sqlResultData['dataColumns'] = call_user_func($funcName);
-				break;
-			// get single record
-			case 'FindData':
-				call_user_func($funcName);
-				break;
-			// get records in result set
-			case 'GetData':
-				call_user_func($funcName);
-				break;
-			case 'CreateData':
-				call_user_func($funcName);
-				break;
-			case 'UpdateData':
-				call_user_func($funcName);
-				break;
-			case 'DeleteData':
-				call_user_func($funcName);
-				break;
-			case 'IsKeyExists':
-				call_user_func($funcName);
-				break;
-			
-			default:
-				# code...
-				break;
-		}
-	}catch (Exception $e) {
-		$responseData->Status = "Error";
-		array_unshift($responseData->Message, $e->getMessage());
-	}
+
+
+	$responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
+
+	echo json_encode($responseData);
+
+	return;
 }
 
-function GetData(){
-	global $requestJson;
-	global $securityManager;
-	global $sqlResultData;
+// retrieve request data
+$requestMethod = $_SERVER['REQUEST_METHOD'];
+$requestData = [];
+switch ($requestMethod) {
+	case 'GET':
+		$requestData = $_GET;
+		break;
+	case 'HEAD':
+		# code...
+		break;
+	case 'POST':
+		$requestData = $_POST;
+		break;
+	case 'PUT':
+		# code...
+		break;
+	
+	default:
+		# code...
+		break;
+}
+
+if($requestData == null || empty($requestData))
+	$requestData = $requestJson;
+
+try{
+	switch ($action) {
+		// get single record
+		case 'GetTableStructure':
+			// $sqlResultData['dataColumns'] = call_user_func_array($funcName, array($requestData));
+			$sqlResultData = call_user_func($funcName);
+			break;
+		// get single record
+		case 'FindData':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			// call_user_func($funcName);
+			break;
+		// get records in result set
+		case 'GetData':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			// call_user_func($funcName);
+			break;
+		case 'CreateData':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			if($sqlResultData['ActionResult']['access_status'] == "OK"){
+				$sqlResultData['Message'] = "Data created.";
+			}else{
+				$sqlResultData['Message'] = "Data create fail.";
+			}
+			// call_user_func($funcName);
+			break;
+		case 'UpdateData':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			if($sqlResultData['ActionResult']['access_status'] == "OK"){
+				$sqlResultData['Message'] = "Data updated.";
+			}else{
+				$sqlResultData['Message'] = "Data update fail.";
+			}
+			// call_user_func($funcName);
+			break;
+		case 'DeleteData':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			if($sqlResultData['ActionResult']['access_status'] == "OK"){
+				$sqlResultData['Message'] = "Data deleted.";
+			}else{
+				$sqlResultData['Message'] = "Data delete fail.";
+			}
+			// call_user_func($funcName);
+			break;
+		case 'IsKeyExists':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+			// call_user_func($funcName);
+			break;
+		
+		default:
+			# code...
+			break;
+	}
+	
+	if($action != "GetTableStructure")
+	if($sqlResultData['ActionResult']['access_status'] != "OK"){
+		$responseData->Status = "Fail";
+	}
+
+}catch (Exception $e) {
+	$responseData->Status = "Error";
+	array_unshift($responseData->Message, $e->getMessage());
 }
 
 function Login(){
+	$securityManager = new SecurityManager();
 	global $requestJson;
-	global $securityManager;
 	global $sqlResultData;
+	global $responseData;
 
 	$username = $requestJson->UserCode;
 	$password = $requestJson->Password;
@@ -171,14 +258,36 @@ function Login(){
 	}else{
 		$sqlResultData = ($securityManager->DoLogin($username, $password));
 	}
+
+	if($sqlResultData["num_rows"] != 1){
+		$responseData->Status = "LoginFail";
+		$responseData->Message = $sqlResultData["error"];
+	}else{
+		$responseData->Status = "LoginSuccess";
+	}
+}
+
+function CheckLogin(){
+	$securityManager = new SecurityManager();
+	global $requestJson;
+	global $sqlResultData;
+	global $responseData;
+
+	if($securityManager->isUserLoggedInBool()){
+		$sqlResultData = ($securityManager->GetLoginData());
+		$responseData->Status = "LoginSuccess";
+		$responseData->Message = "Already login";
+	}else{
+		$responseData->Status = "LoginFail";
+		$responseData->Message = "Not signed in";
+	}
 }
 
 function Logout(){
-	global $securityManager;
+	$securityManager = new SecurityManager();
 	global $sqlResultData;
-	$sqlResultData = $securityManager->doLogout();
+	$sqlResultData = $securityManager->DoLogout();
 }
-
 
 $responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
 

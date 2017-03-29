@@ -103,13 +103,16 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
         }
 
     	function SetRecordStructure(dataJson){
-        	// var items = dataJson.data.items[1];
-        	var itemsColumn = dataJson.data.dataColumns;
-        	var itemsDatatype = dataJson.data.itemsDataType;
+            var tableSchema = dataJson.ActionResult.table_schema;
 
-        	for(var colIndex in itemsColumn){
-        		var columnName = itemsColumn[colIndex];
-        		var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
+        	for(var rowIndex in tableSchema){
+        		var row = tableSchema[rowIndex];
+                var columnName = row.Field;
+        		var colDataType = Core.ConvertMySQLDataType(row.Type);
+
+                var isSystemField = Core.IsSystemField(columnName);
+                if(isSystemField)
+                    continue;
 
         		// is column exists in ngModel
         		if(typeof(recordStructure[columnName]) == "undefined"){
@@ -124,40 +127,46 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
         			}
         		}
         	}
+            // recordStructure.items = [];
     	}
     	function AppendToDataSource(dataJson){
         	var singleItem;
-        	var itemsColumn = dataJson.data.dataColumns;
-        	var itemsDatatype = dataJson.data.itemsDataType;
+            var tableSchema = dataJson.ActionResult.table_schema;
 
         	var dataSourceArray = jQuery.extend([], $scope.dataSource);
-        	//var dataSourceArray = $scope.dataSource;
 
         	// add each getted row into DataSource
-        	for(var itemRow in dataJson.data.items){
-        		var singleItem = dataJson.data.items[itemRow];
+        	for(var itemRow in dataJson.ActionResult.data){
+        		var singleItem = dataJson.ActionResult.data[itemRow];
         		var newRecordRow = jQuery.extend({}, recordStructure);
 
-    			for(var colIndex in itemsColumn){
-            		var columnName = itemsColumn[colIndex];
-            		var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
+                for(var rowIndex in tableSchema){
+                    var row = tableSchema[rowIndex];
+                    var columnName = row.Field;
+                    var colDataType = Core.ConvertMySQLDataType(row.Type);
+
+                    var isSystemField = Core.IsSystemField(columnName);
+                    if(isSystemField)
+                        continue;
 
             		var newColumn = newRecordRow[columnName];
 
             		if (colDataType == "date"){
-        				newColumn = new Date(singleItem[colIndex]);
+        				newColumn = new Date(singleItem[columnName]);
         			}else if (colDataType == "double"){
-        				newColumn = parseFloat(singleItem[colIndex]);
+        				newColumn = parseFloat(singleItem[columnName]);
         			}else{
-        				newColumn = singleItem[colIndex];
+        				newColumn = singleItem[columnName];
         			}
 
         			newRecordRow[columnName] = newColumn;
             	} // columns end
             	//dataSourceArray.psuh(newRecordRow);
             	dataSourceArray[dataSourceArray.length] = newRecordRow;
-        	}
 
+                // append the item records
+                newRecordRow.Items = singleItem.Items;
+        	}
         	$scope.dataSource = jQuery.extend([], dataSourceArray);
 
     	}
@@ -177,12 +186,12 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
                 $scope.DefaultInitDirective();
             }
         }
-        function TryToCallSetCriteriaBeforeGet(lastKeyObj, criteriaObj){
+        function TryToCallSetCriteriaBeforeGet(lastIndex, criteriaObj){
             if(typeof $scope.SetCriteriaBeforeGet == "function"){
-                criteriaObj = $scope.SetCriteriaBeforeGet(lastKeyObj, criteriaObj);
-                $scope.GetNextPageRecords(lastKeyObj, criteriaObj);
+                criteriaObj = $scope.SetCriteriaBeforeGet(lastIndex, criteriaObj);
+                $scope.GetNextPageRecords(lastIndex, criteriaObj);
             }else{
-                $scope.GetNextPageRecords(lastKeyObj, criteriaObj);
+                $scope.GetNextPageRecords(lastIndex, criteriaObj);
             }
         }
 
@@ -340,7 +349,9 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 						isBufferValid = ValidateBuffer();
 					}
 
-                    TryToCallSetCriteriaBeforeGet(lastKeyObj, criteriaObj);
+                    var lastRecordIndex = $scope.sortedDataSource.length;
+
+                    TryToCallSetCriteriaBeforeGet(lastRecordIndex, criteriaObj);
 
 	    			return;
 	    		}
@@ -376,7 +387,7 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
     		$ctrl.ngModel = jQuery.extend([], currentPageRecords);
     	}
 
-    	$scope.GetNextPageRecords = function(keyObj, criteriaObj){
+    	$scope.GetNextPageRecords = function(lastIndex, criteriaObj){
     		$scope.LockAllControls();
 
         	var url = $rootScope.serverHost;
@@ -405,9 +416,8 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
-				"key": keyObj,
-				criteria: criteriaObj,
-				"NextPage" : "true"
+				"Offset": lastIndex,
+				criteria: criteriaObj
 			};
             submitData.Action = "GetData";
 			var jqxhr = $.ajax({
@@ -427,7 +437,7 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 
 				$scope.UnLockAllControls();
 				if(textStatus == "success"){
-					if(typeof(data_or_JqXHR.data.items[1]) == "undefined")
+					if(typeof(data_or_JqXHR.ActionResult.data) == "undefined")
 					{
 						if($scope.maxRecordsCount > 0)
 							$scope.DisplayMessage = "End of records.";
@@ -436,24 +446,19 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 
 						$scope.maxRecordsCount = $scope.dataSource.length;
 
-						$scope.$apply(function(){
-							SetRecordStructure(data_or_JqXHR);
-							AppendToDataSource(data_or_JqXHR);
-							SortingTheDataSource();
-						})
 					}else{
                         $scope.DisplayMessage = "";
                         // Object.keys Browser compatibility
                         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
-                        var recordCount = Object.keys(data_or_JqXHR.data.items).length;
+                        var recordCount = Object.keys(data_or_JqXHR.ActionResult.data).length;
                         if(recordCount <= 100)
                             $scope.maxRecordsCount = recordCount;
-						$scope.$apply(function(){
-							SetRecordStructure(data_or_JqXHR);
-							AppendToDataSource(data_or_JqXHR);
-							SortingTheDataSource();
-						})
 					}
+                    $scope.$apply(function(){
+                        SetRecordStructure(data_or_JqXHR);
+                        AppendToDataSource(data_or_JqXHR);
+                        SortingTheDataSource();
+                    })
 
 	        	}
 
@@ -596,7 +601,6 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 	};
 }]);
 
-
 /**
  * <entry> a entry form use to provide Create/Read/Update/Delete behavior of a single table
  * <editbox
@@ -653,13 +657,17 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         }
 
         function RestoreNgModel(){
-            $ctrl.ngModel = jQuery.extend([], backupNgModelObj);
+            // don't kown why angular.copy doesn't work
+            //$ctrl.ngModel = angular.copy(backupNgModelObj);
+            // $ctrl.ngModel = jQuery.extend([], backupNgModelObj);
+            jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
+
         }
 
         function SetNgModel(dataJson){
-        	var items = dataJson.data.items[1];
-        	var itemsColumn = dataJson.data.dataColumns;
-        	var itemsDatatype = dataJson.data.itemsDataType;
+        	var items = dataJson.data.Items[1];
+        	var itemsColumn = dataJson.data.DataColumns;
+        	// var itemsDatatype = dataJson.data.itemsDataType;
 
             if(items == null || typeof(items) == "undefined"){
                 console.log("Responsed {data:items{}} is null")
@@ -668,6 +676,11 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 
         	for(var colIndex in itemsColumn){
         		var columnName = itemsColumn[colIndex];
+
+                var isSystemField = Core.IsSystemField(columnName);
+                if(isSystemField)
+                    continue;
+
         		var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
 
         		// is column exists in ngModel
@@ -699,7 +712,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 
         }
         function GetTableStructure(callbackFunc){
-            $scope.LockAllControls();
+            // $scope.LockAllControls();
         	var url = $rootScope.serverHost;
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
@@ -720,10 +733,10 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			jqxhr.done(function (data, textStatus, jqXHR) {
 				console.log("ProgramID: "+programId+", Table structure obtained.")
 				SetTableStructure(data);
-                if(editMode == globalCriteria.editMode.Create || editMode == globalCriteria.editMode.Amend)
-                    $scope.UnLockAllControls();
-                else if(editMode == globalCriteria.editMode.Delete)
-                    $scope.UnLockSubmitButton();
+                // if(editMode == globalCriteria.editMode.Create || editMode == globalCriteria.editMode.Amend)
+                //     $scope.UnLockAllControls();
+                // else if(editMode == globalCriteria.editMode.Delete)
+                //     $scope.UnLockSubmitButton();
 			});
 			jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
               console.error("Fail in GetTableStructure() - "+tagName + ":"+$scope.programId)
@@ -737,7 +750,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         }
         function SetTableStructure(dataJson){
         	$scope.tableStructure = dataJson;
-        	var itemsColumn = dataJson.dataColumns;
+        	var itemsColumn = dataJson.DataColumns;
         	// var itemsDatatype = dataJson.itemsDataType;
 
             if($ctrl.ngModel == null)
@@ -747,7 +760,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         		var columnName = colIndex;
         		var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
 
-        		var isSystemField = Security.IsSystemField(columnName);
+        		var isSystemField = Core.IsSystemField(columnName);
 
         		if(isSystemField)
         			continue;
@@ -803,8 +816,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             var upperRecordObj = {};
 
             var tbStructure = $scope.tableStructure;
-            var itemsColumn = tbStructure.dataColumns;
-            var itemsDataType = tbStructure.itemsDataType;
+            var itemsColumn = tbStructure.DataColumns;
 
             if(typeof(itemsColumn) == "undefined"){
                 return recordObj;
@@ -912,10 +924,13 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         $scope.DefaultInitDirective = function(){
             GetTableStructure(function(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
             // console.log("Get Table Structure done"+$scope.editMode)
+                $scope.LockAllControls();
                 if($scope.editMode == globalCriteria.editMode.Create){
                     TryToCallSetDefaultValue();   
                 }
                 BackupNgModel();
+                if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
+                $scope.UnLockAllControls();
             });
         }
 
@@ -1199,11 +1214,21 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         }
 
         function TryToCallSetDefaultValue(){
-			if(typeof $scope.SetDefaultValue == "function"){
-				$scope.SetDefaultValue($scope, $element, $attrs, $ctrl);
-			}else{
-				SetDefaultValue();
-			}
+            if(typeof $scope.SetDefaultValue == "function"){
+                $scope.SetDefaultValue($scope, $element, $attrs, $ctrl);
+            }else{
+                SetDefaultValue();
+            }
+        }
+
+        function TryToCallIsLimitModelStrictWithSchema(){
+            var isLimitModelStrictWithSchema = false;
+            if(typeof $scope.IsLimitModelStrictWithSchema == "function"){
+                isLimitModelStrictWithSchema = $scope.IsLimitModelStrictWithSchema($scope, $element, $attrs, $ctrl);
+            }else{
+                isLimitModelStrictWithSchema = IsLimitModelStrictWithSchema();
+            }
+            return isLimitModelStrictWithSchema;
         }
         function ClearCtrlNgModel(){
             $ctrl.ngModel = {};
@@ -1229,14 +1254,16 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             var isTbStructureValid = true;
 
             var tbStructure = $scope.tableStructure;
-            var itemsColumn = tbStructure.dataColumns;
-            var itemsDatatype = tbStructure.itemsDataType;
+            var itemsColumn = tbStructure.DataColumns;
 
             if(typeof(itemsColumn) == "undefined"){
                 alert("Table structure is null, avoid to execute.");
                 isTbStructureValid = false;
             }
             return isTbStructureValid;
+        }
+        function IsLimitModelStrictWithSchema(){
+            return true;
         }
         function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
             var progID = $scope.programId;
@@ -1253,9 +1280,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
          */
         function IsKeyInDataRow(recordObj){
             var tbStructure = $scope.tableStructure;
-            var itemsColumn = tbStructure.dataColumns;
-            var itemsDatatype = tbStructure.itemsDataType;
-            var keyColumn = tbStructure.keyColumn;
+            var itemsColumn = tbStructure.DataColumns;
+            var keyColumn = tbStructure.KeyColumns;
 
             var isAllKeyExists = true;
             for(var keyIndex in keyColumn){
@@ -1268,7 +1294,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
                 var dataTypeFound = false;
                 var keyColDataType = "";
                 for (var colIndex in itemsColumn) {
-                    var colName = itemsColumn[colIndex];
+                    var colName = colIndex;;
                     var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
                     var colValue = recordObj[colName];
                     if(keyColName == colName){
@@ -1298,13 +1324,13 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
          */
         function ConvertEntryModelStrictWithSchema(recordObj){
             var tbStructure = $scope.tableStructure;
-            var itemsColumn = tbStructure.dataColumns;
-            var itemsDatatype = tbStructure.itemsDataType;
+            var itemsColumn = tbStructure.DataColumns;
+
             var keyColumn = tbStructure.keyColumn;
 
             var strictObj = {};
             for (var colIndex in itemsColumn) {
-                var colName = itemsColumn[colIndex];
+                var colName = colIndex;
                 var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
                 var colValue = recordObj[colName];
 
@@ -1334,8 +1360,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 
         	var tbStructure = $scope.tableStructure;
         	//var tbStructure = $scope.tableStructure.itemsColumn;
-        	var itemsColumn = tbStructure.dataColumns;
-    		var itemsDatatype = tbStructure.itemsDataType;
+        	var itemsColumn = tbStructure.DataColumns;
+    		// var itemsDatatype = tbStructure.itemsDataType;
 
             // the key may be auto generate by server
             // var isAllKeyExists = IsKeyInDataRow(recordObj);
@@ -1346,39 +1372,21 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             // }
 
         	var createObj = {
-        		"header":{},
-        		"items":{}
+                "Header":{},
+                "Items":{}
         	}
-        	createObj.items[1] = {}
-            createObj.items[1] = ConvertEntryModelStrictWithSchema(recordObj);
+            var isModelStrictWithSchema = TryToCallIsLimitModelStrictWithSchema();
 
-        	// for (var colIndex in itemsColumn) {
-        	// 	var colName = itemsColumn[colIndex];
-        	// 	var colDataType = itemsDatatype[colIndex];
-        	// 	var colValue = recordObj[colName];
-
-        	// 	if(typeof(colValue) == "undefined"){
-        	// 		continue;
-        	// 	}
-        	// 	if(colDataType == "string"){
-         //    		if(colValue == null || colValue == ""){
-         //    			continue;
-         //    		}
-         //    	}
-        	// 	if(colDataType == "double"){
-        	// 		var colValueDouble = parseFloat(colValue);
-         //    		if(colValueDouble == 0){
-         //    			continue;
-         //    		}
-         //    	}
-         //    	createObj.items[1][colIndex] = colValue;
-        	// }
+        	createObj.Header[1] = {}
+            if(isModelStrictWithSchema)
+                createObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
+            else
+                createObj.Header[1] = recordObj;
 
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
-				"data": createObj,
-				//"NextPage" : "true"
+				"Data": createObj,
 			};
             submitData.Action = "CreateData";
 			var jqxhr = $.ajax({
@@ -1390,12 +1398,13 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			});
 
 			jqxhr.done(function (data, textStatus, jqXHR) {
-				var msg = data.status;
+                var msg = data.Message;
+                var status = data.Status;
 				$scope.$apply(function(){
 					$scope.DisplayMessageList.push(msg);	
 				})
 
-				if(msg=="Data Created."){
+				if(status=="success"){
                     RestoreNgModel();
 				}
 
@@ -1432,8 +1441,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 
         	var tbStructure = $scope.tableStructure;
         	//var tbStructure = $scope.tableStructure.itemsColumn;
-        	var itemsColumn = tbStructure.dataColumns;
-    		var itemsDatatype = tbStructure.itemsDataType;
+        	var itemsColumn = tbStructure.DataColumns;
+    		// var itemsDatatype = tbStructure.itemsDataType;
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
             if(!isAllKeyExists){
@@ -1443,36 +1452,14 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             }
 
         	var updateObj = {
-        		"header":{},
-        		"items":{}
+        		"Header":{},
+        		"Items":{}
         	}
-        	updateObj.items[1] = {};
-        	//updateObj.items[1] = recordObj;            
-            updateObj.items[1] = ConvertEntryModelStrictWithSchema(recordObj);
+        	updateObj.Header[1] = {};
+        	//updateObj.Header[1] = recordObj;            
+            updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
 
-        	// for (var colIndex in itemsColumn) {
-        	// 	var colName = itemsColumn[colIndex];
-        	// 	var colDataType = itemsDatatype[colIndex];
-        	// 	var colValue = recordObj[colName];
-
-        	// 	if(typeof(colValue) == "undefined"){
-        	// 		continue;
-        	// 	}
-        	// 	if(colDataType == "string"){
-            // 		if(colValue == null || colValue == ""){
-            // 			continue;
-            // 		}
-            // 	}
-            // 	if(colDataType == "double"){
-            // 		var colValueDouble = parseFloat(colValue);
-            // 		if(colValueDouble == 0){
-            // 			continue;
-            // 		}
-            // 	}
-            // 	updateObj.items[1][colIndex] = colValue;
-            // }
-
-        	var isRowEmpty = jQuery.IsEmptyObject(updateObj.items[1])
+        	var isRowEmpty = jQuery.IsEmptyObject(updateObj.Header[1])
         	if(isRowEmpty){
         		alert("Cannot update a empty Record");
         		$scope.UnLockAllControls();
@@ -1482,7 +1469,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
-				"data": updateObj,
+				"Data": updateObj,
 				//"NextPage" : "true"
 			};
             submitData.Action = "UpdateData";
@@ -1495,7 +1482,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			});
 
 			jqxhr.done(function (data, textStatus, jqXHR) {
-				var msg = data.status;
+                var msg = data.Message;
+                var status = data.Status;
 				$scope.$apply(function(){
 					$scope.DisplayMessageList.push(msg);	
 				})
@@ -1532,8 +1520,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 
         	var tbStructure = $scope.tableStructure;
         	//var tbStructure = $scope.tableStructure.itemsColumn;
-        	var itemsColumn = tbStructure.dataColumns;
-    		var itemsDatatype = tbStructure.itemsDataType;
+        	var itemsColumn = tbStructure.DataColumns;
+    		// var itemsDatatype = tbStructure.itemsDataType;
             var keyColumn = tbStructure.keyColumn;
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
@@ -1544,36 +1532,14 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             }
 
         	var deleteObj = {
-        		"header":{},
-        		"items":{}
+        		"Header":{},
+        		"Items":{}
         	}
-        	deleteObj.items[1] = {};
-        	//deleteObj.items[1] = recordObj;
-            deleteObj.items[1] = ConvertEntryModelStrictWithSchema(recordObj);
+        	deleteObj.Header[1] = {};
+        	//deleteObj.Header[1] = recordObj;
+            deleteObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
 
-            // for (var colIndex in itemsColumn) {
-            // 	var colName = itemsColumn[colIndex];
-            // 	var colDataType = itemsDatatype[colIndex];
-            // 	var colValue = recordObj[colName];
-
-            // 	if(typeof(colValue) == "undefined"){
-            // 		continue;
-            // 	}
-            // 	if(colDataType == "string"){
-            // 		if(colValue == null || colValue == ""){
-            // 			continue;
-            // 		}
-            // 	}
-            // 	if(colDataType == "double"){
-            // 		var colValueDouble = parseFloat(colValue);
-            // 		if(colValueDouble == 0){
-            // 			continue;
-            // 		}
-            // 	}
-            // 	deleteObj.items[1][colIndex] = colValue;
-            // }
-
-        	var isRowEmpty = jQuery.IsEmptyObject(deleteObj.items[1]);
+        	var isRowEmpty = jQuery.IsEmptyObject(deleteObj.Header[1]);
 
         	if(isRowEmpty){
         		alert("Cannot Delete a empty Record");
@@ -1584,7 +1550,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
-				"data": deleteObj,
+				"Data": deleteObj,
 				//"NextPage" : "true"
 			};
             submitData.Action = "DeleteData";
@@ -1597,7 +1563,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			});
 
 			jqxhr.done(function (data, textStatus, jqXHR) {
-				var msg = data.status;
+                var msg = data.Message;
+                var status = data.Status;
 				$scope.$apply(function(){
 					$scope.DisplayMessageList.push(msg);	
 				})
@@ -1779,7 +1746,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
                                 scope.LockAllControls();
                         })
                     }
-
 		        }
 		    }
 		    // or

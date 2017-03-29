@@ -80,41 +80,28 @@ function getFunctionName(fun) {
 // using the angular ui of Bootstrap
 var app = angular.module('myApp', ['ngCookies', 'ui.bootstrap']);
 
-app.run(function ($rootScope, $log, $cookies) {
-	$rootScope.globalCriteria = {};
-	
-	var host = window.location.hostname;
-	var href = window.location.href;
-	
-	var globalCriteria = {};
-	globalCriteria.editMode = {};
-	globalCriteria.editMode.None = 0;
-	globalCriteria.editMode.Null = 1;
-
-	globalCriteria.editMode.Create = 5;
-	globalCriteria.editMode.Amend = 6;
-	globalCriteria.editMode.Delete = 7;
-	globalCriteria.editMode.View = 8;
-	globalCriteria.editMode.AmendAndDelete = 9;
-
-	globalCriteria.editMode.Copy = 15;
-	
-	$rootScope.globalCriteria = globalCriteria;
-	
-	$rootScope.serverHost = "http://192.168.0.190/Develop"; //
-	$rootScope.webRoot = "http://192.168.0.190/Develop"; // Describe the domain of the website, not recommend to use localhost, because of the chrome donesn't set cookies for localhost domain.
-
-	$rootScope.webRoot += "/";	
-	$rootScope.requireLoginPage = $rootScope.webRoot+"login.html"; // Specify the page to be redirect after logout success
-	$rootScope.afterLoginPage = $rootScope.webRoot+"main-menu.html"; // Specify the page to be redirect after login success
-	
-	$rootScope.controller = $rootScope.webRoot+"controller/";
-	$rootScope.templateFolder = $rootScope.webRoot+"Templates/";
-	$rootScope.screenTemplate = $rootScope.templateFolder+"screen/";
-});
-
-app.service('Core', ['$rootScope', function($rootScope){
+app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 	var core = this;
+	
+	core.RegistryConfig = function(){
+		$rootScope.globalCriteria = {};
+		
+		$rootScope.globalCriteria = config.editMode;
+		
+		$rootScope.serverHost = config.serverHost;
+		$rootScope.webRoot = config.webRoot;
+		
+		$rootScope.webRoot += "/";	
+		$rootScope.requireLoginPage = $rootScope.webRoot+config.requireLoginPage;
+		$rootScope.afterLoginPage = $rootScope.webRoot+config.afterLoginPage;
+		
+		$rootScope.controller = $rootScope.webRoot+config.controller;
+		$rootScope.templateFolder = $rootScope.webRoot+config.templateFolder;
+		$rootScope.screenTemplate = $rootScope.templateFolder+config.screenTemplate;
+		
+		$rootScope.CookiesEffectivePath = config.CookiesEffectivePath;
+	}
+	
 	core.ConvertMySQLDataType = function(mySqlDataType){
         var dataType ="string";
         if(mySqlDataType == "varchar" || 
@@ -142,6 +129,29 @@ app.service('Core', ['$rootScope', function($rootScope){
         }
         return dataType;
 	}
+	core.IsSystemField = function(fieldName){
+
+        var isSystemField = false;
+
+        switch (fieldName)
+        {
+            // skill these colummn
+            case "line":
+            case "systemUpdateDate":
+            case "systemUpdateUser":
+            case "systemUpdateProgram":
+            case "createDate":
+            case "createUser":
+            case "lastUpdateUser":
+            // case "lastUpdateDate":
+                isSystemField = true;
+                break;
+        }
+
+        return isSystemField;
+	}
+	
+	core.RegistryConfig();
 	return core;
 }]);
 
@@ -265,28 +275,43 @@ app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cook
 	return locker;
 }]);
 
-app.service('Security', function($rootScope, $cookies) {
+app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', function($rootScope, Core, $jqCookies, $cookies) {
 	var secure = this;
 	var rootScope = $rootScope;
    
-	secure.IsSessionExists = function(){
-		var sessionID = secure.GetSessionID();
-		var isExists = false;
-		if(typeof (sessionID) == "undefined"){
-			isExists = false;
-		}else if(sessionID == null){
-			isExists = false;
-		}else if(sessionID == ""){
-			
-		}else{
-			isExists = true;
-		}
+	secure.IsAlreadyLogin = function(callbackFtn){
+		var url = $rootScope.serverHost;
+		//var clientID = secure.GetSessionID();
 		
-		return isExists;
+		var submitData = {"Session": ""};
+		submitData.Action = "CheckLogin";
+
+		var jqxhr = $.ajax({
+		  type: 'POST',
+		  url: url+'/model/ConnectionManager.php',
+		  data: JSON.stringify(submitData),
+		  //dataType: "json", // [xml, json, script, or html]
+		  dataType: "json",
+		});
+		jqxhr.done(function (data, textStatus, jqXHR) {
+		});
+		jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+		});
+		jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
+  			var isUserAlreadyLogin = false;
+  			if(textStatus == "success"){
+	  			var gData = data_or_JqXHR;
+			console.dir(gData)
+	  			if(gData.Status == "LoginSuccess" || gData.Status == "OK"){
+					isUserAlreadyLogin = true;
+			       }
+  			}
+			callbackFtn && callbackFtn(isUserAlreadyLogin);
+		});
 	}
 	
 	secure.GetSessionID = function(){
-        var sessionID = $cookies.get("SessionID");
+        var sessionID = $jqCookies.Read("SessionID");
         return sessionID;
 	}
 
@@ -299,7 +324,7 @@ app.service('Security', function($rootScope, $cookies) {
 	 *}
 	*/
 	secure.GetLoginData = function(){
-        var loginDataString = $cookies.get("LoginData");
+        var loginDataString = $jqCookies.Read("LoginData");
         var loginObj = {};
         if(typeof(loginDataString) != "undefined"){
 	        if(!loginDataString.IsNullOrEmpty()){
@@ -320,22 +345,20 @@ app.service('Security', function($rootScope, $cookies) {
 	}
 	
 	secure.GoToMenuIfSessionExists = function(){
-	   var isUserLogin = true;
-	   isUserLogin = secure.IsSessionExists();
-	   if(isUserLogin){
-		   secure.RedirectToMainPage();
-	   }else{
-		   
-	   }
+		secure.IsAlreadyLogin(function(isUserAlreadyLogin){
+			if(isUserAlreadyLogin){
+				secure.RedirectToMainPage();
+			}
+		});
 	}
 	
 	secure.RequiresAuthorization = function(){
-	   var isUserLogin = true;
-	   isUserLogin = secure.IsSessionExists();
-	   if(isUserLogin){
-	   }else{
-		   secure.RedirectToLoginPage();
-	   }
+		secure.IsAlreadyLogin(function(isUserAlreadyLogin){
+			if(!isUserAlreadyLogin){
+				alert("Session was timeout, please login agian");
+				secure.RedirectToLoginPage();
+			}
+		});
 	}
 
 	secure.SuccessButUnexpected = function(jqXHR, textStatus, errorThrown){
@@ -378,7 +401,6 @@ app.service('Security', function($rootScope, $cookies) {
 		var url = $rootScope.serverHost;
 		var submitData = loginDataObj;
 		submitData.UserCode.toLowerCase();
-		submitData.CompanyCode.toUpperCase();
 
 		submitData.Action = "Login";
 
@@ -400,17 +422,16 @@ app.service('Security', function($rootScope, $cookies) {
   				
   				if(textStatus == "success"){
 	  				var gData = data_or_JqXHR;
-	  				if(gData.Status = "success"){
-						$cookies.put("SessionID", gData.SessionID);
-						submitData.StaffID = submitData.UserCode.ReplaceAll("@staff@", "");
-						submitData.StaffID = submitData.StaffID.toUpperCase();
-						$cookies.put("LoginData", JSON.stringify(submitData));
+	  				if(gData.Status == "success"){
+						$jqCookies.Save("SessionID", gData.SESSION_ID);
+						submitData.UserCode = submitData.UserCode.toUpperCase();
+						$jqCookies.Save("LoginData", JSON.stringify(submitData));
 			        }
 			        
-		  			secure.SetTimeout();
-		  			if(gData.Status = "success")
+		  			if(gData.Status == "success"){
 						alert("login success");
-		  			secure.RedirectToMainPage();
+						secure.RedirectToMainPage();
+					}
   				}
 
   			});
@@ -436,12 +457,15 @@ app.service('Security', function($rootScope, $cookies) {
 
 	secure.LogoutNRedirect = function(){
 		var url = $rootScope.serverHost;
-		var isSessionExists = secure.IsSessionExists();
-		if(!isSessionExists){
-			secure.ClearSessionNUserData();
-			secure.RedirectToLoginPage();
-			return;
-		}
+		
+		secure.IsAlreadyLogin(function(isUserAlreadyLogin){
+			if(!isUserAlreadyLogin){
+				alert("Session already destroyed.");
+				secure.ClearSessionNUserData();
+				secure.RedirectToLoginPage();
+				return;
+			}
+		});
 		
 		var clientID = secure.GetSessionID();
 		
@@ -472,8 +496,8 @@ app.service('Security', function($rootScope, $cookies) {
 	}
 
 	secure.ClearSessionNUserData = function(){
-		$cookies.remove("SessionID");
-		$cookies.remove("LoginData");
+		$jqCookies.Remove("SessionID");
+		$jqCookies.Remove("LoginData");
 		return true;
 	}
 
@@ -500,6 +524,43 @@ app.service('Security', function($rootScope, $cookies) {
         }
 
         return isSystemField;
+	}
+}]);
+
+app.service('CookiesManager', function($rootScope, $cookies) {
+	var cookies = this;
+	var rootScope = $rootScope;
+   
+	cookies.Save = function(name, value){
+		//Define lifetime of the cookie. Value can be a Number which will be interpreted as days from time of creation or a Date object. If omitted, the cookie becomes a session cookie.
+		var expiryDay = 1;
+		
+		//Define the path where the cookie is valid. By default the path of the cookie is the path of the page where the cookie was created (standard browser behavior). If you want to make it available for instance across the entire domain use path: '/'. Default: path of page where the cookie was created.
+		$.cookie(name, value, { expires: expiryDay, path: '/' });
+	}
+	cookies.Read = function(name){
+		var value;
+		value = $.cookie(name);
+		return value;
+	}
+	cookies.Remove = function(name){
+		var removeStatus = $.removeCookie(name, { path: '/' });
+		return removeStatus;
+	}
+	cookies.RemoveAllCookies = function(){
+		var allCookies = $.cookie();
+		for(var key in allCookies){
+			var removeResultDesc = "Remove cookies: "+key;
+			var removeStatus = $.removeCookie(key);
+			removeResultDesc += removeStatus;
+			console.log(removeResultDesc);
+		}
+	}
+	cookies.PrintAllCookies = function(){
+		var allCookies = $.cookie();
+		var cooliesAsJsonText = JSON.stringify(allCookies, null, 4);
+		console.dir(allCookies);
+		console.log(cooliesAsJsonText);
 	}
 });
 

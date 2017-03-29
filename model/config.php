@@ -1,4 +1,7 @@
 <?php
+
+date_default_timezone_set('Asia/Hong_Kong');
+
 /**
  * Configuration for: Database Connection
  *
@@ -20,7 +23,7 @@ define("_DB_PASS", "Demo-DB3.2", true);
  * RESOURSE_PATH: the directory of mail merge word template
  * TEMP_PATH: the directory of temporary to store some files, such as a excel prepare for download
  */
-define("DOMIAN_NAME", "192.168.0.190/Deveop/");
+define("DOMIAN_NAME", "172.20.2.60/Deveop/");
 
 
 /**

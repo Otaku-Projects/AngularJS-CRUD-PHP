@@ -7,7 +7,6 @@
 //require_once dirname(__FILE__).'/../globalVariable.php';
 require_once dirname(__FILE__).'/config.php';
 
-date_default_timezone_set('Asia/Hong_Kong');
 class DatabaseManager{
 	private $hostname_fyp;
     private $database_fyp;
@@ -62,8 +61,8 @@ class DatabaseManager{
 	 * the select / insert / update / delete right are according to the database permission granted
 	 * controller name
 	**/
-	protected $enableSecurityModule = true;
-	protected $enableAdvanceSecurityCheck = true;
+	protected $enableSecurityModule = false;
+	protected $enableAdvanceSecurityCheck = false;
 	protected $controllerName = "";
 	protected $functionName = "";
 	protected $functionDescription = "";
@@ -93,8 +92,30 @@ class DatabaseManager{
 	function ResetResponseArray(){
 		$this->responseArray = array();
 		$this->responseArray_errs = array();
+
+		$this->responseArray = $this->CreateResponseArray();
+		
+		// $arrayIndex = array("data", 
+		// 	"sql", 
+		// 	"num_rows", 
+		// 	"insert_id", 
+		// 	"affected_rows", 
+		// 	"access_status", 
+		// 	"error");
+		// foreach ($arrayIndex as $indexValue){
+		// 	$this->responseArray[$indexValue] = null;
+		// }
+		// $this->responseArray["sql"] = null;
+		// $this->responseArray["access_status"] = $this->access_status["None"];
+		// return $this->GetResponseArray();
+	}
+    
+	function CreateResponseArray(){
+		$responseArray = array();
+		$responseArray_errs = array();
 		
 		$arrayIndex = array("data", 
+			"table_schema",
 			"sql", 
 			"num_rows", 
 			"insert_id", 
@@ -102,11 +123,12 @@ class DatabaseManager{
 			"access_status", 
 			"error");
 		foreach ($arrayIndex as $indexValue){
-			$this->responseArray[$indexValue] = null;
+			$responseArray[$indexValue] = null;
 		}
-		$this->responseArray["sql"] = null;
-		$this->responseArray["access_status"] = $this->access_status["None"];
-		return $this->GetResponseArray();
+		$responseArray["data"] = [];
+		$responseArray["sql"] = null;
+		$responseArray["access_status"] = $this->access_status["None"];
+		return $responseArray;
 	}
 
 	function SetDBContector($dbc){
@@ -212,6 +234,10 @@ class DatabaseManager{
     }
 
     function Initialize(){
+		$this->dataSchema = array();
+		$this->dataSchemaCSharp = array();
+		$this->_ = array();
+
 		// set parent dataSchema
 		$this->setDataSchemaForSet();
 		// set construct _ index
@@ -290,8 +316,14 @@ class DatabaseManager{
 	 * //http://www.php.net/manual/en/class.mysqli-result.php
 	 *
 	 */
-    function queryForDataArray($sql_str=null, $fetchType=MYSQLI_NUM) {
-    	//$this->ResetResponseArray();
+    function queryForDataArray($fetchType = null) {
+    	if(null == $fetchType)
+    		$fetchType = MYSQLI_NUM;
+
+    	$responseArray = $this->CreateResponseArray();
+    	// $responseArray_errs = $this->responseArray_errs;
+    	$sql_str = $this->sql_str;
+
 		if($this->IsNullOrEmptyString($sql_str)){
 			$sql_str = $this->sql_str;
 
@@ -304,36 +336,38 @@ class DatabaseManager{
 
 		// Fixed: num_rows only work for select, num_rows maybe null
 		if(isset($result->num_rows))
-			$this->responseArray['num_rows'] = $result->num_rows;
+			$responseArray['num_rows'] = $result->num_rows;
 		else
-			$this->responseArray['num_rows'] = 0;
+			$responseArray['num_rows'] = 0;
 		// insert_id return the lasted AUTO_INCREMENT field value.
 		// Returns zero if no previous query or the query did not update an AUTO_INCREMENT value
-		$this->responseArray['insert_id'] = $this->dbc->insert_id;
+		$responseArray['insert_id'] = $this->dbc->insert_id;
 		
 		// affected_rows only work for create, insert, update, replace, delete
 		// For SELECT statements mysqli_affected_rows() works like mysqli_num_rows().
-		$this->responseArray['affected_rows'] = $this->dbc->affected_rows;
+		$responseArray['affected_rows'] = $this->dbc->affected_rows;
 		
         $dataArray = array();
 		$tempSQLError = $this->dbc->error;
         // Debug mode - set sql, error 
 		if($this->debug){
-			$this->responseArray["sql"] = $sql_str;
-			if(!empty($this->dbc->error)){
-					array_push($this->responseArray_errs, $tempSQLError);
-					$this->responseArray['access_status'] = $this->access_status["SqlError"];
+			$responseArray["sql"] = $sql_str;
+			if(!empty($tempSQLError)){
+				array_push($this->responseArray_errs, $tempSQLError);
 			}		
 		}else{
-			$this->responseArray["sql"] = "turn on debug mode to unhidden";
+			$responseArray["sql"] = "turn on debug mode to unhidden";
 			array_push($this->responseArray_errs, "turn on debug mode to unhidden");
 		}
 		// End - Debug mode
-		if($this->IsNullOrEmptyString($tempSQLError) || $tempSQLError == null || $tempSQLError = ""){
-			$this->responseArray['access_status'] = $this->access_status['OK'];
+		if(empty($tempSQLError)){
+			$responseArray['access_status'] = $this->access_status['OK'];
+		}
+		else if(!empty($tempSQLError)){
+			$responseArray['access_status'] = $this->access_status["SqlError"];
 		}
 		else{
-			$this->responseArray['access_status'] = $this->access_status['Error'];
+			$responseArray['access_status'] = $this->access_status['Error'];
 		}
 
 		if(isset($result->num_rows)){
@@ -343,19 +377,21 @@ class DatabaseManager{
 					//echo $row['Default'];
 					array_push($dataArray, $row);
 				}
-				$this->responseArray['data'] = $dataArray;
+				$responseArray['data'] = $dataArray;
 			}else if($fetchType=MYSQLI_ASSOC){
 			}
         }
-		return $this->GetResponseArray();
+		return $responseArray;
     }
     function queryResultToArrayVertical($sql_str, $fetchType=MYSQLI_NUM) {
-    	//$this->ResetResponseArray();
+    	$responseArray = $this->CreateResponseArray();
+    	$responseArray_errs = $this->responseArray_errs;
+
 		if($this->IsNullOrEmptyString($sql_str)){
 			$sql_str = $this->sql_str;
 
 			if($this->IsNullOrEmptyString($sql_str)){
-				array_push($this->responseArray_errs, $this->sys_err_msg["SQLNullOrEmpty"]);
+				array_push($responseArray_errs, $this->sys_err_msg["SQLNullOrEmpty"]);
 				return $this->GetResponseArray();
 			}
 		}
@@ -364,23 +400,22 @@ class DatabaseManager{
 		//error handling, if num_rows = null
 		// num_rows only work for select
 		if(isset($result->num_rows))
-			$this->responseArray['num_rows'] = $result->num_rows;
+			$responseArray['num_rows'] = $result->num_rows;
 		else
-			$this->responseArray['num_rows'] = 0;
+			$responseArray['num_rows'] = 0;
 		// insert_id return the lasted AUTO_INCREMENT field value.
 		// Returns zero if no previous query or the query did not update an AUTO_INCREMENT value
-		$this->responseArray['insert_id'] = $this->dbc->insert_id;
+		$responseArray['insert_id'] = $this->dbc->insert_id;
 		
 		// affected_rows only work for create, insert, update, replace, delete
 		// For SELECT statements mysqli_affected_rows() works like mysqli_num_rows().
-		$this->responseArray['affected_rows'] = $this->dbc->affected_rows;
+		$responseArray['affected_rows'] = $this->dbc->affected_rows;
 		
-        $this->responseArray['data'] = array();
         // Debug mode - set sql, error 
 		if($this->debug){
-			$this->responseArray["sql"] = $sql_str;
+			$responseArray["sql"] = $sql_str;
 			if(isset($this->dbc->error)){
-				array_push($this->responseArray_errs, $this->dbc->error);
+				array_push($responseArray_errs, $this->dbc->error);
 			}
 		}
 		// End - Debug mode
@@ -388,16 +423,16 @@ class DatabaseManager{
 			if($fetchType==MYSQLI_NUM){
 				while ($row = $result->fetch_array(MYSQLI_ASSOC)) { // MYSQLI_BOTH, MYSQLI_ASSOC, MYSQLI_NUM
 					foreach($row as $key=>$value){
-						if(!array_key_exists($key, $this->responseArray['data'])) {
-							$this->responseArray['data'][$key] = array();
+						if(!array_key_exists($key, $responseArray['data'])) {
+							$responseArray['data'][$key] = array();
 						}
-						array_push($this->responseArray['data'][$key], $value);
+						array_push($responseArray['data'][$key], $value);
 					}
 				}
 			}else if($fetchType=MYSQLI_ASSOC){
 			}
         }
-		return $this->GetResponseArray();
+		return $responseArray;
     }
 
     function beforeCreateInsertUpdateDelete($crudType){
@@ -503,9 +538,9 @@ class DatabaseManager{
 			
 		$this->sql_str = $sql_str;
 
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
 
-		$responseArray = $this->GetResponseArray();
+		// $responseArray = $this->GetResponseArray();
 
 		if($responseArray['num_rows'])
 			$isKeyExists = true;
@@ -555,7 +590,7 @@ class DatabaseManager{
 		if(!$isBeforeSuccess){
 			return $this->GetResponseArray();
 		}
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
 
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
@@ -592,14 +627,14 @@ class DatabaseManager{
 		if(!$isBeforeSuccess){
 			return $this->GetResponseArray();
 		}
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
 
 		$this->afterCreateInsertUpdateDelete("select");
 		return $this->GetResponseArray();
 	}
-	function selectPage($pageNum=1, $tempStep=10){
+	function selectPage($pageNum=1, $tempStep=2, $tempLimit=100){
 		$tempStep = $this->selectStep;
-		$tempLimit = $tempStep;
+		// $tempLimit = $tempStep;
 		$tempOffset = ($pageNum-1) * $tempStep;
 
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
@@ -640,7 +675,8 @@ class DatabaseManager{
 		if(!$isBeforeSuccess){
 			return $this->GetResponseArray();
 		}
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
 
 		$this->afterCreateInsertUpdateDelete("select");
 		return $this->GetResponseArray();
@@ -660,19 +696,51 @@ class DatabaseManager{
 		$valuesSQL = "";
 		$isSpecifiesColumn = false;
 		$array_value = "";
+		$isPKMissing = false;
+
+		$primaryKeySchema = $this->getPrimaryKeyName();
+
+		// error handling
+		// is primary key missing?
+		foreach ($primaryKeySchema['data']['Field'] as $index => $value){
+			if($this->IsNullOrEmptyString($array[$value])){
+				$isPKMissing = true;
+				break;
+			}
+		}
+
+		// stop and return error msg if PK missing
+		if($isPKMissing){
+			$missingPK = "";
+			foreach ($primaryKeySchema['data']['Field'] as $index => $value){
+				if($this->IsNullOrEmptyString($array[$value])){
+					$missingPK.=$value." , ";
+				}
+			}
+			$missingPK = rtrim($missingPK, " , ");
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			$this->responseArray['access_status'] = $this->access_status["Error"];
+			return $this->GetResponseArray();
+		}
 
 		foreach ($dataSchema['data'] as $index => $value){
 			$isColumnNullOrEmpty = false;
 			$column = $value['Field'];
 			$type = $value['Type'];
+
+			if($this->IsSystemField($column)){
+				continue;
+			}
 			
 			// if value is null or empty
 			if($this->IsNullOrEmptyString($array[$column])){
 				$isColumnNullOrEmpty = true;
+				// echo "IsNullOrEmpty";
 			}
 			// if value exist are not null and empty
 			else {
 				$array_value = $this->GetSQLValueString($column);//$array[$column];
+				// echo "IsNotNullOrEmpty";
 			}
 			// if column cannot null
 			if(strtolower($value['Null']) == 'no'){
@@ -693,13 +761,17 @@ class DatabaseManager{
 				$isSpecifiesColumn = true;
 			}
 		}
+
+		$type = MYSQLI_NUM;
+		$isClear = false;
 		
 		// add the createDate and createUser if table exists those fields
 		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
 			$this->reserved_fields["createDate"]);
-		$resultData = $this->queryForDataArray($custom_sql_str);
+		$this->sql_str = $custom_sql_str;
+		$resultData = $this->queryForDataArray();
 		if($resultData['num_rows'] > 0){
 			$tableColumnSQL .= $this->reserved_fields['createDate']." , ";
 			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
@@ -710,7 +782,8 @@ class DatabaseManager{
 			$this->database_fyp,
 			$this->table,
 			$this->reserved_fields["lastUpdateDate"]);
-		$resultData = $this->queryForDataArray($custom_sql_str);
+		$this->sql_str = $custom_sql_str;
+		$resultData = $this->queryForDataArray();
 
 		if($resultData['num_rows'] > 0){
 			$tableColumnSQL .= $this->reserved_fields['lastUpdateDate']." , ";
@@ -730,11 +803,16 @@ class DatabaseManager{
 			if(!$isBeforeSuccess){
 				return $this->GetResponseArray();
 			}
-			$this->queryForDataArray();
+		// print_r($this->responseArray);
+			$this->responseArray = $this->queryForDataArray();
+		// print_r($this->responseArray);
 		}else{
 			// if all fields are not specifies any value
 			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["InsertFailFieldsNullOrEmpty"]));
+			$this->responseArray['access_status'] = $this->access_status["Error"];
 		}
+
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
 
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
@@ -814,7 +892,8 @@ class DatabaseManager{
 				$this->database_fyp,
 				$this->table,
 				$this->reserved_fields["lastUpdateDate"]);
-			$lastUpdateResponseArray = $this->queryForDataArray($custom_sql_str);
+			$this->sql_str = $custom_sql_str;
+			$lastUpdateResponseArray = $this->queryForDataArray();
 		}
 		
 		$isLastUpdateDateFound = false;
@@ -847,7 +926,9 @@ class DatabaseManager{
 		if(!$isBeforeSuccess){
 			return $this->GetResponseArray();
 		}
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
+
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
 
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
@@ -922,7 +1003,9 @@ class DatabaseManager{
 		if(!$isBeforeSuccess){
 			return $this->GetResponseArray();
 		}
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
+
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
 
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
@@ -1019,7 +1102,9 @@ class DatabaseManager{
 		if(!$isBeforeSuccess){
 			return $this->GetResponseArray();
 		}
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
+
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
 
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
@@ -1034,9 +1119,9 @@ class DatabaseManager{
 		$sql_str = sprintf("describe %s",
 			$this->table);
 		$this->sql_str = $sql_str;
-		$this->queryForDataArray();
-		$this->dataSchema = $this->GetResponseArray();
-		
+		// $this->responseArray = $this->queryForDataArray();
+		$this->dataSchema = $this->queryForDataArray();
+
 		// extract data schema to increase readability
 		$colDetailsIndex = array(
 			"type", 
@@ -1111,7 +1196,7 @@ class DatabaseManager{
 		$sql_str = sprintf("show index from %s",
 			$this->table);
 		$this->sql_str = $sql_str;
-		$this->queryForDataArray();
+		$this->responseArray = $this->queryForDataArray();
 		$this->tableIndex = $this->GetResponseArray();
 	}
 	function getColumnInfo($columnName){
@@ -1311,6 +1396,10 @@ class DatabaseManager{
 		// i don't kown why it must coding as $type===, otherwise $type='datetime' will cased as float/double
 		$typeCaseAs = "";
 
+		//$hkTimeZone = new DateTimeZone("Asia/Hong_Kong");
+		$defaultTimeZoneString = date_default_timezone_get();
+		$hkTimeZone = new DateTimeZone($defaultTimeZoneString);
+
 		//echo "I am a $type type.";
 		switch (true) {
 			case strpos($type, "char") !== FALSE:
@@ -1320,7 +1409,10 @@ class DatabaseManager{
 				if(strpos($setValue, "'")==0 && strrpos($setValue, "'")==strlen($setValue)-1 && strlen($setValue)!=1){
 					break;
 				}
-				$setValue = ($setValue != "") ? "'" . $setValue . "'" : "NULL";
+				// $setValue = ($setValue != "") ? "'" . $setValue . "'" : NULL;
+				$setValue = $this->dbc->real_escape_string($setValue);
+
+				$setValue = ($setValue != "") ? "'" . $setValue . "'" : NULL;
 				break;
 			//http://dev.mysql.com/doc/refman/5.0/en/integer-types.html
 			case strpos($type, "tinyint") !== FALSE: // -128 to 127, 0 to 255
@@ -1346,6 +1438,7 @@ class DatabaseManager{
 					else
 						$setValue = new DateTime($setValue);
 				
+				$setValue->setTimezone($hkTimeZone);
 				$setValue = $setValue->format("Y-m-d");
 				$setValue = "'" . $setValue . "'";
 				$typeCaseAs = "date";
@@ -1353,14 +1446,16 @@ class DatabaseManager{
 
 			case $type==="datetime":
 			case $type==="timestamp":
-					// convert string to date
-					$tmpDate = date_parse($setValue);
-					//print_r($tmpDate);
-					if($tmpDate["error_count"] > 0)
-						$setValue = date("Y-m-d H:i:s"); // if convert with error, use the current date
-					else
-						$setValue = new DateTime($setValue);
 
+				// convert string to date
+				$tmpDate = date_parse($setValue);
+				//print_r($tmpDate);
+				if($tmpDate["error_count"] > 0)
+					$setValue = date("Y-m-d\TH:i:s+"); // if convert with error, use the current date
+				else
+					$setValue = new DateTime($setValue);
+
+				$setValue->setTimezone($hkTimeZone);
 				$setValue = $setValue->format("Y-m-d H:i:s");
 				$typeCaseAs = "datetime";
 				break;
@@ -1378,7 +1473,7 @@ class DatabaseManager{
 		}
 		
 		// if(strpos($setValue, '@')!==false)
-		// 	echo "value in:$setValue, type:$type, entryType:$typeCaseAs<br>";
+		// echo "value in:$setValue, type:$type, entryType:$typeCaseAs"."<br>";
 
 		$this->_[$setColumn] = $setValue;
 	}
@@ -1406,12 +1501,17 @@ class DatabaseManager{
 			case strpos($type, "char") !== FALSE:
 			case strpos($type, "varchar") !== FALSE:
 			case strpos($type, "text") !== FALSE:
+
 				if(strpos($valueIn, "'")==0 && strrpos($valueIn, "'")==strlen($valueIn)-1){
 					$valueOut = $valueIn;
 				}else{
-					$valueOut = ($valueIn != "") ? "'" . $valueIn . "'" : "NULL";
+					$valueOut = ($valueIn != "") ? "'" . $valueIn . "'" : NULL;
 				}
+
+				// $valueOut = $this->dbc->real_escape_string($valueIn);
+
 				$typeCaseAs = "text";
+
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/integer-types.html
 			case strpos($type, "tinyint") !== FALSE: // -128 to 127, 0 to 255
@@ -1485,6 +1585,7 @@ class DatabaseManager{
 				$valueOut = "'" . $valueOut . "'";
 
 				$typeCaseAs = "datetime";
+
 				break;
 			case $type==="time":
 				if($this->IsNullOrEmptyString($valueIn)){

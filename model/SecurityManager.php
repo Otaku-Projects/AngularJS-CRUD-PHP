@@ -78,7 +78,7 @@ class SecurityManager extends DatabaseManager {
 
 		$this->ResetResponseArray();
 
-		$this->hideSQL = true;
+		// $this->hideSQL = true;
 	}
 	function ReInit(){
 		$this->Initialize();
@@ -172,7 +172,7 @@ class SecurityManager extends DatabaseManager {
 				// check the break down right
 				$tempFunctionName = "N/A";
 				$tempCtrlName = $this->permsCtrlName;
-					$sql_str = sprintf("SELECT $selectIndividualRightCols FROM `permissionGroupRight` WHERE (permissionID = %s or permissionGroupName = '%s') AND (functionName = '%s' or controllerName = '%s')",
+					$sql_str = sprintf("SELECT $selectIndividualRightCols FROM `permissionGroupRight` WHERE (permissionID = '%s' or permissionGroupName = '%s') AND (functionName = '%s' or controllerName = '%s')",
 							$permsID,
 							$permsGroupName,
 							$tempFunctionName,
@@ -237,13 +237,12 @@ class SecurityManager extends DatabaseManager {
 				$tmpResponseArray["SESSION_ID"] = $_SESSION['SESSION_ID'];
 			}else{
 				$tmpResponseArray["access_status"] = $this->access_status["AuthenticationFail"];
-				//array_push($this->responseArray_errs, sprintf($this->sys_err_msg["AuthenticationFail"]));
-				if(!$this->IsNullOrEmptyString($tmpResponseArray["error"]))
-				 	$tmpResponseArray["error"] .= "\n\r".$this->sys_err_msg["AuthenticationFail"];
-				else
-				 	$tmpResponseArray["error"] = $this->sys_err_msg["AuthenticationFail"];
-			}
 
+				if(!$this->IsNullOrEmptyString($tmpResponseArray["error"])){
+				 	// $tmpResponseArray["error"] = $this->sys_err_msg["AuthenticationFail"];
+				}
+			}
+			//echo json_encode($tmpResponseArray);
 			return $tmpResponseArray;
 		}
 	}
@@ -315,6 +314,7 @@ class SecurityManager extends DatabaseManager {
 
 		$responseArray['num_rows'] = 0;
 		$responseArray['isLogin'] = 0;
+			$sessionArray = $this->GetSessionData();
 		if(isset($_SESSION['USER_login_status']) && $_SESSION['USER_login_status'] == 1)
 		{
 			$responseArray['num_rows'] = 1;
