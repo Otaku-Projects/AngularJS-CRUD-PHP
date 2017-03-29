@@ -188,22 +188,22 @@ switch ($requestMethod) {
 if($requestData == null || empty($requestData))
 	$requestData = $requestJson;
 
+/*
+Note that using call_user_func_* functions can't be used to call private or protected methods.
+*/
 try{
 	switch ($action) {
 		// get single record
 		case 'GetTableStructure':
-			// $sqlResultData['dataColumns'] = call_user_func_array($funcName, array($requestData));
 			$sqlResultData = call_user_func($funcName);
 			break;
 		// get single record
 		case 'FindData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
-			// call_user_func($funcName);
 			break;
 		// get records in result set
 		case 'GetData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
-			// call_user_func($funcName);
 			break;
 		case 'CreateData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
@@ -212,7 +212,6 @@ try{
 			}else{
 				$sqlResultData['Message'] = "Data create fail.";
 			}
-			// call_user_func($funcName);
 			break;
 		case 'UpdateData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
@@ -221,7 +220,6 @@ try{
 			}else{
 				$sqlResultData['Message'] = "Data update fail.";
 			}
-			// call_user_func($funcName);
 			break;
 		case 'DeleteData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
@@ -230,7 +228,6 @@ try{
 			}else{
 				$sqlResultData['Message'] = "Data delete fail.";
 			}
-			// call_user_func($funcName);
 			break;
 		case 'ImportData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));

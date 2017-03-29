@@ -923,8 +923,9 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         }
         $scope.DefaultInitDirective = function(){
             GetTableStructure(function(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
-            // console.log("Get Table Structure done"+$scope.editMode)
-                $scope.LockAllControls();
+            //console.log("Get Table Structure done"+$scope.editMode)
+                // the controls inside the directive was locked in the post render
+                //$scope.LockAllControls();
                 if($scope.editMode == globalCriteria.editMode.Create){
                     TryToCallSetDefaultValue();   
                 }
@@ -1666,28 +1667,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
           // inside of the ng-transclude
           //'<div ng-transclude></div>' +
           '<div class="custom-transclude"></div>';
-          //'{{entryCtrl.editMode}}' +
-        //   '<div class="submitBtn" style="text-align: right;">';
-
-        //   if(editModeNum == globalCriteria.editMode.Create)
-        //     template += 
-        //       '<span>'+
-        //       	'<button class="btn btn-default" type="button" ng-click="SubmitData()">Create</button> ' +
-        //       '</span>';
-        //   if(editModeNum == globalCriteria.editMode.Amend || editModeNum == globalCriteria.editMode.AmendAndDelete)
-        //     template += 
-        //       '<span>'+
-        //       	'<button class="btn btn-default" type="button" ng-click="SubmitData()">Amend</button> ' +
-        //       '</span>';
-        //   if(editModeNum == globalCriteria.editMode.Delete || editModeNum == globalCriteria.editMode.AmendAndDelete)
-        //     template +=
-        //       '<span>'+
-        //       	'<button class="btn btn-default" type="button" ng-click="SubmitData()">Delete</button> ' +
-        //       '</span>';
-
-        // template +=
-        //   '</div>' +
-        //   '';
         return template;
     }
 
@@ -2314,6 +2293,7 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
         var tagName = $element[0].tagName.toLowerCase();
 
         var globalCriteria = $rootScope.globalCriteria;
+        var backupNgModelObj = {};
 
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -2324,6 +2304,7 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
         }
         $scope.DefaultInitDirective = function(){
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+            BackupNgModel();
         }
         function InitializeImportDirective() {
             $scope.tableStructure = {};
@@ -2346,6 +2327,26 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
                 alert("<importExport> Must declare a attribute of program-id");
 
             $scope.DisplayMessageList = [];
+        }
+
+        $scope.BackupNgModel = function(){
+            BackupNgModel();
+        }
+
+        $scope.RestoreNgModel = function(){
+            RestoreNgModel();
+        }
+
+        function BackupNgModel(){
+            backupNgModelObj = jQuery.extend([], $ctrl.ngModel);
+        }
+
+        function RestoreNgModel(){
+            // don't kown why angular.copy doesn't work
+            //$ctrl.ngModel = angular.copy(backupNgModelObj);
+            // $ctrl.ngModel = jQuery.extend([], backupNgModelObj);
+            jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
+
         }
 
         function ImportData(uploadFileInfo){
@@ -2371,6 +2372,8 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
                     return;
                 }
             }
+
+            $scope.DisplayMessageList = [];
 
             var submitData = {
                 "Session": clientID,

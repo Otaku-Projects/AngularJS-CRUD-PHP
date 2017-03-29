@@ -39,7 +39,7 @@ function GetData($requestData){
 	$offsetRecords = 0;
 	$offsetRecords = $requestData->Offset;
 
-	$responseArray = $senseiManager->selectPage(1, $offsetRecords);
+	$responseArray = $senseiManager->selectPage(2, $offsetRecords);
 
 	// foreach ($createRows as $keyIndex => $rowItem) {
 	// 	// $senseiManager->Initialize();

@@ -95,9 +95,9 @@ app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 		$rootScope.requireLoginPage = $rootScope.webRoot+config.requireLoginPage;
 		$rootScope.afterLoginPage = $rootScope.webRoot+config.afterLoginPage;
 		
-		$rootScope.controller = $rootScope.webRoot+config.controller;
-		$rootScope.templateFolder = $rootScope.webRoot+config.templateFolder;
-		$rootScope.screenTemplate = $rootScope.templateFolder+config.screenTemplate;
+		$rootScope.controller = $rootScope.webRoot+config.reservedPath.controller;
+		$rootScope.templateFolder = $rootScope.webRoot+config.reservedPath.templateFolder;
+		$rootScope.screenTemplate = $rootScope.templateFolder+config.reservedPath.screenTemplate;
 		
 		$rootScope.CookiesEffectivePath = config.CookiesEffectivePath;
 	}

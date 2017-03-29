@@ -47,6 +47,7 @@ class DatabaseManager{
 	// config the select mechanism.
 	protected $isSelectAllColumns = true;
 	protected $selectWhichCols = "*";
+	public $pageNum = 1;
 	protected $selectStep = 10;
 
 	// update mechanism
@@ -474,7 +475,7 @@ class DatabaseManager{
     	return $isPermissionAllow;
     }
 
-    function IsColumnExists($columnName){
+    public function IsColumnExists($columnName){
     	$search_array = $this->_;
     	// echo array_search($columnName, $search_array);
 		if (array_key_exists($columnName, $search_array))
@@ -487,7 +488,7 @@ class DatabaseManager{
      * ExcelManager is record found in DB, insert for not found, update for found
      *
      */
-    function CheckKeyExists(){
+    public function CheckKeyExists(){
     	$isKeyExists = false;
 
 		$array = $this->_;
@@ -551,7 +552,7 @@ class DatabaseManager{
      * TableManager basic and simple SELECT SQL Function
      *
      */
-	function select(){
+	public function select(){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
 
 		$array = $this->_;
@@ -587,11 +588,12 @@ class DatabaseManager{
 			return $this->GetResponseArray();
 		}
 		$this->responseArray = $this->queryForDataArray();
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
 
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
 	}
-	function count(){
+	public function count(){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
 
 		$array = $this->_;
@@ -628,10 +630,17 @@ class DatabaseManager{
 		$this->afterCreateInsertUpdateDelete("select");
 		return $this->GetResponseArray();
 	}
-	function selectPage($pageNum=1, $tempStep=2, $tempLimit=100){
-		$tempStep = $this->selectStep;
-		// $tempLimit = $tempStep;
-		$tempOffset = ($pageNum-1) * $tempStep;
+
+/*
+20161113, keithpoon, fixed: arguments cannot passed when use call_user_func_array in ConnectionManager.
+Note that using call_user_func_* functions can't be used to call private or protected methods.
+select(), count(), selectPage, insert(), update(), delete() must be public
+// http://stackoverflow.com/questions/18526060/why-should-one-prefer-call-user-func-array-over-regular-calling-of-function
+*/
+	public function selectPage($pageNum=1, $tempOffset = 10, $tempLimit = 10){
+		// $tempStep = $this->selectStep;
+		// $tempLimit = $this->selectStep;
+		$tempTotalOffset = ($pageNum-1) * $tempOffset;
 
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
 
@@ -659,12 +668,12 @@ class DatabaseManager{
 					$this->table,
 					$whereSQL,
 					$tempLimit,
-					$tempOffset);
+					$tempTotalOffset);
 		}else{
 			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s LIMIT %s OFFSET %s",
 					$this->table,
 					$tempLimit,
-					$tempOffset);
+					$tempTotalOffset);
 		}
 
 		$this->sql_str = $sql_str;
@@ -682,7 +691,7 @@ class DatabaseManager{
      * TableManager basic and simple INSERT SQL Function
      *
      */
-	function insert(){
+	public function insert(){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
 
 		$array = $this->_;
@@ -818,7 +827,7 @@ class DatabaseManager{
      * TableManager basic and simple UPDATE SQL Function
      * update but expect the key fields
      */
-	function update($ignoreTheLastDateCheck = false, $allowUpdateToEmptyValue = false){
+	public function update($ignoreTheLastDateCheck = false, $allowUpdateToEmptyValue = false){
 		if($this->$ignoreTheLastDateCheck)
 			$ignoreTheLastDateCheck = true;
 
@@ -937,7 +946,7 @@ class DatabaseManager{
      * TableManager basic and simple UPDATE SQL Function
      * update the instance value according to the parameter
      */
-	function updateAnyFieldTo($updateToMe){
+	public function updateAnyFieldTo($updateToMe){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
 
 		$tableObject = $this->_;
@@ -1014,7 +1023,7 @@ class DatabaseManager{
      * TableManager basic and simple DELETE SQL Function
      *
      */
-	function delete(){
+	public function delete(){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
 
 		$array = $this->_;
@@ -1436,26 +1445,33 @@ class DatabaseManager{
 						$setValue = date("Y-m-d"); // if convert with error, use the current date
 					else
 						$setValue = new DateTime($setValue);
-				
-				$setValue->setTimezone($hkTimeZone);
-				$setValue = $setValue->format("Y-m-d");
+
+				if(is_object($setValue)){
+					$setValue->setTimezone($hkTimeZone);
+					$setValue = $setValue->format("Y-m-d");
+				}
 				$setValue = "'" . $setValue . "'";
 				$typeCaseAs = "date";
 				break;
 
 			case $type==="datetime":
 			case $type==="timestamp":
-
 				// convert string to date
 				$tmpDate = date_parse($setValue);
 				//print_r($tmpDate);
-				if($tmpDate["error_count"] > 0)
-					$setValue = date("Y-m-d\TH:i:s+"); // if convert with error, use the current date
-				else
+				if($tmpDate["error_count"] > 0){
+					//$setValue = date("Y-m-d\TH:i:s+"); // if convert with error, use the current date
+					$setValue = NULL;
+					break;
+				}else{
 					$setValue = new DateTime($setValue);
+				}
 
-				$setValue->setTimezone($hkTimeZone);
-				$setValue = $setValue->format("Y-m-d H:i:s");
+				// if(!is_null($setValue))
+					if(is_object($setValue) && $setValue instanceof DateTime){
+						$setValue->setTimezone($hkTimeZone);
+						$setValue = $setValue->format("Y-m-d H:i:s");
+					}
 				$typeCaseAs = "datetime";
 				break;
 			case $type==="time":
@@ -1530,7 +1546,10 @@ class DatabaseManager{
 				break;
 			case $type==="date":
 				if($this->IsNullOrEmptyString($valueIn)){
-					$valueOut = date("Y-m-d");
+					//$valueOut = date("Y-m-d");
+					$valueOut = NULL;
+		return $valueOut;
+					break;
 				}else{
 					$valueIn = trim($valueIn, "'");
 					// convert string to date
@@ -1562,7 +1581,10 @@ class DatabaseManager{
 			case $type==="datetime":
 			case $type==="timestamp":
 				if($this->IsNullOrEmptyString($valueIn)){
-					$valueOut = date("Y-m-d H:i:s");
+					//$valueOut = date("Y-m-d H:i:s");
+					$valueOut = NULL;
+		return $valueOut;
+					break;
 				}else{
 					$valueIn = trim($valueIn, "'");
 					// convert string to date
@@ -1581,7 +1603,8 @@ class DatabaseManager{
 							$tmpDate["year"])
 					);
 				}
-				$valueOut = "'" . $valueOut . "'";
+				if(!is_null($valueOut))
+					$valueOut = "'" . $valueOut . "'";
 
 				$typeCaseAs = "datetime";
 
@@ -1609,7 +1632,7 @@ class DatabaseManager{
 				break;
 		}
 		
-		//echo "value in:$valueIn, type:$type, entryType:$typeCaseAs, value out:$valueOut";
+		// echo "value in:$valueIn, type:$type, entryType:$typeCaseAs, value out:$valueOut";
 		return $valueOut;
 	}
 	
