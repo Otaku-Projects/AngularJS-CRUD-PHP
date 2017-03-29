@@ -7,6 +7,7 @@ require_once 'ManagerLoader.php';
 
 header('Content-Type: application/json', true, 200);
 
+
 // $currentFilename = basename(__FILE__);
 
 // foreach (scandir(dirname(__FILE__)) as $filename) {
@@ -32,9 +33,6 @@ header('Content-Type: application/json', true, 200);
 //         require_once $path;
 //     }
 // }
-
-$errors         = array();  	// array to hold validation errors
-$data 			= array(); 		// array to pass back data
 
 // new Object();
 // Standard Defined Classes in PHP
@@ -154,7 +152,6 @@ if(!$isProgramExists){
 	$responseData->Status = "FuncNotFound";
 	array_unshift($responseData->Message, "Function $funcName() not found in $prgmName");
 
-
 	$responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
 
 	echo json_encode($responseData);
@@ -162,8 +159,12 @@ if(!$isProgramExists){
 	return;
 }
 
-// retrieve request data
+// get the HTTP method, path and body of the request
 $requestMethod = $_SERVER['REQUEST_METHOD'];
+// retrieve request data
+//$request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
+$input = json_decode(file_get_contents('php://input'),true);
+
 $requestData = [];
 switch ($requestMethod) {
 	case 'GET':
@@ -232,6 +233,7 @@ try{
 			// call_user_func($funcName);
 			break;
 		case 'ImportData':
+			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
 			break;
 		case 'ExportData':
 			// $sqlResultData['ActionResult'] = array();
@@ -307,29 +309,7 @@ function Logout(){
 
 $responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
 
-	switch ($action) {
-		// case 'GetTableStructure':
-		// 	break;
-		// case 'FindData':
-		// 	break;
-		// case 'GetData':
-		// 	break;
-		// case 'CreateData':
-		// 	break;
-		// case 'UpdateData':
-		// 	break;
-		// case 'DeleteData':
-		// 	break;
-		// case 'IsKeyExists':
-		// 	break;
-		case 'ImportData':
-			break;
-		// case 'ExportData':
-		// 	break;
-		default:
-			echo json_encode($responseData);
-			break;
-	}
+echo json_encode($responseData);
 
 
 ?>

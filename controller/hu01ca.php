@@ -57,8 +57,74 @@ function ExportData($httpRequest){
 	return $responseArray;
 }
 
-function ImportData(){
+function ImportData($httpRequest){
+	$responseArray = array();
+	$fileExistsInUploadFolder = false;
+	$fileExistsInUserFolder = false;
+
 	$importManager = new ExcelManager();
 	$importManager->Initialize();
+	$importManager->AddTable("Card");
+	// $importManager->AddTable("CardContent");
+
+	$responseArray = $importManager->CreateResponseArray();
+
+	$requestData = new stdClass();
+	$requestData = $httpRequest; //->Data->Header;
+
+	$fileInfo = new stdClass();
+
+	if(is_array($requestData->FileUploadedResult)){
+		$fileInfo = $requestData->FileUploadedResult[0];
+	}
+	$excelFileLocation = $fileInfo->movedTo;
+
+	// move file to user folder if user is valid
+	$userID = "";
+	$securityManager = new SecurityManager();
+
+	// if($securityManager->isUserLoggedInBool()){
+	// 	$sqlResultData = $securityManager->GetLoginData();
+	// 	$userID = $sqlResultData['LOGIN_ID'];
+
+	// 	$destination = BASE_USER_ATTACH . $userID .'/'. $fileInfo->name;
+		
+	// 	if(file_exists($fileInfo->movedTo))
+	// 		$fileExistsInUploadFolder = true;
+	// }
+
+	// if($fileExistsInUploadFolder){
+	// 	// $path_parts = pathinfo('/www/htdocs/inc/lib.inc.php');
+
+	// 	// echo $path_parts['dirname'], "\n";
+	// 	// echo $path_parts['basename'], "\n";
+	// 	// echo $path_parts['extension'], "\n";
+	// 	// echo $path_parts['filename'], "\n"; // since PHP 5.2.0
+
+	// 	// /www/htdocs/inc
+	// 	// lib.inc.php
+	// 	// php
+	// 	// lib.inc
+	// 	$directory = pathinfo($destination);
+	// 	if(!file_exists($directory['dirname']))
+	// 		mkdir($destination);
+
+	// 	if(rename($fileInfo->movedTo, $destination))
+	// 		$excelFileLocation = $destination;
+	// }
+
+	if(file_exists($excelFileLocation))
+		$fileExistsInUserFolder = true;
+
+	if($fileExistsInUserFolder)
+		$responseArray = $importManager->Import($excelFileLocation);
+
+	// if(!$fileExistsInUploadFolder || !$fileExistsInUserFolder)
+	// {
+	// 	$responseArray['access_status'] = $importManager->access_status["Fail"];
+	// 	$responseArray['error'] = "file was found at: $excelFileLocation";
+	// }
+
+	return $responseArray;
 }
 ?>

@@ -78,7 +78,7 @@ function getFunctionName(fun) {
 
 //angular.element() === jQuery() === $();
 // using the angular ui of Bootstrap
-var app = angular.module('myApp', ['ngCookies', 'ui.bootstrap']);
+var app = angular.module('myApp', ['ngCookies', 'ui.bootstrap', 'ngFileUpload']);
 
 app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 	var core = this;
@@ -611,6 +611,19 @@ app.directive('importExport', ['Security', '$rootScope', function(Security, $roo
         }
         $scope.InitScope = function(){
             InitializeEntry();
+        }
+
+        function InitDirective(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        function EventListener(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
+        }
+        // function SetDefaultValue(){
+        //     console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
+        // }
+        function StatusChange(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
         }
         $scope.Initialize();
     }

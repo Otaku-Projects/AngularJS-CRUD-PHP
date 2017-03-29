@@ -121,6 +121,7 @@ class DatabaseManager{
 			"insert_id", 
 			"affected_rows", 
 			"access_status", 
+			"process_result",
 			"error");
 		foreach ($arrayIndex as $indexValue){
 			$responseArray[$indexValue] = null;
@@ -321,7 +322,6 @@ class DatabaseManager{
     		$fetchType = MYSQLI_NUM;
 
     	$responseArray = $this->CreateResponseArray();
-    	// $responseArray_errs = $this->responseArray_errs;
     	$sql_str = $this->sql_str;
 
 		if($this->IsNullOrEmptyString($sql_str)){
@@ -537,18 +537,14 @@ class DatabaseManager{
         	$updateWhereColumn);
 			
 		$this->sql_str = $sql_str;
-
 		$this->responseArray = $this->queryForDataArray();
 
-		// $responseArray = $this->GetResponseArray();
-
-		if($responseArray['num_rows'])
+		if($this->responseArray['num_rows'])
 			$isKeyExists = true;
 		else
 			$isKeyExists = false;
 
 		return $isKeyExists;
-		//return $this->GetResponseArray();
     }
 	
     /**
@@ -822,7 +818,7 @@ class DatabaseManager{
      * TableManager basic and simple UPDATE SQL Function
      * update but expect the key fields
      */
-	function update($ignoreTheLastDateCheck = false){
+	function update($ignoreTheLastDateCheck = false, $allowUpdateToEmptyValue = false){
 		if($this->$ignoreTheLastDateCheck)
 			$ignoreTheLastDateCheck = true;
 
@@ -871,11 +867,14 @@ class DatabaseManager{
 			if($isColumnAPK === false){
 
 				$isAllColumnNullOrEmpty = $isAllColumnNullOrEmpty && $this->IsNullOrEmptyString($value);
-				
+
 				if(!$this->IsNullOrEmptyString($value)){
 					$updateSetColumn.="`".$key."` =".$this->GetSQLValueString($key)." , ";
 				}else{
-					$nullOrEmptyColumn.=$key." , ";
+					if($allowUpdateToEmptyValue)
+						$updateSetColumn.="`".$key."` ='', ";
+					else
+						$nullOrEmptyColumn.=$key." , ";
 				}
 			}
 		}

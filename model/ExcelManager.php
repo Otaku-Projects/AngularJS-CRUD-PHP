@@ -772,26 +772,40 @@ class ExcelManager extends DatabaseManager {
 		
 		$dataSet = array();
 
-			foreach($this->tableList as $tableName) {
-				$dataSet[$tableName] = $this->ConvertWorksheet2Array($uploadedExcelPath, $tableName);
-			}
-			foreach($this->tableList as $tableName) {
-				$tempProcessMessage = "Import $tableName";
-				array_push($this->processMessageList, $tempProcessMessage);
-				$dataTable = $dataSet[$tableName]['excelData'];
-				$this->ImportData($dataTable, $tableName);
-			}
+		// Convert worksheet to array
+		foreach($this->tableList as $tableName) {
+			$dataSet[$tableName] = $this->ConvertWorksheet2Array($uploadedExcelPath, $tableName);
+		}
+		// Import worksheet
+		foreach($this->tableList as $tableName) {
+			$tempProcessMessage = "Import $tableName";
+			array_push($this->processMessageList, $tempProcessMessage);
+			$dataTable = $dataSet[$tableName]['excelData'];
+			$this->ImportData($dataTable, $tableName);
+		}
 
 		//return json_encode($dataSet, JSON_PRETTY_PRINT);
-		return json_encode($this->processMessageList, JSON_PRETTY_PRINT);
+		//return json_encode($this->processMessageList, JSON_PRETTY_PRINT);
+
+		$this->responseArray = $this->CreateResponseArray();
+		// $this->responseArray['importResult'] = $this->processMessageList;
+
+		$responseArray = $this->GetResponseArray();
+		$responseArray['process_result'] = $this->processMessageList;
+		$responseArray['access_status'] = $this->access_status['OK'];
+
+		return $responseArray;
+		// return $this->processMessageList;
 	}
 	
 	function ImportData($dataTable, $tableName){
-			//print_r($dataTable);
 		for($tableRowIndex=0; $tableRowIndex < count($dataTable); $tableRowIndex++){
 			$addThisRow = $dataTable[$tableRowIndex];
 			$dataTable[$tableRowIndex] = $this->AmendDataRowBeforeGoToImport($tableName, $tableRowIndex, $addThisRow);
 		}
+
+		// print_r($dataTable);
+		// return;
 		$this->ImportInsertOrUpdateData($dataTable, $tableName);
 	}
 	
@@ -805,9 +819,13 @@ class ExcelManager extends DatabaseManager {
 			$importThisRow = $this->UpdateDataRowBeforeImport($tableName, $tableRowIndex, $importThisRow);
 			$_tableManager->setArrayIndex();
 			foreach($importThisRow as $columnName => $cellValue) {
-				if(!empty($cellValue))
+				// 20161019, keithpoon, 0 should not seem as null or empty in some real case
+				// if(!empty($cellValue))
 					$_tableManager->$columnName = $cellValue;
 			}
+
+			// print_r($_tableManager->_);
+			// continue;
 			
 			$this->CustomImportInsertOrUpdateData($_tableManager, $tableRowIndex);
 			
@@ -840,30 +858,22 @@ class ExcelManager extends DatabaseManager {
 		}
 		$keyString = trim($keyString, ", ");
 		
-		
 		$excelRowIndex = $rowIndex + 1;
 		$responseArray = array();
 		$tempProcessMessage = "";
 		
 		$tableObject->topRightToken = true;
 		$tableObject->debug = true;
-		//print_r($primaryKeySchema);
-		/*
-		if(!$isPKMissing)
-		$responseArray = $tableObject->update(true);
-		else
-		$responseArray = $tableObject->insert();
-		*/
-		
-		//$responseArray = $tableObject->insert();
 
-		//$responseArray = $tableObject->update(true);
-
+		// Check key exists
 		$isKeyExists = $tableObject->CheckKeyExists();
+		// Update if exists, insert if not exists
 		if($isKeyExists)
-			$responseArray = $tableObject->update(true);
+			$responseArray = $tableObject->update(true, true);
 		else
 			$responseArray = $tableObject->insert();
+
+		// print_r($responseArray);
 
 		if(!$isKeyExists)
 		{
@@ -875,27 +885,16 @@ class ExcelManager extends DatabaseManager {
 		}else{
 			if($responseArray['affected_rows'] > 0){
 				$tempProcessMessage = "Rows ".$excelRowIndex." "."updated: ".$keyString;
-			}else{
+			}
+			// sql query result is success but no rows updated.
+			// because the imported data total same as the record in database, no records will be changes.
+			else if($responseArray["access_status"] == $this->access_status["OK"]){
+				$tempProcessMessage = "Rows ".$excelRowIndex." sql query sccuess but no record updated.";	
+			}
+			else{
 				$tempProcessMessage = "Rows ".$excelRowIndex." update ".$responseArray['access_status'].": ".$responseArray['error'];
 			}
 		}
-
-		/*
-		if($responseArray['affected_rows'] > 0){
-			$tempProcessMessage = "Rows ".$excelRowIndex." "."updated: ".$keyString;
-		}else
-		{
-			$responseArray = array();
-			$responseArray = $tableObject->insert();
-			
-			//print_r($responseArray);
-			if($responseArray['affected_rows'] > 0){
-				$tempProcessMessage = "Rows ".$excelRowIndex." "."inserted: ".$keyString;
-			}else{
-				$tempProcessMessage = "Rows ".$excelRowIndex." ".$responseArray['access_status'].": ".$responseArray['error'];
-			}
-		}
-		*/
 		
 		array_push($this->processMessageList, $tempProcessMessage);
 	}
@@ -948,8 +947,6 @@ class ExcelManager extends DatabaseManager {
 
 		$skipExcelRowCounter = $readStartFromRow;
 
-
-		
 		// convert the excel to array
 		foreach ($objWorksheet->getRowIterator() as $row) {
 			if($skipExcelRowCounter > 1){
@@ -959,20 +956,25 @@ class ExcelManager extends DatabaseManager {
 			$excelArray[$rowIndex] = array();
 
 			$cellIterator = $row->getCellIterator();
-			$cellIterator->setIterateOnlyExistingCells(false); // This loops all cells,
-		                                                     // even if it is not set.
-		                                                     // By default, only cells
-		                                                     // that are set will be
-		                                                     // iterated.
+			$cellIterator->setIterateOnlyExistingCells(false);
+			// This loops all cells,
+			// even if it is not set.
+			// By default, only cells
+			// that are set will be
+			// iterated.
+
 			$isWholeRowEmpty = true;
 			$colIndex = 0;
 			foreach ($cellIterator as $cell) {
 				$headerName = $this->excelSheetsHeader[$tableName][$colIndex];
 				$columnFound = $this->MappingSheetColumnsWithDataTable($_tableManager, $headerName);
-				//echo "colun found ".$columnFound;
+				// echo "column $headerName found result (bool)".$columnFound;
+
 				if((bool)$columnFound){
-					
-					if(is_null($cell->getValue()) || empty($cell->getValue())){
+					// 20161019, keithpoon, 0 should not seem as null or empty in some real case
+					// if(is_null($cell->getValue()) || empty($cell->getValue())){
+					if(is_null($cell->getValue()))
+					{
 						$isWholeRowEmpty = $isWholeRowEmpty && true;
 						$excelArray[$rowIndex][$headerName] = NULL;
 						$colIndex++;
@@ -983,6 +985,7 @@ class ExcelManager extends DatabaseManager {
 					
 					// extract the Data Type
 					$columnInfo = $_tableManager->getColumnInfo($headerName);
+
 					if(strpos($columnInfo['Type'], '(') >= 0)
 						$columnInfo['Type'] = substr($columnInfo['Type'], 0, strlen($columnInfo['Type']) - strpos($columnInfo['Type'], '('));
 					
@@ -990,11 +993,6 @@ class ExcelManager extends DatabaseManager {
 					$format = "Y-m-d H:i:s";
 					
 					$type = $columnInfo['Type'];
-					
-					/*
-					if($headerName == "testDateTime")
-						echo $type;
-					*/
 					
 					if($columnInfo){
 						switch($type){
