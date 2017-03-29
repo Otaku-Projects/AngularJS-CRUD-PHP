@@ -8,7 +8,7 @@ var afterLoginPage = "main-menu.html";
 
 var CookiesEffectivePath = '/';
 
-var editMode = {
+var directiveEditMode = {
 	None: 0,
 	NUll: 1,
 	
@@ -35,7 +35,7 @@ app.constant('config', {
 	requireLoginPage: requireLoginPage,
 	afterLoginPage: afterLoginPage,
 	
-	editMode: editMode,
+	editMode: directiveEditMode,
 	reservedPath: reservedPath,
 	CookiesEffectivePath: CookiesEffectivePath,
 });

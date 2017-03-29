@@ -34,10 +34,18 @@ app.service('ProcessResultMessage', function($timeout){
 // call HttpRequest simple
 /*
 Object{
-	config: Object
+	data – {string|Object} – The response body transformed with the transform functions.
+	status – {number} – HTTP status code of the response.
+	headers – {function([headerName])} – Header getter function.
+	config – {Object} – The configuration object that was used to generate the request.
+	statusText – {string} – HTTP status text of the response.
+}
+e.g
+Object{
 	data: Object
-	headers: function()
 	status: 200
+	headers: function()
+	config: Object
 	statusText: "OK"
 }
 */

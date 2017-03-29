@@ -22,13 +22,14 @@ function ExportData($httpRequest){
 	// array_push($tableList, "webuser");
 
 	// $excelManager->tableList = $tableList;
-	// $excelManager->AddTable("Card");
-	// $excelManager->AddTable("CardContent");
-	// $excelManager->AddTable("CardType");
-	// $excelManager->AddTable("SpellClass");
-	// $excelManager->AddTable("CardSpellClass");
 	
+	$excelManager->AddTable("Card");
 	$excelManager->AddTable("CardContent");
+	$excelManager->AddTable("CardType");
+	$excelManager->AddTable("SpellClass");
+	$excelManager->AddTable("CardSpellClass");
+
+	// $excelManager->AddTable("CardContent");
 
 	// $excelManager->SetExportColumnSequence("profile", "fullName");
 	// $excelManager->SetExportColumnSequence("profile", "lastName");

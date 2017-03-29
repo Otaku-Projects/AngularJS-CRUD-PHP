@@ -250,17 +250,7 @@ app.directive('pageview', ['$rootScope',
             $scope.selectedRecord = jQuery.extend([], $scope.pointedRecord);
 
             $scope.pointedRecord = {};
-
-            // console.dir($scope)
-            // var isEditBoxParent = false;
-            // if(typeof($scope.$parent.editboxCtrl) != "undefined")
-            // {
-            //     isEditBoxParent = true;
-            // }
-            // if(isEditBoxParent){
-            //     var editBoxCtrl = $scope.$parent.editboxCtrl;
-            // }
-
+            
             var sRecord = $scope.selectedRecord;
             if(typeof $scope.CustomSelectedToRecord == "function"){
                 $scope.CustomSelectedToRecord(sRecord, $scope, $element, $ctrl);
@@ -500,19 +490,6 @@ app.directive('pageview', ['$rootScope',
 
     	}
 
-		// $scope.$watch(
-		//   // This function returns the value being watched. It is called for each turn of the $digest loop
-		//   function() { return $scope.sortedDataSource; },
-		//   // This is the change listener, called when the value returned from the above function changes
-		//   function(newValue, oldValue) {
-		// 	if ( newValue !== oldValue ) {
-		//   		if(newValue.length>0){
-		// 	      DisplayPageNum($scope.pageNum);
-		// 	    }
-		// 	}
-		//   }
-		// );
-
 		$scope.$watch(
 		  // This function returns the value being watched. It is called for each turn of the $digest loop
 		  function() { return $scope.maxRecordsCount; },
@@ -656,13 +633,34 @@ app.directive('entry', ['$rootScope',
 
     	var globalCriteria = $rootScope.globalCriteria;
         var backupNgModelObj = {};
+        
+        var DirectiveProperties = (function () {
+            var editMode;
+
+            function findEditMode() {
+                var object = $scope.editMode = FindEditModeEnum($attrs.editMode);
+                return object;
+            }
+
+            return {
+                getEditMode: function () {
+                    if (!editMode) {
+                        editMode = findEditMode();
+                    }
+                    return editMode;
+                }
+            };
+        })();
 
         function InitializeEntry() {
         	$scope.tableStructure = {};
         	//$ctrl.ngModel = {};
 
             // check attribute EditMode
-            $scope.editMode = FindEditModeEnum($attrs.editMode);
+//            $scope.editMode = FindEditModeEnum($attrs.editMode);
+            DirectiveProperties.getEditMode();
+            
+            $scope.DisplayMessageList = [];
 
             // check attribute programId
             var isProgramIdFound = false;
@@ -754,7 +752,7 @@ app.directive('entry', ['$rootScope',
 				"Table": programId
 			};
             submitData.Action = "GetTableStructure";
-            var editMode = $scope.editMode;
+            
             var globalCriteria = $rootScope.globalCriteria;
 
             var requestOption = {
@@ -774,31 +772,6 @@ app.directive('entry', ['$rootScope',
             });
 
             return request;
-
-   //      	var jqxhr = $.ajax({
-			//   type: 'POST',
-   //            url: url+'/model/ConnectionManager.php',
-			//   data: JSON.stringify(submitData),
-			//   //dataType: "json", // [xml, json, script, or html]
-			//   dataType: "json",
-			// });
-			// jqxhr.done(function (data, textStatus, jqXHR) {
-			// 	console.log("ProgramID: "+programId+", Table structure obtained.")
-			// 	SetTableStructure(data);
-   //              // if(editMode == globalCriteria.editMode.Create || editMode == globalCriteria.editMode.Amend)
-   //              //     $scope.UnLockAllControls();
-   //              // else if(editMode == globalCriteria.editMode.Delete)
-   //              //     $scope.UnLockSubmitButton();
-			// });
-			// jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-   //            console.error("Fail in GetTableStructure() - "+tagName + ":"+$scope.programId)
-   //            Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-			// });
-   //          jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-   //              // textStatus
-   //              //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-   //              callbackFunc(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-   //          });
         }
         function SetTableStructure(dataJson){
         	$scope.tableStructure = dataJson;
@@ -926,34 +899,6 @@ app.directive('entry', ['$rootScope',
             return upperRecordObj;
         }
 
-        function ConvertMySQLDataType(mySqlDataType){
-            var dataType ="string";
-            if(mySqlDataType == "varchar" || 
-                mySqlDataType == "char" || 
-                mySqlDataType == "tinytext" || 
-                mySqlDataType == "text" || 
-                mySqlDataType == "mediumtext" || 
-                mySqlDataType == "longtext"){
-                dataType = "string";
-            }
-            else if (mySqlDataType == "datetime" ||
-                mySqlDataType == "timestamp"  ||
-                mySqlDataType == "date" ){
-                dataType = "date";
-            }
-            else if (mySqlDataType == "double" ||
-                mySqlDataType == "decimal"  ||
-                mySqlDataType == "float"  ||
-                mySqlDataType == "tinyint"  ||
-                mySqlDataType == "smallint"  ||
-                mySqlDataType == "mediumint"  ||
-                mySqlDataType == "int"  ||
-                mySqlDataType == "bigint" ){
-                dataType = "double";
-            }
-            return dataType;
-        }
-
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
                 $scope.InitDirective($scope, $element, $attrs, $ctrl);
@@ -974,8 +919,8 @@ app.directive('entry', ['$rootScope',
             InitializeEntry();
         }
         $scope.DefaultInitDirective = function(){
-            var getTableRequest = GetTableStructure();
-            getTableRequest.then(function(){
+            var getTableStructurePromiseResult = GetTableStructure();
+            getTableStructurePromiseResult.then(function(){
                 // the controls inside the directive was locked in the post render
                 if($scope.editMode == globalCriteria.editMode.Create){
                     TryToCallSetDefaultValue();   
@@ -984,17 +929,7 @@ app.directive('entry', ['$rootScope',
                 if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
                     $scope.UnLockAllControls();
             });
-     //        GetTableStructure(function(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
-     //        //console.log("Get Table Structure done"+$scope.editMode)
-     //            // the controls inside the directive was locked in the post render
-     //            //$scope.LockAllControls();
-     //            if($scope.editMode == globalCriteria.editMode.Create){
-     //                TryToCallSetDefaultValue();   
-     //            }
-     //            BackupNgModel();
-     //            if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
-					// $scope.UnLockAllControls();
-     //        });
+            
         }
 
         /**
@@ -1165,41 +1100,42 @@ app.directive('entry', ['$rootScope',
                 // }
             });
             return request;
-
-            var jqxhr = $.ajax({
-              type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-              data: JSON.stringify(submitData),
-              //dataType: "json", // [xml, json, script, or html]
-              dataType: "json",
-            });
-            jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in GetData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-            });
-            jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-                // textStatus
-                //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-                if(textStatus == "success"){
-                    $scope.$apply(function () {
-                        SetNgModel(data_or_JqXHR);
-                    });
-                }
-
-                if(typeof $scope.CustomGetDataResult == "function"){
-                    $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
-                }else{
-                    CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                }
-            });
         }
 
         $scope.SubmitData = function(){
         	console.log("<"+$element[0].tagName+"> submitting data")
-        	var editMode = $scope.editMode;
             var globalCriteria = $rootScope.globalCriteria;
 
         	$scope.LockAllControls();
+            
+            if(!ValidateSubmitData()){
+                return;
+            }
+            
+            var submitPromiseResult = SubmitData();
+            submitPromiseResult.catch(function(e){
+                // handle errors in processing or in error.
+                console.log("Submit data error catch in entry");
+                console.dir(e);
+            }).finally(function() {
+                // Always execute unlock on both error and success
+                $scope.UnLockAllControls();
+
+                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                if(typeof $scope.CustomSubmitDataResult == "function"){
+                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                        textStatus, 
+                        jqXHR_or_errorThrown, 
+                        $scope, 
+                        $element, 
+                        $attrs, 
+                        $ctrl);
+                }
+            });
+        }
+        function ValidateSubmitData(){
+            var isValid = true;
+        	var editMode = DirectiveProperties.getEditMode();
 
         	// if Buffer invalid, cannot send request
         	var isBufferValid = true;
@@ -1208,39 +1144,79 @@ app.directive('entry', ['$rootScope',
 			}else{
 				isBufferValid = ValidateBuffer();
 			}
+            isValid = isValid && isBufferValid;
 			if(!isBufferValid && editMode != globalCriteria.editMode.Delete){
                 if(editMode == globalCriteria.editMode.Create || 
                     editMode == globalCriteria.editMode.Amend)
                 $scope.UnLockAllControls();
-				return;
             }
 
             var tbStructure = ValidateTableStructure();
-
-            if(!tbStructure)
-                return;
-
+            isValid = isValid && tbStructure;
+            
+            return isValid;
+        }
+        function SubmitData(){
+            var submitPromise;
+        	var editMode = DirectiveProperties.getEditMode();
 			if(editMode == globalCriteria.editMode.Create){
 				if(typeof $scope.CreateData == "function"){
-	            	scope.CreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            	submitPromise = scope.CreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
-	            	CreateData($ctrl.ngModel);
+	            	submitPromise = CreateData($ctrl.ngModel);
 	            }
+                
+                submitPromise.then(function(responseObj) {
+                    var data_or_JqXHR = responseObj.data;
+                    var msg = data_or_JqXHR.Message;
+                    
+//                    $scope.DisplayMessageList.push(msg);
+
+                    ProcessResultMessage.addMsg(msg);
+                    $scope.DisplayMessageList = ProcessResultMessage.messgeList;
+
+                    RestoreNgModel();
+                }, function(reason) {
+                  console.error("Fail in CreateData() - "+tagName + ":"+$scope.programId)
+                  Security.HttpPromiseFail(reason);
+                });
 			}
 			else if(editMode == globalCriteria.editMode.Amend){
 				if(typeof $scope.UpdateData == "function"){
-	            	scope.UpdateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            	submitPromise = scope.UpdateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
-	            	UpdateData($ctrl.ngModel);
+	            	submitPromise = UpdateData($ctrl.ngModel);
 	            }
+                
+                submitPromise.then(function(responseObj) {
+                    var data_or_JqXHR = responseObj.data;
+                    var msg = data_or_JqXHR.Message;
+
+                    ProcessResultMessage.addMsg(msg);
+                }, function(reason) {
+                  console.error("Fail in UpdateData() - "+tagName + ":"+$scope.programId)
+                  Security.HttpPromiseFail(reason);
+                })
 			}
 			else if(editMode == globalCriteria.editMode.Delete){
 				if(typeof $scope.DeleteData == "function"){
-	            	scope.DeleteData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            	submitPromise = scope.DeleteData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
-	            	DeleteData($ctrl.ngModel);
+	            	submitPromise = DeleteData($ctrl.ngModel);
 	            }
+                submitPromise.then(function(responseObj) {
+                    var data_or_JqXHR = responseObj.data;
+                    var msg = data_or_JqXHR.Message;
+                    ProcessResultMessage.addMsg(msg);
+
+                    ClearCtrlNgModel();
+                    SetTableStructure($scope.tableStructure);
+                }, function(reason) {
+                  console.error("Fail in DeleteData() - "+tagName + ":"+$scope.programId)
+                  Security.HttpPromiseFail(reason);
+                })
 			}
+            return submitPromise;
         }
         $scope.LockAllControls = function(){
             LockAllControls();
@@ -1453,22 +1429,11 @@ app.directive('entry', ['$rootScope',
         }
 
         function CreateData(recordObj){
-        	var url = $rootScope.serverHost;
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
 
         	var tbStructure = $scope.tableStructure;
-        	//var tbStructure = $scope.tableStructure.itemsColumn;
         	var itemsColumn = tbStructure.DataColumns;
-    		// var itemsDatatype = tbStructure.itemsDataType;
-
-            // the key may be auto generate by server
-            // var isAllKeyExists = IsKeyInDataRow(recordObj);
-            // if(!isAllKeyExists){
-            //     alert("Key not complete in record, avoid to delete data.");
-            //     $scope.UnLockAllControls();
-            //     return;
-            // }
 
         	var createObj = {
                 "Header":{},
@@ -1490,91 +1455,20 @@ app.directive('entry', ['$rootScope',
             submitData.Action = "CreateData";
 
             var requestOption = {
-                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
                 method: 'POST',
                 data: JSON.stringify(submitData)
             };
 
             var request = HttpRequeset.send(requestOption);
-            request.then(function(responseObj) {
-                var data_or_JqXHR = responseObj.data;
-                var msg = data_or_JqXHR.Message;
-                // var status = data_or_JqXHR.Status;
-
-                ProcessResultMessage.addMsg(msg);
-
-                // if(status=="success"){
-                    RestoreNgModel();
-                // }
-            }, function(reason) {
-              console.error("Fail in CreateData() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
-            }).finally(function() {
-                // Always execute this on both error and success
-                $scope.UnLockAllControls();
-                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                // if(typeof $scope.CustomSubmitDataResult == "function"){
-                //     $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                //         textStatus, 
-                //         jqXHR_or_errorThrown, 
-                //         $scope, 
-                //         $element, 
-                //         $attrs, 
-                //         $ctrl);
-                // }
-            });
             return request;
-
-			var jqxhr = $.ajax({
-			  type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-			  data: JSON.stringify(submitData),
-			  //dataType: "json", // [xml, json, script, or html]
-			  dataType: "json",
-			});
-
-			jqxhr.done(function (data, textStatus, jqXHR) {
-                var msg = data.Message;
-                var status = data.Status;
-
-                ProcessResultMessage.addMsg(msg);
-
-				if(status=="success"){
-                    RestoreNgModel();
-				}
-
-			});
-			jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in CreateData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-			});
-			jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-				// textStatus
-				//"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-				$scope.UnLockAllControls();
-
-	            SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-	            if(typeof $scope.CustomSubmitDataResult == "function"){
-	            	$scope.CustomSubmitDataResult(data_or_JqXHR, 
-	            		textStatus, 
-	            		jqXHR_or_errorThrown, 
-	            		$scope, 
-	            		$element, 
-	            		$attrs, 
-	            		$ctrl);
-	            }
-			});
         }
 
         function UpdateData(recordObj){
-        	var url = $rootScope.serverHost;
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
 
         	var tbStructure = $scope.tableStructure;
-        	//var tbStructure = $scope.tableStructure.itemsColumn;
         	var itemsColumn = tbStructure.DataColumns;
-    		// var itemsDatatype = tbStructure.itemsDataType;
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
             if(!isAllKeyExists){
@@ -1607,85 +1501,20 @@ app.directive('entry', ['$rootScope',
             submitData.Action = "UpdateData";
 
             var requestOption = {
-                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
                 method: 'POST',
                 data: JSON.stringify(submitData)
             };
 
             var request = HttpRequeset.send(requestOption);
-            request.then(function(responseObj) {
-                var data_or_JqXHR = responseObj.data;
-                var msg = data_or_JqXHR.Message;
-
-                ProcessResultMessage.addMsg(msg);
-            }, function(reason) {
-              console.error("Fail in UpdateData() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
-            }).finally(function() {
-                // Always execute this on both error and success
-                $scope.UnLockAllControls();
-
-                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                // if(typeof $scope.CustomSubmitDataResult == "function"){
-                //     $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                //         textStatus, 
-                //         jqXHR_or_errorThrown, 
-                //         $scope, 
-                //         $element, 
-                //         $attrs, 
-                //         $ctrl);
-                // }
-            });
             return request;
-
-			var jqxhr = $.ajax({
-			  type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-			  data: JSON.stringify(submitData),
-			  //dataType: "json", // [xml, json, script, or html]
-			  dataType: "json",
-			});
-
-			jqxhr.done(function (data, textStatus, jqXHR) {
-                var msg = data.Message;
-                var status = data.Status;
-
-                ProcessResultMessage.addMsg(msg);
-			});
-			jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in UpdateData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-			});
-			jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-				// textStatus
-				//"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-				$scope.UnLockAllControls();
-				if(textStatus == "success"){
-
-	        	}
-
-	            SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-	            if(typeof $scope.CustomSubmitDataResult == "function"){
-	            	$scope.CustomSubmitDataResult(data_or_JqXHR, 
-	            		textStatus, 
-	            		jqXHR_or_errorThrown, 
-	            		$scope, 
-	            		$element, 
-	            		$attrs, 
-	            		$ctrl);
-	            }
-			});
         }
 
         function DeleteData(recordObj){
-        	var url = $rootScope.serverHost;
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
 
         	var tbStructure = $scope.tableStructure;
-        	//var tbStructure = $scope.tableStructure.itemsColumn;
         	var itemsColumn = tbStructure.DataColumns;
-    		// var itemsDatatype = tbStructure.itemsDataType;
             var keyColumn = tbStructure.keyColumn;
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
@@ -1720,135 +1549,69 @@ app.directive('entry', ['$rootScope',
             submitData.Action = "DeleteData";
 
             var requestOption = {
-                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
                 method: 'POST',
                 data: JSON.stringify(submitData)
             };
 
             var request = HttpRequeset.send(requestOption);
-            request.then(function(responseObj) {
-                var data_or_JqXHR = responseObj.data;
-                var msg = data_or_JqXHR.Message;
-                ProcessResultMessage.addMsg(msg);
-
-                ClearCtrlNgModel();
-                SetTableStructure($scope.tableStructure);
-            }, function(reason) {
-              console.error("Fail in DeleteData() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
-            }).finally(function() {
-                // Always execute this on both error and success
-                $scope.UnLockSubmitButton();
-
-                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                        textStatus, 
-                        jqXHR_or_errorThrown, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
-                        $ctrl);
-                }
-            });
             return request;
-
-			var jqxhr = $.ajax({
-			  type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-			  data: JSON.stringify(submitData),
-			  //dataType: "json", // [xml, json, script, or html]
-			  dataType: "json",
-			});
-
-			jqxhr.done(function (data, textStatus, jqXHR) {
-                var msg = data.Message;
-                var status = data.Status;
-                ProcessResultMessage.addMsg(msg);
-
-				ClearCtrlNgModel();
-				SetTableStructure($scope.tableStructure);
-			});
-			jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in DeleteData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-			});
-			jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-				// textStatus
-				//"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-				$scope.UnLockSubmitButton();
-				if(textStatus == "success"){
-
-	        	}
-
-	            SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-	            if(typeof $scope.CustomSubmitDataResult == "function"){
-	            	$scope.CustomSubmitDataResult(data_or_JqXHR, 
-	            		textStatus, 
-	            		jqXHR_or_errorThrown, 
-	            		$scope, 
-	            		$element, 
-	            		$attrs, 
-	            		$ctrl);
-	            }
-			});
         }
 
         $scope.Initialize();
     }
 
-        function FindEditModeEnum(attrEditMode){
-            var globalCriteria = $rootScope.globalCriteria;
-            var isEditModeFound = false;
-            var isEditModeNumeric = false;
-            var editMode = 0;
+    function FindEditModeEnum(attrEditMode){
+        var globalCriteria = $rootScope.globalCriteria;
+        var isEditModeFound = false;
+        var isEditModeNumeric = false;
+        var editMode = 0;
 
-            if(typeof(attrEditMode) != undefined){
-                if(attrEditMode != null && attrEditMode !=""){
-                    isEditModeFound = true;
+        if(typeof(attrEditMode) != undefined){
+            if(attrEditMode != null && attrEditMode !=""){
+                isEditModeFound = true;
+            }
+        }
+        if(isEditModeFound){
+            isEditModeNumeric = !isNaN(parseInt(attrEditMode));
+        }
+        if(!isEditModeFound){
+            editMode = globalCriteria.editMode.None;
+        }else{
+            if(isEditModeNumeric){
+                editMode = attrEditMode;
+            }
+            else{
+                attrEditMode = attrEditMode.toLowerCase();
+                if(attrEditMode == "none"){
+                    editMode = globalCriteria.editMode.None;
                 }
-            }
-            if(isEditModeFound){
-                isEditModeNumeric = !isNaN(parseInt(attrEditMode));
-            }
-            if(!isEditModeFound){
-                editMode = globalCriteria.editMode.None;
-            }else{
-                if(isEditModeNumeric){
-                    editMode = attrEditMode;
+                else if(attrEditMode == "create"){
+                    editMode = globalCriteria.editMode.Create;
+                }
+                else if(attrEditMode == "amend"){
+                    editMode = globalCriteria.editMode.Amend;
+                }
+                else if(attrEditMode == "delete"){
+                    editMode = globalCriteria.editMode.Delete;
+                }
+                else if(attrEditMode == "view"){
+                    editMode = globalCriteria.editMode.View;
+                }
+                else if(attrEditMode == "copy"){
+                    editMode = globalCriteria.editMode.Copy;
+                }
+                else if(attrEditMode == "null"){
+                    editMode = globalCriteria.editMode.Null;
                 }
                 else{
-                    attrEditMode = attrEditMode.toLowerCase();
-                    if(attrEditMode == "none"){
-                        editMode = globalCriteria.editMode.None;
-                    }
-                    else if(attrEditMode == "create"){
-                        editMode = globalCriteria.editMode.Create;
-                    }
-                    else if(attrEditMode == "amend"){
-                        editMode = globalCriteria.editMode.Amend;
-                    }
-                    else if(attrEditMode == "delete"){
-                        editMode = globalCriteria.editMode.Delete;
-                    }
-                    else if(attrEditMode == "view"){
-                        editMode = globalCriteria.editMode.View;
-                    }
-                    else if(attrEditMode == "copy"){
-                        editMode = globalCriteria.editMode.Copy;
-                    }
-                    else if(attrEditMode == "null"){
-                        editMode = globalCriteria.editMode.Null;
-                    }
-                    else{
-                        if(attrEditMode.indexOf("amend") >-1 && 
-                            attrEditMode.indexOf("delete") >-1 )
-                            editMode = globalCriteria.editMode.AmendAndDelete;
-                    }
+                    if(attrEditMode.indexOf("amend") >-1 && 
+                        attrEditMode.indexOf("delete") >-1 )
+                        editMode = globalCriteria.editMode.AmendAndDelete;
                 }
             }
-            return editMode;
         }
+        return editMode;
+    }
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
         var editModeNum = FindEditModeEnum(tAttrs.editMode);
