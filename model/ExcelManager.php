@@ -255,7 +255,8 @@ class ExcelManager extends DatabaseManager {
 
 						// if column value is not null and not empty
 						if( isset( $tempColValue ) )
-							if( !empty($tempColValue) && $tempColValue != NULL ){
+							//if( !empty($tempColValue) && $tempColValue != NULL ){
+							if( $tempColValue != NULL ){
 								
 								// 20150706, fixed: leave the cell blank when datetime value is zero.
 								$isEmptyDate = false;
