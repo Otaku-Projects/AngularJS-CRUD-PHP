@@ -1529,12 +1529,12 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/integer-types.html
-			case strpos($type, "tinyint") !== FALSE: // -128 to 127, 0 to 255
-			case strpos($type, "smallint") !== FALSE: // -32768 to 32767, 0 to 65535
-			case strpos($type, "mediumint") !== FALSE: // -8388608 to 8388607, 0 to 16777215
-			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
-			case strpos($type, "bigint") !== FALSE: // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
-				$valueOut = ($valueIn != "") ? intval($valueIn) : "NULL";
+			case $type === "tinyint": // -128 to 127, 0 to 255
+			case $type === "smallint": // -32768 to 32767, 0 to 65535
+			case $type === "mediumint": // -8388608 to 8388607, 0 to 16777215
+			case $type === "integer": // -2147483648 to 2147483647, 0 to 4294967295
+			case $type === "bigint": // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
+				$valueOut = ($valueIn != "" && $valueIn != null) ? intval($valueIn) : "NULL";
 				$typeCaseAs = "integer";
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
@@ -1548,7 +1548,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				if($this->IsNullOrEmptyString($valueIn)){
 					//$valueOut = date("Y-m-d");
 					$valueOut = NULL;
-		return $valueOut;
+					return $valueOut;
 					break;
 				}else{
 					$valueIn = trim($valueIn, "'");
@@ -1583,7 +1583,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				if($this->IsNullOrEmptyString($valueIn)){
 					//$valueOut = date("Y-m-d H:i:s");
 					$valueOut = NULL;
-		return $valueOut;
+					return $valueOut;
 					break;
 				}else{
 					$valueIn = trim($valueIn, "'");
