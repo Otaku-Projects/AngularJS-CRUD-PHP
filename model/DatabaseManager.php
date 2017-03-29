@@ -533,7 +533,7 @@ class DatabaseManager{
 		//$updateSetColumn = rtrim($updateSetColumn, " , ");		
 		//$nullOrEmptyColumn = rtrim($nullOrEmptyColumn, " , ");
 		// mapping a update sql
-		$sql_str = sprintf("SELECT * from %s where %s",
+		$sql_str = sprintf("SELECT * from `%s` where %s",
 			$this->table,
         	$updateWhereColumn);
 			
@@ -575,11 +575,11 @@ class DatabaseManager{
 		}
 		if($isWhere){
 			$whereSQL = rtrim($whereSQL, " and "); //would cut trailing 'and'.
-			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s where %s",
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from `%s` where %s",
 					$this->table,
 					$whereSQL);
 		}else{
-			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s",
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from `%s`",
 					$this->table);
 		}
 
@@ -613,11 +613,11 @@ class DatabaseManager{
 		}
 		if($isWhere){
 			$whereSQL = rtrim($whereSQL, " and "); //would cut trailing 'and'.
-			$sql_str = sprintf("SELECT count(*) as count from %s where %s",
+			$sql_str = sprintf("SELECT count(*) as count from `%s` where %s",
 					$this->table,
 					$whereSQL);
 		}else{
-			$sql_str = sprintf("SELECT count(*) as count from %s",
+			$sql_str = sprintf("SELECT count(*) as count from `%s`",
 					$this->table);
 		}
 
@@ -664,13 +664,13 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		}
 		if($isWhere){
 			$whereSQL = rtrim($whereSQL, " and "); //would cut trailing 'and'.
-			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s where %s LIMIT %s OFFSET %s",
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from `%s` where %s LIMIT %s OFFSET %s",
 					$this->table,
 					$whereSQL,
 					$tempLimit,
 					$tempTotalOffset);
 		}else{
-			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s LIMIT %s OFFSET %s",
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from `%s` LIMIT %s OFFSET %s",
 					$this->table,
 					$tempLimit,
 					$tempTotalOffset);
@@ -1102,7 +1102,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$deleteWhereColumn = rtrim($deleteWhereColumn, " AND ");
 		$nullOrEmptyColumn = rtrim($nullOrEmptyColumn, " , ");
 
-		$sql_str = sprintf("DELETE from %s where %s",
+		$sql_str = sprintf("DELETE from `%s` where %s",
 			$this->table,
 			$deleteWhereColumn);
 
@@ -1201,7 +1201,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 	}
 	function getTableIndex(){
 		//$this->ResetResponseArray();
-		$sql_str = sprintf("show index from %s",
+		$sql_str = sprintf("show index from `%s`",
 			$this->table);
 		$this->sql_str = $sql_str;
 		$this->responseArray = $this->queryForDataArray();
@@ -1532,7 +1532,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			case $type === "tinyint": // -128 to 127, 0 to 255
 			case $type === "smallint": // -32768 to 32767, 0 to 65535
 			case $type === "mediumint": // -8388608 to 8388607, 0 to 16777215
-			case $type === "integer": // -2147483648 to 2147483647, 0 to 4294967295
+			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
 			case $type === "bigint": // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
 				$valueOut = ($valueIn != "" && $valueIn != null) ? intval($valueIn) : "NULL";
 				$typeCaseAs = "integer";
