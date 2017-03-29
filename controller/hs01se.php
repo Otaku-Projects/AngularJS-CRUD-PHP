@@ -38,8 +38,10 @@ function GetData($requestData){
 	$senseiManager = new SenseiManager();
 	$offsetRecords = 0;
 	$offsetRecords = $requestData->Offset;
+	$pageNum = $requestData->PageNum;
 
-	$responseArray = $senseiManager->selectPage(2, $offsetRecords);
+	//$responseArray = $senseiManager->select();
+	$responseArray = $senseiManager->selectPage($offsetRecords);
 
 	// foreach ($createRows as $keyIndex => $rowItem) {
 	// 	// $senseiManager->Initialize();

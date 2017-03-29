@@ -22,7 +22,12 @@ function ExportData($httpRequest){
 	// array_push($tableList, "webuser");
 
 	// $excelManager->tableList = $tableList;
-	$excelManager->AddTable("Card");
+	// $excelManager->AddTable("Card");
+	// $excelManager->AddTable("CardContent");
+	// $excelManager->AddTable("CardType");
+	// $excelManager->AddTable("SpellClass");
+	// $excelManager->AddTable("CardSpellClass");
+	
 	$excelManager->AddTable("CardContent");
 
 	// $excelManager->SetExportColumnSequence("profile", "fullName");
@@ -66,6 +71,9 @@ function ImportData($httpRequest){
 	$importManager->Initialize();
 	$importManager->AddTable("Card");
 	$importManager->AddTable("CardContent");
+	$importManager->AddTable("CardType");
+	$importManager->AddTable("SpellClass");
+	$importManager->AddTable("CardSpellClass");
 
 	$responseArray = $importManager->CreateResponseArray();
 

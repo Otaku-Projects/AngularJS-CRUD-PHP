@@ -54,7 +54,10 @@ if($requestType === "select"){
 			$pageNum = 1;
 	}
 	//$webuserManager->selectStep = $recordPerPage;
-	$responseArray = $webuserManager->selectPage($pageNum);
+	$offsetRecords = 0;
+
+	//$responseArray = $senseiManager->select();
+	$responseArray = $senseiManager->selectPage($offsetRecords);
 }
 else if($requestType === "count"){
 	$responseArray = $webuserManager->count();

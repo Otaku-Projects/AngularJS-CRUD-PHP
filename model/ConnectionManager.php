@@ -1,6 +1,7 @@
 <?php
 date_default_timezone_set('Asia/Hong_Kong');
 
+require_once 'config.php';
 require_once 'Core.php';
 require_once 'FormSubmitManager.php';
 require_once 'ManagerLoader.php';

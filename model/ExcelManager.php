@@ -1,6 +1,6 @@
 <?php
 // require_once 'DatabaseManager.php';
-require_once '../third-party/PHPExcel_1.8.0/PHPExcel.php';
+require_once '../third-party/PHPExcel_1.8.1/PHPExcel.php';
 // require_once 'SimpleTableManager.php';
 
 class ExcelManager extends DatabaseManager {
@@ -112,10 +112,48 @@ class ExcelManager extends DatabaseManager {
 
 			//$excelCellCoordinate = $this->getNameFromNumber($columnIndex).$rowCount;
 			$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
+			$excelColumnCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).":".PHPExcel_Cell::stringFromColumnIndex($columnIndex);
 			if(parent::IsSystemField($headerColumn))
 				continue;
 			//$objPHPExcel->setActiveSheetIndex(0)->SetCellValue($excelCellCoordinate, $headerColumn);
 			$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $headerColumn);
+
+			$tempDataType = $this->SearchDataType($tableObject->dataSchema['data'], 'Field', $headerColumn)[0]['Type'];
+
+			switch (true) {
+				case strpos($tempDataType, "char") !== FALSE:
+				case strpos($tempDataType, "varchar") !== FALSE:
+				case strpos($tempDataType, "text") !== FALSE:
+					$objPHPExcel->getActiveSheet()->getStyle($excelColumnCoordinate)
+					    ->getNumberFormat()
+					    ->setFormatCode('@');
+					break;
+				case strpos($tempDataType, "tinyint") !== FALSE:
+				case strpos($tempDataType, "smallint") !== FALSE:
+				case strpos($tempDataType, "mediumint") !== FALSE:
+				case strpos($tempDataType, "int") !== FALSE:
+				case strpos($tempDataType, "bigint") !== FALSE:
+					preg_match_all('!\d+!', $tempDataType, $columnLength);
+					if(isset($columnLength[0])){
+						$format = str_pad('',$columnLength[0][0],"#");
+						$objPHPExcel->getActiveSheet()->getStyle($excelColumnCoordinate)
+						    ->getNumberFormat()
+						    ->setFormatCode($format);
+					}
+					break;
+				case strpos($tempDataType, "float") !== FALSE:
+				case strpos($tempDataType, "double") !== FALSE:
+					preg_match_all('!\d+!', $tempDataType, $columnLength);
+					// print_r($columnLength[0][0]);
+					if(isset($columnLength[0][0]) && isset($columnLength[0][1])){
+						$format1 = str_pad('',$columnLength[0][0],"#");
+						$format2 = str_pad('',$columnLength[0][1],"0");
+						$objPHPExcel->getActiveSheet()->getStyle($excelColumnCoordinate)
+						    ->getNumberFormat()
+						    ->setFormatCode("$format1.$format2");
+					}
+					break;
+			}
 
 
 			// Start - format whole column as datetime format if datetime column
@@ -251,29 +289,9 @@ class ExcelManager extends DatabaseManager {
 							continue;
 						$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
 
-						$tempDataType = $this->SearchDataType($tableObject->dataSchema['data'], 'Field', $colName)[0]['Type'];						
+						$tempDataType = $this->SearchDataType($tableObject->dataSchema['data'], 'Field', $colName)[0]['Type'];
 
-						// if column value is not null and not empty
-						if( isset( $tempColValue ) )
-							//if( !empty($tempColValue) && $tempColValue != NULL ){
-							if( $tempColValue != NULL ){
-								
-								// 20150706, fixed: leave the cell blank when datetime value is zero.
-								$isEmptyDate = false;
-								switch ($tempDataType) {
-									case $tempDataType==="date":
-									case $tempDataType==="datetime":
-									case $tempDataType==="timestamp":
-									case $tempDataType==="time":
-										if(strtotime($tempColValue) == 0)
-											$isEmptyDate = true;
-										break;
-								}
-								
-								if(!$isEmptyDate)
-									$objPHPExcel->getActiveSheet()->setCellValue($excelCellCoordinate, $tempColValue);
-							}
-
+								// echo $tempDataType;
 
 						/* if data field is date/time/datetime/timestamp */
 						/* format the cell as the related format */
@@ -299,6 +317,75 @@ class ExcelManager extends DatabaseManager {
 								    ->setFormatCode('hh:mm:ss');
 								break;
 						}
+
+						// switch (true) {
+						// 	case strpos($tempDataType, "char") !== FALSE:
+						// 	case strpos($tempDataType, "varchar") !== FALSE:
+						// 	case strpos($tempDataType, "text") !== FALSE:
+						// 	    $objRichText = new PHPExcel_RichText();
+						// 		$$tempColValue = $objRichText->createText($tempColValue);
+						// 		break;
+						// }
+
+						// switch (true) {
+						// 	case strpos($tempDataType, "char") !== FALSE:
+						// 	case strpos($tempDataType, "varchar") !== FALSE:
+						// 	case strpos($tempDataType, "text") !== FALSE:
+						// 		$objPHPExcel->getActiveSheet()->getStyle($excelCellCoordinate)
+						// 		    ->getNumberFormat()
+						// 		    ->setFormatCode('@');
+						// 		break;
+						// 	case strpos($tempDataType, "tinyint") !== FALSE:
+						// 	case strpos($tempDataType, "smallint") !== FALSE:
+						// 	case strpos($tempDataType, "mediumint") !== FALSE:
+						// 	case strpos($tempDataType, "int") !== FALSE:
+						// 	case strpos($tempDataType, "bigint") !== FALSE:
+						// 		preg_match_all('!\d+!', $tempDataType, $columnLength);
+						// 		if(isset($columnLength[0])){
+						// 			$format = str_pad('',$columnLength[0][0],"#");
+						// 			$objPHPExcel->getActiveSheet()->getStyle($excelCellCoordinate)
+						// 			    ->getNumberFormat()
+						// 			    ->setFormatCode($format);
+						// 		}
+						// 		break;
+						// 	case strpos($tempDataType, "float") !== FALSE:
+						// 	case strpos($tempDataType, "double") !== FALSE:
+						// 		preg_match_all('!\d+!', $tempDataType, $columnLength);
+						// 		// print_r($columnLength[0][0]);
+						// 		if(isset($columnLength[0][0]) && isset($columnLength[0][1])){
+						// 			$format1 = str_pad('',$columnLength[0][0],"#");
+						// 			$format2 = str_pad('',$columnLength[0][1],"0");
+						// 			$objPHPExcel->getActiveSheet()->getStyle($excelCellCoordinate)
+						// 			    ->getNumberFormat()
+						// 			    ->setFormatCode("$format1.$format2");
+						// 		}
+						// 		break;
+						// }
+
+
+						// if column value is not null and not empty
+						if( isset( $tempColValue ) )
+							//if( !empty($tempColValue) && $tempColValue != NULL ){
+							if( $tempColValue != NULL ){
+								
+								// 20150706, fixed: leave the cell blank when datetime value is zero.
+								$isEmptyDate = false;
+								switch ($tempDataType) {
+									case $tempDataType==="date":
+									case $tempDataType==="datetime":
+									case $tempDataType==="timestamp":
+									case $tempDataType==="time":
+										if(strtotime($tempColValue) == 0 || empty($tempColValue))
+											$isEmptyDate = true;
+										break;
+								}
+								
+								if(!$isEmptyDate){
+								   // echo $tempColValue;
+									$objPHPExcel->getActiveSheet()->setCellValue($excelCellCoordinate, $tempColValue);
+								}
+							}
+
 						$columnIndex++;
 					}
 					// Increment the Excel row counter
@@ -503,19 +590,22 @@ class ExcelManager extends DatabaseManager {
 
 		// echo $this->filenamePost;
 
-		// return;
-		//	Change these values to select the Rendering library that you wish to use
-		//		and its directory location on your server
-		//$rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
-		//$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
-		$rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
-		//$rendererLibrary = 'tcPDF5.9';
-		$rendererLibrary = 'dompdf-master/';
-		//$rendererLibrary = 'domPDF0.6.0beta3';
-		//$rendererLibraryPath = dirname(__FILE__).'/../../' . $rendererLibrary;
-		//$rendererLibraryPath = dirname(__FILE__).'/../third-party/'. $rendererLibrary;
-		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
+		// Change these values to select the Rendering library that you wish to use and its directory location on your server
+
+		// $rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
+		// $rendererLibrary = 'dompdf/dompdf-0.6.2/';
+		// local the dompdf enginer folder, PHPExcel 1.8.0+ not support dompdf 0.7.0+
+		//$rendererLibrary = 'dompdf/dompdf-0.7.0/';
+
+		// extremely slow performance
+		// $rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+		// $rendererLibrary = 'TCPDF/TCPDF-6.2.13/';
+
+		$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
+		$rendererLibrary = 'MPDF/mpdf_6.1.0/';
 		
+		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
+
 		//$rendererLibraryPath = $this->base_Path["serverHost"].$this->base_Path["thrid-party"].$rendererLibrary;
 
 		//echo "<br>$rendererLibraryPath<br>";
@@ -523,7 +613,7 @@ class ExcelManager extends DatabaseManager {
 				
 		switch($this->outputAsFileType){
 			case "xlsx":
-				// // Redirect output to a client¡¦s web browser (Excel2007)
+				// // Redirect output to a clientÂ¡Â¦s web browser (Excel2007)
 				// header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 				// header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 				// header('Cache-Control: max-age=0');
@@ -541,7 +631,7 @@ class ExcelManager extends DatabaseManager {
 				$objWriter->save($exportedPath);
 				break;
 			case "xls":
-				// // Redirect output to a client¡¦s web browser (Excel5)
+				// // Redirect output to a clientÂ¡Â¦s web browser (Excel5)
 				// header('Content-Type: application/vnd.ms-excel');
 				// header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 				// header('Cache-Control: max-age=0');
@@ -553,6 +643,9 @@ class ExcelManager extends DatabaseManager {
 				// header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
 				// header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 				// header ('Pragma: public'); // HTTP/1.0
+
+				$sheetCount = $excel->getSheetCount();
+				$objWriter->setSheetIndex(1);
 				
 				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 				// $objWriter->save('php://output');
@@ -572,7 +665,7 @@ class ExcelManager extends DatabaseManager {
 				}
 				
 				
-				// // Redirect output to a client¡¦s web browser (PDF)
+				// // Redirect output to a clientÂ¡Â¦s web browser (PDF)
 				// header('Content-Type: application/pdf');
 				// header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 				// header('Cache-Control: max-age=0');
@@ -665,7 +758,7 @@ class ExcelManager extends DatabaseManager {
 				
 		switch($this->outputAsFileType){
 			case "xlsx":
-				// Redirect output to a client¡¦s web browser (Excel2007)
+				// Redirect output to a clientÂ¡Â¦s web browser (Excel2007)
 				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 				header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 				header('Cache-Control: max-age=0');
@@ -683,7 +776,7 @@ class ExcelManager extends DatabaseManager {
 				// $objWriter->save($exportedPath);
 				break;
 			case "xls":
-				// Redirect output to a client¡¦s web browser (Excel5)
+				// Redirect output to a clientÂ¡Â¦s web browser (Excel5)
 				header('Content-Type: application/vnd.ms-excel');
 				header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 				header('Cache-Control: max-age=0');
@@ -714,7 +807,7 @@ class ExcelManager extends DatabaseManager {
 				}
 				
 				
-				// Redirect output to a client¡¦s web browser (PDF)
+				// Redirect output to a clientÂ¡Â¦s web browser (PDF)
 				header('Content-Type: application/pdf');
 				header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 				header('Cache-Control: max-age=0');
@@ -822,6 +915,11 @@ class ExcelManager extends DatabaseManager {
 			foreach($importThisRow as $columnName => $cellValue) {
 				// 20161019, keithpoon, 0 should not seem as null or empty in some real case
 				// if(!empty($cellValue))
+
+				// 20161113, keithpoon, try to set NULL to datetime field if it is null
+				// if(is_null($cellValue))
+				// 	$_tableManager->$columnName = NULL;
+				// else
 					$_tableManager->$columnName = $cellValue;
 			}
 
@@ -974,10 +1072,11 @@ class ExcelManager extends DatabaseManager {
 				if((bool)$columnFound){
 					// 20161019, keithpoon, 0 should not seem as null or empty in some real case
 					// if(is_null($cell->getValue()) || empty($cell->getValue())){
-					if(is_null($cell->getValue()))
+					$cellValue = $cell->getValue();
+					if(is_null($cellValue) || $cellValue == "")
 					{
 						$isWholeRowEmpty = $isWholeRowEmpty && true;
-						$excelArray[$rowIndex][$headerName] = NULL;
+						$excelArray[$rowIndex][$headerName] = $cellValue;
 						$colIndex++;
 						continue;
 					}else{
@@ -987,10 +1086,9 @@ class ExcelManager extends DatabaseManager {
 					// extract the Data Type
 					$columnInfo = $_tableManager->getColumnInfo($headerName);
 
-					if(strpos($columnInfo['Type'], '(') >= 0)
-						$columnInfo['Type'] = substr($columnInfo['Type'], 0, strlen($columnInfo['Type']) - strpos($columnInfo['Type'], '('));
+					if(strpos($columnInfo['Type'], '(') !== false)
+						$columnInfo['Type'] = substr($columnInfo['Type'], 0, strpos($columnInfo['Type'], '('));
 					
-					$cellValue = $cell->getValue();
 					$format = "Y-m-d H:i:s";
 					
 					$type = $columnInfo['Type'];
@@ -1003,7 +1101,10 @@ class ExcelManager extends DatabaseManager {
 								//$cellValue = date($format, PHPExcel_Shared_Date::ExcelToPHP($dateTimeValue, true, date_default_timezone_get()));
 								//$cellValue = date($format, PHPExcel_Shared_Date::ExcelToPHP($dateTimeValue, true, 'Asia/Hong_Kong'));
 								//$cellValue = date($format, PHPExcel_Shared_Date::ExcelToPHP($dateTimeValue, true, 'UTC'));
+								// echo "cellValue:$cellValue, dateTimeValue:$dateTimeValue";
 								$cellValue = date($format, PHPExcel_Shared_Date::ExcelToPHP($dateTimeValue));
+								// echo "cellValue2:$cellValue";
+
 								
 								$tempDateObj = new DateTime();
 								$tempDateObj = date_create_from_format($format, $cellValue);

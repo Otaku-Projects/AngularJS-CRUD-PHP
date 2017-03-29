@@ -23,9 +23,10 @@ function GetData($requestData){
 	$senseiManager = new SenseiManager();
 	$offsetRecords = 0;
 	$offsetRecords = $requestData->Offset;
+	$pageNum = $requestData->PageNum;
 
-	$responseArray = $senseiManager->select();
-	// $responseArray = $senseiManager->selectPage(1, $offsetRecords, 10);
+	//$responseArray = $senseiManager->select();
+	$responseArray = $senseiManager->selectPage($offsetRecords);
 
 	// foreach ($createRows as $keyIndex => $rowItem) {
 	// 	// $senseiManager->Initialize();

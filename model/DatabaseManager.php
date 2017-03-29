@@ -5,7 +5,7 @@
  * @version 3.5
  */
 //require_once dirname(__FILE__).'/../globalVariable.php';
-require_once dirname(__FILE__).'/config.php';
+// require_once dirname(__FILE__).'/config.php';
 
 class DatabaseManager{
 	private $hostname_fyp;
@@ -637,10 +637,11 @@ Note that using call_user_func_* functions can't be used to call private or prot
 select(), count(), selectPage, insert(), update(), delete() must be public
 // http://stackoverflow.com/questions/18526060/why-should-one-prefer-call-user-func-array-over-regular-calling-of-function
 */
-	public function selectPage($pageNum=1, $tempOffset = 10, $tempLimit = 10){
+	public function selectPage($tempOffset = 0, $tempLimit = 10){
 		// $tempStep = $this->selectStep;
 		// $tempLimit = $this->selectStep;
-		$tempTotalOffset = ($pageNum-1) * $tempOffset;
+		// $tempTotalOffset = ($pageNum-1) * $tempOffset;
+		$tempTotalOffset = $tempOffset;
 
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
 

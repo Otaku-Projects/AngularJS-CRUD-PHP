@@ -25,7 +25,13 @@ app.directive('logout', ['Security', '$rootScope', function(Security, $rootScope
  * @param {String} program-id - assign the program id to implement the behavior of CRUD
  * @param {String} edit-mode - define the mode [create | view | amend | delete |]
  */
-app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManager', function($rootScope, $timeout, Core, Security, LockManager) {
+app.directive('pageview', ['$rootScope', 
+    '$timeout', 
+    'Core', 
+    'Security', 
+    'LockManager', 
+    'HttpRequeset',
+    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
     function PageViewConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.pageviewCtrl;
@@ -85,9 +91,12 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 
             $scope.pageNum = 1;
 
-            $ctrl.ngModel = $scope.currentPageRecords;
+            $ctrl.ngModel = {};
+            // $ctrl.ngModel = $scope.currentPageRecords;
 
             $scope.DisplayMessage = "";
+
+            $scope.getNextPageTimes = 0;
     	}
 
         function EventListener(){
@@ -96,13 +105,18 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
         function ValidateBuffer(){
             console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateBuffer() function in webapge"); 
             return true;
-        }        
+        }
         function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
             var progID = $scope.programId;
             //console.log("scope.$id:"+$scope.$id+", programId:"+progID+", must implement $scope.CustomGetDataResult() function in webapge");
         }
 
     	function SetRecordStructure(dataJson){
+            // if structure already defined, escape the function
+            if(!jQuery.isEmptyObject(recordStructure)){
+                return;
+            }
+            //console.log("Pageview SetRecordStructure() execute.");
             var tableSchema = dataJson.ActionResult.table_schema;
 
         	for(var rowIndex in tableSchema){
@@ -129,12 +143,17 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
         	}
             // recordStructure.items = [];
     	}
-    	function AppendToDataSource(dataJson){
+    	function AppendToDataSource(pageNum, dataJson){
         	var singleItem;
             var tableSchema = dataJson.ActionResult.table_schema;
+            var numOfRecordPerPage = $scope.numOfRecordPerPage;
+
+            var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
+            var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
 
         	var dataSourceArray = jQuery.extend([], $scope.dataSource);
 
+            var counter = recordNumberStart;
         	// add each getted row into DataSource
         	for(var itemRow in dataJson.ActionResult.data){
         		var singleItem = dataJson.ActionResult.data[itemRow];
@@ -162,16 +181,17 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
         			newRecordRow[columnName] = newColumn;
             	} // columns end
             	//dataSourceArray.psuh(newRecordRow);
-            	dataSourceArray[dataSourceArray.length] = newRecordRow;
+            	// dataSourceArray[dataSourceArray.length] = newRecordRow;
+                dataSourceArray[counter] = newRecordRow;
+                counter++;
 
                 // append the item records
                 newRecordRow.Items = singleItem.Items;
         	}
         	$scope.dataSource = jQuery.extend([], dataSourceArray);
-
     	}
     	function SortingTheDataSource(){
-    		$scope.sortedDataSource = jQuery.extend([], $scope.dataSource);
+            $scope.sortedDataSource = jQuery.extend([], $scope.dataSource);
     	}
 
     	function GetRecordStructure(){
@@ -186,13 +206,11 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
                 $scope.DefaultInitDirective();
             }
         }
-        function TryToCallSetCriteriaBeforeGet(lastIndex, criteriaObj){
+        function TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj){
             if(typeof $scope.SetCriteriaBeforeGet == "function"){
-                criteriaObj = $scope.SetCriteriaBeforeGet(lastIndex, criteriaObj);
-                $scope.GetNextPageRecords(lastIndex, criteriaObj);
-            }else{
-                $scope.GetNextPageRecords(lastIndex, criteriaObj);
+                criteriaObj = $scope.SetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
             }
+            $scope.GetNextPageRecords(pageNum, lastRecordIndex, criteriaObj);
         }
 
         $scope.Initialize = function(){
@@ -248,21 +266,23 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
                 $scope.CustomSelectedToRecord(sRecord, $scope, $element, $ctrl);
             }else{
                 console.log("<"+$element[0].tagName+">" +" Directive function CustomSelectedToRecord() should be override.");
-                $scope.ClosePageView();
             }
+            
+            if(typeof $scope.ClosePageView == "function")
+                $scope.ClosePageView();
         }
 
         $scope.ClearNRefreshData = function(){
             var pageNum = $scope.pageNum;
 
             $scope.DisplayMessage = "";
-            $scope.dataSource = [];
-            $scope.sortedDataSource = [];
+            // $scope.dataSource = [];
+            // $scope.sortedDataSource = [];
             $scope.currentPageRecords = {};
             $ctrl.ngModel = {};
-            $scope.maxRecordsCount = -1;
+            // $scope.maxRecordsCount = -1;
 
-            $scope.TryToDisplayPageNum(pageNum);
+            $scope.TryToDisplayPageNum(pageNum, true);
         }
         $scope.LockAllControls = function(){
             LockAllControls();
@@ -301,8 +321,12 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
     	$scope.GotoLastPageRecord = function(){
     		if($scope.pageNum == $scope.lastPageNum)
     			return;
-    		if($scope.lastPageNum != -1){
-    			$scope.pageNum = $scope.lastPageNum;
+            if($scope.lastPageNum == -1){
+                return;
+            }
+            if($scope.lastPageNum != -1){
+    			// $scope.pageNum = $scope.lastPageNum;
+                $scope.pageNum++;
     			$scope.TryToDisplayPageNum($scope.pageNum);
     			return;
     		}
@@ -316,29 +340,34 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
     		$scope.TryToDisplayPageNum(pageNum);
     	}
 
-    	$scope.TryToDisplayPageNum = function(pageNum){
+    	$scope.TryToDisplayPageNum = function(pageNum, clearNRefresh){
     		$scope.DisplayMessage = "";
     		var numOfRecordPerPage = $scope.numOfRecordPerPage;
     		// Check is sortedDataSource contains enough records
     		// pageNum = 2, numOfRecordPerPage = 10, record start from 11 to 20
-    		var recordNumberStart = pageNum * numOfRecordPerPage - numOfRecordPerPage + 1;
-    		var recordNumberEnd = pageNum * numOfRecordPerPage;
+    		var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
+    		var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
     		var isAllRecordsExists = true;
-    		for(var recordCounter = recordNumberStart-1; recordCounter < recordNumberEnd; recordCounter++){
-    			if(typeof($scope.sortedDataSource[recordCounter]) == "undefined"){
-    				isAllRecordsExists = false;
-    				break;
-    			}
-    		}
 
-    		if($scope.maxRecordsCount != $scope.dataSource.length){
+            if(typeof(clearNRefresh) == "undefined"){
+                clearNRefresh = false;
+            }
+
+            if(!clearNRefresh){
+        		for(var recordCounter = recordNumberStart; recordCounter < recordNumberEnd; recordCounter++){
+        			if(typeof($scope.sortedDataSource[recordCounter]) == "undefined"){
+        				isAllRecordsExists = false;
+        				break;
+        			}
+        		}
+            }else{
+                isAllRecordsExists = false;
+            }
+
+    		if($scope.maxRecordsCount != $scope.dataSource.length || clearNRefresh){
 	    		// Get data if records not enough
 	    		if(!isAllRecordsExists){
-	    			var lastKeyObj = {};
                     var criteriaObj = $scope.criteriaObj;
-	    			if($scope.sortedDataSource.length>0){
-	    				lastKeyObj = $scope.sortedDataSource[$scope.sortedDataSource.length-1];
-	    			}
 
 	    			// pageview need ValidateBuffer(), for inquiry the records with some criteria
 	    			// if Buffer invalid, cannot send request
@@ -351,7 +380,7 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 
                     var lastRecordIndex = $scope.sortedDataSource.length;
 
-                    TryToCallSetCriteriaBeforeGet(lastRecordIndex, criteriaObj);
+                    TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
 
 	    			return;
 	    		}
@@ -364,35 +393,35 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
     		console.log("Going to display the Page no.("+pageNum + ") records.");
     		var numOfRecordPerPage = $scope.numOfRecordPerPage;
 
-    		var recordNumberStart = pageNum * numOfRecordPerPage - numOfRecordPerPage + 1;
-    		var recordNumberEnd = pageNum * numOfRecordPerPage;
+    		var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
+    		var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
 
-    		if(typeof($scope.sortedDataSource[recordNumberStart-1]) == "undefined"){
+            var currentPageRecords = [];
+
+    		if(typeof($scope.sortedDataSource[recordNumberStart]) == "undefined"){
 
     		}else{
-
 	    		// assign records to current page according to the page number
-	    		var currentPageRecords = [];
-	    		for(var recordCounter = recordNumberStart-1; recordCounter < recordNumberEnd; recordCounter++){
+	    		for(var recordCounter = recordNumberStart; recordCounter < recordNumberEnd; recordCounter++){
 
 	    			if(recordCounter >= $scope.maxRecordsCount && $scope.maxRecordsCount > 0)
 	    				break;
 	    			var newRow = jQuery.extend({}, $scope.sortedDataSource[recordCounter]);
-	    			currentPageRecords[currentPageRecords.length] = newRow;
+                    if(!jQuery.isEmptyObject(newRow))
+	    			    currentPageRecords[currentPageRecords.length] = newRow;
 	    		}
     		}
 
-    		$scope.currentPageRecords = [];
-    		$scope.currentPageRecords = jQuery.extend([], currentPageRecords);
-    		$ctrl.ngModel = jQuery.extend([], currentPageRecords);
+            $ctrl.ngModel = $scope.currentPageRecords = currentPageRecords;
     	}
 
-    	$scope.GetNextPageRecords = function(lastIndex, criteriaObj){
+    	$scope.GetNextPageRecords = function(pageNum, lastRecordIndex, criteriaObj){
     		$scope.LockAllControls();
 
-        	var url = $rootScope.serverHost;
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
+            var pageNum = $scope.pageNum;
+            var recordOffset = (pageNum-1) * $scope.numOfRecordPerPage;
 
             // $scope.DisplayMessage = "";
         	// Convert the Key Value to Upper Case
@@ -416,72 +445,73 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
-				"Offset": lastIndex,
+                "PageNum": pageNum,
+				"Offset": recordOffset,
 				criteria: criteriaObj
 			};
             submitData.Action = "GetData";
-			var jqxhr = $.ajax({
-			  type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-			  data: JSON.stringify(submitData),
-			  //dataType: "json", // [xml, json, script, or html]
-			  dataType: "json",
-			});
-            jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+
+            var requestOption = {
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            $scope.getNextPageTimes+1;
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                // console.dir(data_or_JqXHR);
+                $scope.UnLockAllControls();
+                if(typeof(data_or_JqXHR.ActionResult.data) == "undefined")
+                {
+                    if($scope.getNextPageTimes == 1){
+                        $scope.DisplayMessage = "Record Not Found.";
+                    }else{
+                        $scope.DisplayMessage = "End of records.";
+                    }
+
+                    $scope.maxRecordsCount = $scope.dataSource.length;
+
+                }
+
+                SetRecordStructure(data_or_JqXHR);
+                AppendToDataSource(pageNum, data_or_JqXHR);
+                SortingTheDataSource();
+                DisplayPageNum(pageNum);
+                // Object.keys Browser compatibility
+                // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+                var recordCount = Object.keys(data_or_JqXHR.ActionResult.data).length;
+                if(recordCount < $rootScope.serEnv.phpRecordLimit){
+                     // $scope.maxRecordsCount = recordCount;
+                     $scope.maxRecordsCount = $scope.sortedDataSource.length;
+                }
+            }, function(reason) {
               console.error("Fail in GetNextPageRecords() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-            });
-			jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-				// textStatus
-				//"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-
-				$scope.UnLockAllControls();
-				if(textStatus == "success"){
-					if(typeof(data_or_JqXHR.ActionResult.data) == "undefined")
-					{
-						if($scope.maxRecordsCount > 0)
-							$scope.DisplayMessage = "End of records.";
-						else
-							$scope.DisplayMessage = "Record Not Found.";
-
-						$scope.maxRecordsCount = $scope.dataSource.length;
-
-					}else{
-                        $scope.DisplayMessage = "";
-                        // Object.keys Browser compatibility
-                        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
-                        var recordCount = Object.keys(data_or_JqXHR.ActionResult.data).length;
-                        if(recordCount <= 100)
-                            $scope.maxRecordsCount = recordCount;
-					}
-                    $scope.$apply(function(){
-                        SetRecordStructure(data_or_JqXHR);
-                        AppendToDataSource(data_or_JqXHR);
-                        SortingTheDataSource();
-                    })
-
-	        	}
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
 
                 if(typeof $scope.CustomGetDataResult == "function"){
-                    $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
+                    // $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
                 }else{
-                    CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                    // CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
                 }
-			});
+            });
+
     	}
 
-		$scope.$watch(
-		  // This function returns the value being watched. It is called for each turn of the $digest loop
-		  function() { return $scope.sortedDataSource; },
-		  // This is the change listener, called when the value returned from the above function changes
-		  function(newValue, oldValue) {
-			if ( newValue !== oldValue ) {
-		  		if(newValue.length>0){
-			      DisplayPageNum($scope.pageNum);
-			    }
-			}
-		  }
-		);
+		// $scope.$watch(
+		//   // This function returns the value being watched. It is called for each turn of the $digest loop
+		//   function() { return $scope.sortedDataSource; },
+		//   // This is the change listener, called when the value returned from the above function changes
+		//   function(newValue, oldValue) {
+		// 	if ( newValue !== oldValue ) {
+		//   		if(newValue.length>0){
+		// 	      DisplayPageNum($scope.pageNum);
+		// 	    }
+		// 	}
+		//   }
+		// );
 
 		$scope.$watch(
 		  // This function returns the value being watched. It is called for each turn of the $digest loop
@@ -612,7 +642,13 @@ app.directive('pageview', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMa
  * @param {String} program-id - assign the program id to implement the behavior of CRUD
  * @param {String} edit-mode - define the mode [create | view | amend | delete |]
  */
-app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManager', function($rootScope, $timeout, Core, Security, LockManager) {
+app.directive('entry', ['$rootScope', 
+    '$timeout', 
+    'Core', 
+    'Security', 
+    'LockManager', 
+    'HttpRequeset', 
+    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
     function EntryConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.entryCtrl;
@@ -640,8 +676,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             }
             else
             	alert("<entry> Must declare a attribute of program-id");
-
-            $scope.DisplayMessageList = [];
         }
 
         $scope.BackupNgModel = function(){
@@ -661,7 +695,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             //$ctrl.ngModel = angular.copy(backupNgModelObj);
             // $ctrl.ngModel = jQuery.extend([], backupNgModelObj);
             jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
-
         }
 
         function SetNgModel(dataJson){
@@ -711,7 +744,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         	}
 
         }
-        function GetTableStructure(callbackFunc){
+        function GetTableStructure(){
             // $scope.LockAllControls();
         	var url = $rootScope.serverHost;
         	var clientID = Security.GetSessionID();
@@ -723,30 +756,49 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             submitData.Action = "GetTableStructure";
             var editMode = $scope.editMode;
             var globalCriteria = $rootScope.globalCriteria;
-        	var jqxhr = $.ajax({
-			  type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-			  data: JSON.stringify(submitData),
-			  //dataType: "json", // [xml, json, script, or html]
-			  dataType: "json",
-			});
-			jqxhr.done(function (data, textStatus, jqXHR) {
-				console.log("ProgramID: "+programId+", Table structure obtained.")
-				SetTableStructure(data);
-                // if(editMode == globalCriteria.editMode.Create || editMode == globalCriteria.editMode.Amend)
-                //     $scope.UnLockAllControls();
-                // else if(editMode == globalCriteria.editMode.Delete)
-                //     $scope.UnLockSubmitButton();
-			});
-			jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+
+            var requestOption = {
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                console.log("ProgramID: "+programId+", Table structure obtained.")
+                var data = responseObj.data;
+                SetTableStructure(data);
+            }, function(reason) {
               console.error("Fail in GetTableStructure() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-			});
-            jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-                // textStatus
-                //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-                callbackFunc(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
             });
+
+            return request;
+
+   //      	var jqxhr = $.ajax({
+			//   type: 'POST',
+   //            url: url+'/model/ConnectionManager.php',
+			//   data: JSON.stringify(submitData),
+			//   //dataType: "json", // [xml, json, script, or html]
+			//   dataType: "json",
+			// });
+			// jqxhr.done(function (data, textStatus, jqXHR) {
+			// 	console.log("ProgramID: "+programId+", Table structure obtained.")
+			// 	SetTableStructure(data);
+   //              // if(editMode == globalCriteria.editMode.Create || editMode == globalCriteria.editMode.Amend)
+   //              //     $scope.UnLockAllControls();
+   //              // else if(editMode == globalCriteria.editMode.Delete)
+   //              //     $scope.UnLockSubmitButton();
+			// });
+			// jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+   //            console.error("Fail in GetTableStructure() - "+tagName + ":"+$scope.programId)
+   //            Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
+			// });
+   //          jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
+   //              // textStatus
+   //              //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
+   //              callbackFunc(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+   //          });
         }
         function SetTableStructure(dataJson){
         	$scope.tableStructure = dataJson;
@@ -922,17 +974,27 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             InitializeEntry();
         }
         $scope.DefaultInitDirective = function(){
-            GetTableStructure(function(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
-            //console.log("Get Table Structure done"+$scope.editMode)
+            var getTableRequest = GetTableStructure();
+            getTableRequest.then(function(){
                 // the controls inside the directive was locked in the post render
-                //$scope.LockAllControls();
                 if($scope.editMode == globalCriteria.editMode.Create){
                     TryToCallSetDefaultValue();   
                 }
                 BackupNgModel();
                 if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
-					$scope.UnLockAllControls();
+                    $scope.UnLockAllControls();
             });
+     //        GetTableStructure(function(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
+     //        //console.log("Get Table Structure done"+$scope.editMode)
+     //            // the controls inside the directive was locked in the post render
+     //            //$scope.LockAllControls();
+     //            if($scope.editMode == globalCriteria.editMode.Create){
+     //                TryToCallSetDefaultValue();   
+     //            }
+     //            BackupNgModel();
+     //            if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
+					// $scope.UnLockAllControls();
+     //        });
         }
 
         /**
@@ -940,7 +1002,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
          * @param {Object} tempKeyObj - provide keyObj to find the specified record
          */
         $scope.FindData = function(tempKeyObj){
-            var url = $rootScope.serverHost;
             var clientID = Security.GetSessionID();
             var programId = $scope.programId.toLowerCase();
 
@@ -999,37 +1060,62 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
             };
             submitData.Action = "FindData";
 
-            var jqxhr = $.ajax({
-              type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-              data: JSON.stringify(submitData),
-              //dataType: "json", // [xml, json, script, or html]
-              dataType: "json",
-            });
-            jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-            });
-            jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-                // textStatus
-                //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-                if(textStatus == "success"){
-                    if(data_or_JqXHR.status == "Ok"){
-                        $scope.$apply(function () {
-                            SetNgModel(data_or_JqXHR);
-                        });
-                    }else{
-                        console.warn("Success but unexpected in FindData() - "+tagName + ":"+$scope.programId)
-                        Security.SuccessButUnexpected(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                    }
-                }
+            var requestOption = {
+                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
 
-                if(typeof $scope.CustomGetDataResult == "function"){
-                    $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
-                }else{
-                    CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                }
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                $scope.$apply(function () {
+                    SetNgModel(data_or_JqXHR);
+                });
+            }, function(reason) {
+              console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
+                // if(typeof $scope.CustomGetDataResult == "function"){
+                //     $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
+                // }else{
+                //     CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                // }
             });
+            return request;
+
+            // var jqxhr = $.ajax({
+            //   type: 'POST',
+            //   url: url+'/model/ConnectionManager.php',
+            //   data: JSON.stringify(submitData),
+            //   //dataType: "json", // [xml, json, script, or html]
+            //   dataType: "json",
+            // });
+            // jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
+            //   console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
+            //   Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
+            // });
+            // jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
+            //     // textStatus
+            //     //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
+            //     if(textStatus == "success"){
+            //         if(data_or_JqXHR.status == "Ok"){
+            //             $scope.$apply(function () {
+            //                 SetNgModel(data_or_JqXHR);
+            //             });
+            //         }else{
+            //             console.warn("Success but unexpected in FindData() - "+tagName + ":"+$scope.programId)
+            //             Security.SuccessButUnexpected(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+            //         }
+            //     }
+
+            //     if(typeof $scope.CustomGetDataResult == "function"){
+            //         $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
+            //     }else{
+            //         CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+            //     }
+            // });
         }
 
         /**
@@ -1038,7 +1124,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
          * @param {String} criteriaObj - the criteria will pass to the backend program, you need to extract and handle the criteria in it.
          */
         $scope.GetData = function(keyObj, criteriaObj){
-            var url = $rootScope.serverHost;
             var clientID = Security.GetSessionID();
             var programId = $scope.programId.toLowerCase();
             for(var keyIndex in keyObj){
@@ -1055,6 +1140,32 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
                 "NextPage" : "true"
             };
             submitData.Action = "GetData";
+
+            var requestOption = {
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                $scope.$apply(function () {
+                    SetNgModel(data_or_JqXHR);
+                });
+            }, function(reason) {
+              console.error("Fail in GetData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
+
+                // if(typeof $scope.CustomGetDataResult == "function"){
+                //     $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
+                // }else{
+                //     CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                // }
+            });
+            return request;
+
             var jqxhr = $.ajax({
               type: 'POST',
               url: url+'/model/ConnectionManager.php',
@@ -1186,19 +1297,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 		    }
 		  },
 		  true
-		);
-
-		$scope.$watchCollection(
-		  // This function returns the value being watched. It is called for each turn of the $digest loop
-		  function() { return $scope.DisplayMessageList; },
-		  // This is the change listener, called when the value returned from the above function changes
-		  function(newValue, oldValue) {
-		  	if(newValue.length > oldValue.length){
-			  	$timeout(function(){
-			  		$scope.DisplayMessageList.shift();
-			  	}, 5000); // (milliseconds),  1s = 1000ms
-			  }
-		  }
 		);
 
         function LockAllControls(){
@@ -1390,6 +1488,43 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 				"Data": createObj,
 			};
             submitData.Action = "CreateData";
+
+            var requestOption = {
+                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                var msg = data_or_JqXHR.Message;
+                // var status = data_or_JqXHR.Status;
+
+                ProcessResultMessage.addMsg(msg);
+
+                // if(status=="success"){
+                    RestoreNgModel();
+                // }
+            }, function(reason) {
+              console.error("Fail in CreateData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
+                $scope.UnLockAllControls();
+                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                // if(typeof $scope.CustomSubmitDataResult == "function"){
+                //     $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                //         textStatus, 
+                //         jqXHR_or_errorThrown, 
+                //         $scope, 
+                //         $element, 
+                //         $attrs, 
+                //         $ctrl);
+                // }
+            });
+            return request;
+
 			var jqxhr = $.ajax({
 			  type: 'POST',
               url: url+'/model/ConnectionManager.php',
@@ -1401,9 +1536,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			jqxhr.done(function (data, textStatus, jqXHR) {
                 var msg = data.Message;
                 var status = data.Status;
-				$scope.$apply(function(){
-					$scope.DisplayMessageList.push(msg);	
-				})
+
+                ProcessResultMessage.addMsg(msg);
 
 				if(status=="success"){
                     RestoreNgModel();
@@ -1418,9 +1552,6 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 				// textStatus
 				//"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
 				$scope.UnLockAllControls();
-				if(textStatus == "success"){
-
-	        	}
 
 	            SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
 	            if(typeof $scope.CustomSubmitDataResult == "function"){
@@ -1460,7 +1591,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         	//updateObj.Header[1] = recordObj;            
             updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
 
-        	var isRowEmpty = jQuery.IsEmptyObject(updateObj.Header[1])
+        	var isRowEmpty = jQuery.isEmptyObject(updateObj.Header[1])
         	if(isRowEmpty){
         		alert("Cannot update a empty Record");
         		$scope.UnLockAllControls();
@@ -1474,6 +1605,39 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 				//"NextPage" : "true"
 			};
             submitData.Action = "UpdateData";
+
+            var requestOption = {
+                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                var msg = data_or_JqXHR.Message;
+
+                ProcessResultMessage.addMsg(msg);
+            }, function(reason) {
+              console.error("Fail in UpdateData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
+                $scope.UnLockAllControls();
+
+                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                // if(typeof $scope.CustomSubmitDataResult == "function"){
+                //     $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                //         textStatus, 
+                //         jqXHR_or_errorThrown, 
+                //         $scope, 
+                //         $element, 
+                //         $attrs, 
+                //         $ctrl);
+                // }
+            });
+            return request;
+
 			var jqxhr = $.ajax({
 			  type: 'POST',
               url: url+'/model/ConnectionManager.php',
@@ -1485,9 +1649,8 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			jqxhr.done(function (data, textStatus, jqXHR) {
                 var msg = data.Message;
                 var status = data.Status;
-				$scope.$apply(function(){
-					$scope.DisplayMessageList.push(msg);	
-				})
+
+                ProcessResultMessage.addMsg(msg);
 			});
 			jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
               console.error("Fail in UpdateData() - "+tagName + ":"+$scope.programId)
@@ -1540,7 +1703,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
         	//deleteObj.Header[1] = recordObj;
             deleteObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
 
-        	var isRowEmpty = jQuery.IsEmptyObject(deleteObj.Header[1]);
+        	var isRowEmpty = jQuery.isEmptyObject(deleteObj.Header[1]);
 
         	if(isRowEmpty){
         		alert("Cannot Delete a empty Record");
@@ -1555,6 +1718,41 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 				//"NextPage" : "true"
 			};
             submitData.Action = "DeleteData";
+
+            var requestOption = {
+                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                var msg = data_or_JqXHR.Message;
+                ProcessResultMessage.addMsg(msg);
+
+                ClearCtrlNgModel();
+                SetTableStructure($scope.tableStructure);
+            }, function(reason) {
+              console.error("Fail in DeleteData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
+                $scope.UnLockSubmitButton();
+
+                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                if(typeof $scope.CustomSubmitDataResult == "function"){
+                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                        textStatus, 
+                        jqXHR_or_errorThrown, 
+                        $scope, 
+                        $element, 
+                        $attrs, 
+                        $ctrl);
+                }
+            });
+            return request;
+
 			var jqxhr = $.ajax({
 			  type: 'POST',
               url: url+'/model/ConnectionManager.php',
@@ -1566,9 +1764,7 @@ app.directive('entry', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManag
 			jqxhr.done(function (data, textStatus, jqXHR) {
                 var msg = data.Message;
                 var status = data.Status;
-				$scope.$apply(function(){
-					$scope.DisplayMessageList.push(msg);	
-				})
+                ProcessResultMessage.addMsg(msg);
 
 				ClearCtrlNgModel();
 				SetTableStructure($scope.tableStructure);
@@ -1991,7 +2187,16 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 	};
 }]);
 
-app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManager', function($rootScope, $timeout, Core, Security, LockManager) {
+
+app.directive('export', [
+    '$rootScope',
+    '$timeout', 
+    'Core', 
+    'Security', 
+    'LockManager', 
+    'HttpRequeset', 
+    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
+
     function ExportConstructor($scope, $element, $attrs) {
 
         var constructor = this;
@@ -1999,6 +2204,8 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
         var tagName = $element[0].tagName.toLowerCase();
 
         var globalCriteria = $rootScope.globalCriteria;
+
+        $scope.DisplayMessageList = ProcessResultMessage.messgeList;
 
         $ctrl.ExportFileTypeAs = {
             availableOptions: [
@@ -2035,8 +2242,6 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             }
             else
                 alert("<export> Must declare a attribute of program-id");
-
-            $scope.DisplayMessageList = [];
         }
 
         function ExportData(recordObj){
@@ -2062,8 +2267,40 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             };
             submitData.Action = "ExportData";
 
-            // var path = url+'/model/ConnectionManager.php';
-            // SendPostRequest(path, submitData);
+            var requestOption = {
+                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                var msg = data_or_JqXHR.Message;
+
+                var actionResult = data_or_JqXHR.ActionResult;
+                SubmitDataSuccessResult(data_or_JqXHR);
+
+                ProcessResultMessage.addMsg(msg);
+            }, function(reason) {
+              console.error("Fail in ExportData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function(resultObj, resultObj1, resultObj2, resultObj3) {
+                // Always execute this on both error and success
+                $scope.UnLockAllControls();
+
+                // SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                // if(typeof $scope.CustomSubmitDataResult == "function"){
+                //     $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                //         textStatus, 
+                //         jqXHR_or_errorThrown, 
+                //         $scope, 
+                //         $element, 
+                //         $attrs, 
+                //         $ctrl);
+                // }
+            });
+            return request;
 
             var jqxhr = $.ajax({
               type: 'POST',
@@ -2076,9 +2313,7 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             jqxhr.done(function (data, textStatus, jqXHR) {
                 var msg = data.Message;
                 var status = data.Status;
-                $scope.$apply(function(){
-                    $scope.DisplayMessageList.push(msg);    
-                })
+                ProcessResultMessage.addMsg(msg);
 
                 if(status=="success"){
                     //RestoreNgModel();
@@ -2197,10 +2432,6 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
         }
 
-        function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
-            var progID = $scope.programId;
-            //console.log("scope.$id:"+$scope.$id+", programId:"+progID+", must implement $scope.CustomGetDataResult() function in webapge");
-        }
         function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
             if(textStatus == "success"){
                 var actionResult = data_or_JqXHR.ActionResult;
@@ -2212,6 +2443,10 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
                     saveByteArray(actionResult.filename, actionResult.FileAsBase64);
                 }
             }
+        }
+        function SubmitDataSuccessResult(data_or_JqXHR){
+            var actionResult = data_or_JqXHR.ActionResult;
+            saveByteArray(actionResult.filename, actionResult.FileAsBase64);
         }
         function saveByteArray(fileName, b64Data) {
             // http://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
@@ -2287,7 +2522,14 @@ app.directive('export', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
     };
 }]);
 
-app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManager', 'Upload', function($rootScope, $timeout, Core, Security, LockManager, Upload) {
+app.directive('import', [
+    '$rootScope',
+    '$timeout', 
+    'Core', 
+    'Security', 
+    'LockManager', 
+    'HttpRequeset', 
+    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
     function ImportConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.importCtrl;
@@ -2295,6 +2537,8 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
 
         var globalCriteria = $rootScope.globalCriteria;
         var backupNgModelObj = {};
+
+        $scope.DisplayMessageList = ProcessResultMessage.messageList;
 
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -2326,8 +2570,6 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             }
             else
                 alert("<importExport> Must declare a attribute of program-id");
-
-            $scope.DisplayMessageList = [];
         }
 
         $scope.BackupNgModel = function(){
@@ -2374,7 +2616,7 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
                 }
             }
 
-            $scope.DisplayMessageList = [];
+            // ProcessResultMessage.clear();
 
             var submitData = {
                 "Session": clientID,
@@ -2382,6 +2624,39 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
                 "FileUploadedResult": uploadFileInfo,
             };
             submitData.Action = "ImportData";
+
+            var requestOption = {
+                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
+                method: 'POST',
+                data: JSON.stringify(submitData)
+            };
+
+            var request = HttpRequeset.send(requestOption);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+
+                ProcessResultMessage.setMsg(data_or_JqXHR.ActionResult.process_result);
+                $scope.DisplayMessageList = ProcessResultMessage.messageList;
+            }, function(reason) {
+              console.error("Fail in ImportData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+                // Always execute this on both error and success
+                $scope.UnLockAllControls();
+
+                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
+                if(typeof $scope.CustomSubmitDataResult == "function"){
+                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
+                        textStatus, 
+                        jqXHR_or_errorThrown, 
+                        $scope, 
+                        $element, 
+                        $attrs, 
+                        $ctrl);
+                }
+            });
+            return request;
+
             var jqxhr = $.ajax({
               type: 'POST',
               url: url+'/model/ConnectionManager.php',
@@ -2393,10 +2668,8 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             jqxhr.done(function (data, textStatus, jqXHR) {
                 // var msg = data.Message;
                 var status = data.Status;
-                $scope.$apply(function(){
-                    // $scope.DisplayMessageList.push(data.ActionResult.process_result);
-                    $scope.DisplayMessageList = data.ActionResult.process_result;
-                })
+                ProcessResultMessage.setMsg(data.ActionResult.process_result);
+                $scope.DisplayMessageList = ProcessResultMessage.messageList;
 
                 if(status=="success"){
                     // RestoreNgModel();
@@ -2493,10 +2766,6 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
         }
 
-        function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
-            var progID = $scope.programId;
-            //console.log("scope.$id:"+$scope.$id+", programId:"+progID+", must implement $scope.CustomGetDataResult() function in webapge");
-        }
         function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
         }
         $scope.Initialize();
@@ -2551,11 +2820,19 @@ app.directive('import', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
 }]);
 
 
-app.directive('upload', ['$rootScope', '$timeout', 'Core', 'Security', 'LockManager', 'Upload', function($rootScope, $timeout, Core, Security, LockManager, Upload) {
+app.directive('upload', [
+    '$rootScope',
+    '$timeout', 
+    'Core', 
+    'Security', 
+    'LockManager', 
+    'Upload',
+    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, Upload, ProcessResultMessage) {
     function UploadConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.uploadCtrl;
         var tagName = $element[0].tagName.toLowerCase();
+        $scope.DisplayMessageList = ProcessResultMessage.messageList;
         
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -2568,7 +2845,6 @@ app.directive('upload', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function InitializeUpload() {
-            $scope.DisplayMessageList = [];
             $scope.uploadInfo = [];
             $scope.uploadResult = [];
         }
@@ -2658,6 +2934,8 @@ app.directive('upload', ['$rootScope', '$timeout', 'Core', 'Security', 'LockMana
                   var uploadedPercentage = Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
                   uploadInfoRecord.uploadProgress = uploadedPercentage;
                 });
+
+                return uploadAction;
 
 
             // if(typeof callback == "function")

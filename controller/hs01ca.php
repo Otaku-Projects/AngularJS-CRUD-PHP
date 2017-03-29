@@ -74,11 +74,12 @@ function CreateData($requestData){
 function GetData($requestData){
 	$cardManager = new CardManager();
 	$cardContentManager = new CardContentManager();
-
 	$offsetRecords = 0;
 	$offsetRecords = $requestData->Offset;
+	$pageNum = $requestData->PageNum;
 
-	$responseArray = $cardManager->selectPage(1, $offsetRecords);
+	//$responseArray = $senseiManager->select();
+	$responseArray = $cardManager->selectPage($offsetRecords);
 
 	//  print_r($responseArray['data']);
 

@@ -314,16 +314,17 @@ class SecurityManager extends DatabaseManager {
 
 		$responseArray['num_rows'] = 0;
 		$responseArray['isLogin'] = 0;
-			$sessionArray = $this->GetSessionData();
+		$responseArray['error'] = "";
+		//$sessionArray = $this->GetSessionData();
 		if(isset($_SESSION['USER_login_status']) && $_SESSION['USER_login_status'] == 1)
 		{
 			$responseArray['num_rows'] = 1;
 			$responseArray['isLogin'] = 1;
 			$sessionArray = $this->GetSessionData();
 
-			//$responseArray = array_merge((array)$responseArray, (array)$sessionArray);
+			$responseArray = array_merge((array)$responseArray, (array)$sessionArray);
 		}
-		return $sessionArray;
+		return $responseArray;
 	}
 
 	function CheckSessionID($tmpSessionID){

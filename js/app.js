@@ -100,6 +100,10 @@ app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 		$rootScope.screenTemplate = $rootScope.templateFolder+config.reservedPath.screenTemplate;
 		
 		$rootScope.CookiesEffectivePath = config.CookiesEffectivePath;
+
+		// Server Environment
+		$rootScope.serEnv = {};
+		$rootScope.serEnv.phpRecordLimit = 10; // assume PHP select reocrd limit as 10, must match with server side
 	}
 	
 	core.ConvertMySQLDataType = function(mySqlDataType){
@@ -270,6 +274,8 @@ app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cook
 	function LockSubmitButton(lockArea, isLock){
 		var button = lockArea.find(".submitBtn button")
 		$(button).prop("disabled", isLock)
+		var subminButton = lockArea.find("button[type='submit']")
+		$(subminButton).prop("disabled", isLock)
 	}
 
 	return locker;
@@ -391,6 +397,12 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', fun
 			console.log("HTTP responseText is empty!")
 			// Security.ServerResponse499(jqXHR, textStatus, errorThrown);
 		}
+	}
+
+
+	secure.HttpPromiseFail = function(reason){
+		console.warn("HttpRequest promise return as fail");
+		console.dir(reason);
 	}
 
 	/**
