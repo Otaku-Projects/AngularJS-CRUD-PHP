@@ -5,19 +5,29 @@
  * @version 3.5
  */
 //require_once dirname(__FILE__).'/../globalVariable.php';
-class DatabaseManager {
+require_once dirname(__FILE__).'/config.php';
+
+date_default_timezone_set('Asia/Hong_Kong');
+class DatabaseManager{
+	private $hostname_fyp;
+    private $database_fyp;
+    private $username_fyp;
+    private $password_fyp;
 
     protected $dbc;
+    protected $sql_str;
     protected $previousInsertID;
     protected $i;
 	
 	// define by the getTheDataSchemaForSet;
 	protected $showColumnList;
 	protected $dataSchema;
+	protected $dataSchemaCSharp;
 	protected $tableIndex;
 	protected $tablePrimaryKey;
 	
-	protected $debug = false;
+	protected $debug = true;
+	protected $hideSQL = false;
 	protected $isTableSchemaFound = false;
 	protected $isAllowSetDefaultValue = true;
 	
@@ -28,17 +38,61 @@ class DatabaseManager {
 	protected $long = "long";
 	protected $double = "double";
 	protected $date = "date";
-    protected		$hostname_fyp = "localhost";
-    protected		$database_fyp = "acgni308_keithbox";
-    protected		$username_fyp = "acgni308_kbuser";
-    protected		$password_fyp = "Demo-DB3.2";
 	
 	private	$reserved_fields = array();
 	private $responseArray = array("data"=>null, "sql"=>null);
 	private $access_status = array();
+	private $sys_err_msg = array();
+	private $responseArray_errs = array();
+
+	// config the select mechanism.
+	protected $isSelectAllColumns = true;
+	protected $selectWhichCols = "*";
+	protected $selectStep = 10;
+
+	// update mechanism
+	protected $ignoreTheLastDateCheck = false;
+
+	// config is enable SecurityManager
+	/**
+	 * enable SecurityModule
+	 * you must login to insert / update / delete any records.
+	 *
+	 * enable advance security check
+	 * the select / insert / update / delete right are according to the database permission granted
+	 * controller name
+	**/
+	protected $enableSecurityModule = true;
+	protected $enableAdvanceSecurityCheck = true;
+	protected $controllerName = "";
+	protected $functionName = "";
+	protected $functionDescription = "";
+
+	// init the var, other tableManager should implete for CRUD permission checking
+	protected $permsCtrlName;
+	protected $permsFunctionName;
+	protected $topRightToken = false;
+
+	function GetRealEscapeString($value){
+		if(!$this->dbc->connect_errno)
+			return $this->dbc->real_escape_string($value);
+		else
+			return "have not connected to database.";
+	}
+
+	function GetResponseArray(){
+		$this->responseArray["sql"] = $this->sql_str;
+		$this->responseArray["error"] = join("\r\n", $this->responseArray_errs);
+
+		if($this->hideSQL)
+			$this->responseArray["sql"] = "SQL Masked****";
+		
+		return $this->responseArray;
+	}
     
 	function ResetResponseArray(){
 		$this->responseArray = array();
+		$this->responseArray_errs = array();
 		
 		$arrayIndex = array("data", 
 			"sql", 
@@ -50,8 +104,17 @@ class DatabaseManager {
 		foreach ($arrayIndex as $indexValue){
 			$this->responseArray[$indexValue] = null;
 		}
-		$this->responseArray["sql"] = "turn on debug mode to unhidden";
-		$this->responseArray["access_status"] = $this->access_status["OK"];
+		$this->responseArray["sql"] = null;
+		$this->responseArray["access_status"] = $this->access_status["None"];
+		return $this->GetResponseArray();
+	}
+
+	function SetDBContector($dbc){
+		$this->dbc = $dbc;
+	}
+
+	function GetDBContector(){
+		return $this->dbc;
 	}
 	
 	/**
@@ -60,8 +123,12 @@ class DatabaseManager {
 	 *
 	 */
     function __construct(){
-		//parent::__construct();
     	try {
+    		$this->hostname_fyp = _DB_HOST;
+    		$this->database_fyp = _DB_NAME;
+    		$this->username_fyp = _DB_USER;
+    		$this->password_fyp = _DB_PASS;
+
     		$hostname_fyp = $this->hostname_fyp;
     		$database_fyp = $this->database_fyp;
     		$username_fyp = $this->username_fyp;
@@ -69,13 +136,24 @@ class DatabaseManager {
 			
     		$this->dbc = new mysqli($hostname_fyp, $username_fyp, $password_fyp, $database_fyp) or trigger_error(mysqli_error(), E_USER_ERROR);
          	mysqli_set_charset($this->dbc, "utf8");
-         }catch (Exception $e ) {
+        }catch (Exception $e ) {
          	echo "Service unavailable";
          	echo "message: " . $e->message;   // not in live code obviously...
-            exit;
-         }
-		 date_default_timezone_set('Hongkong');
-		 $this->reserved_fields = array(
+        	exit;
+        }
+
+		/*
+			$_SERVER['PHP_SELF'] vs __FILE__
+
+			__FILE__ in manager.php file
+			when controll.php call manager.php file, __FILE__ will be come file_path/manager.php
+
+			$_SERVER['PHP_SELF'] in manager.php file
+			when controll.php call manager.php file, __FILE__ will be come file_path/controll.php						
+		*/
+		$this->permsCtrlName = basename($_SERVER['PHP_SELF']);
+
+		$this->reserved_fields = array(
 			"createUser"=>"createUser",
 			"createDate"=>"createDate",
 			"lastUpdateUser"=>"lastUpdateUser",
@@ -85,6 +163,7 @@ class DatabaseManager {
 			"systemUpdateProgram"=>"systemUpdateProgram"
 		);
 		$this->access_status = array(
+			"None" => "None",
 			"OK" => "OK",
 			"Duplicate" => "Duplicate",
 			"Fail" => "Fail",
@@ -93,9 +172,50 @@ class DatabaseManager {
 			"EndOfFile" => "EndOfFile",
 			"Locked" => "Locked",
 			"RecordNotFound" => "RecordNotFound",
-			"SqlError" => "SqlError"
-			
+			"SqlError" => "SqlExecuteError",
+			"NoPermission" => "NoPermission",
+			"AuthorizationFail" => "AuthorizationFail", // permissions (what you are allowed to do)
+			"AuthenticationFail" => "AuthenticationFail"
 		);
+
+		$this->sys_err_msg = array(
+			// registration
+			"UserNameDuplicate" => "The username already in used by someone.",
+
+			// sql level
+			"SQLNullOrEmpty" => "sql query is empty",
+
+			// insert error
+			"InsertFailFieldsNullOrEmpty" => "All Fields are null or empty: insert a record with all null or empty cols, what you are doing?",
+
+			// update error
+			"UpdateFailNoPK" => "Primary Key: (%s) have not set, cannot update.",
+			"UpdateFailFieldsNullOrEmpty" => "All Fields are null or empty: did't update all fields to null or empty, it doesn't make sense.",
+
+			// delete error
+			"DeleteFailNoPK" => "Primary Key: (%s) have not set, cannot delete.",
+			"DeleteFailFieldsNullOrEmpty" => "All Fields are null or empty: cannot allocate a record to delete.",
+
+			// Authorization || login
+			"AuthorizationFail" => "Not enough permission to perform operation.", // permissions (what you are allowed to do)
+
+			// Permission
+			"NoPermission" => "Not enough permission to perform operation.",
+			"AuthenticationFail" => "Invalid login ID or password.",
+
+			"SecurityManagerNotFound" => "Security module enabled, but not inlcuded manager.php in ".$this->permsCtrlName,
+
+			"TableNameNotFound" => "Table name was undefined."
+		);
+		$this->ResetResponseArray();
+		$this->Initialize();
+    }
+
+    function Initialize(){
+		// set parent dataSchema
+		$this->setDataSchemaForSet();
+		// set construct _ index
+		$this->setArrayIndex();
     }
 
     function beginTransaction() {
@@ -121,27 +241,11 @@ class DatabaseManager {
      * 
      */
     private function query($sql_str) {
-    	sleep(3); // for testing
+    	//sleep(1); // for testing
+        // echo $sql_str;
         $result = $this->dbc->query($sql_str);
         return $result;
     }
-	function query_num_rows($sql_str, $isDebug=false) {
-        $result = $this->dbc->query($sql_str);
-		if($isDebug===true){
-			echo "<br>";
-			$this->debug($sql_str);  //debug
-			echo "<br>";
-			echo "result: ".var_dump($result);
-			echo "<br>";
-			echo "dbc->error_list".var_dump($this->dbc->error_list);
-			echo "<br>";
-		}
-        if($result===false){
-        	return $this->debug($sql_str)."<br><br>".$result."<br><br><pre>".print_r($this->dbc->error_list)."</pre>";
-        	//return print_r($this->dbc->error);
-        }
-        return $result->num_rows;
-	}
 	
 	function selectFirstRowFirstElement($sql_str, $isDebug=false) {
 		$result = $this->dbc->query($sql_str);
@@ -175,8 +279,9 @@ class DatabaseManager {
 	}
 
 	/**
-	 * call query() to execute sql query and
-	 * return the fetch result in array
+	 * call query() to execute sql query,
+	 * assign the result to the instance's responseArray object,
+	 * return the responseArray
 	 *
 	 * @param string $sql_str, sql statement
 	 * @return Associative arrays, ['data'] = sql result, ['sql'] = sql statement, ['num_rows'] =  number of rows in a result, ['error'] = sql error
@@ -185,10 +290,15 @@ class DatabaseManager {
 	 * //http://www.php.net/manual/en/class.mysqli-result.php
 	 *
 	 */
-    function queryForDataArray($sql_str, $fetchType=MYSQLI_NUM) {
+    function queryForDataArray($sql_str=null, $fetchType=MYSQLI_NUM) {
+    	//$this->ResetResponseArray();
 		if($this->IsNullOrEmptyString($sql_str)){
-			$this->responseArray['error'] = "sql query is empty";
-			return;
+			$sql_str = $this->sql_str;
+
+			if($this->IsNullOrEmptyString($sql_str)){
+				array_push($this->responseArray_errs, $this->sys_err_msg["SQLNullOrEmpty"]);
+				return $this->GetResponseArray();
+			}
 		}
         $result = $this->query($sql_str);
 
@@ -206,20 +316,26 @@ class DatabaseManager {
 		$this->responseArray['affected_rows'] = $this->dbc->affected_rows;
 		
         $dataArray = array();
+		$tempSQLError = $this->dbc->error;
         // Debug mode - set sql, error 
 		if($this->debug){
 			$this->responseArray["sql"] = $sql_str;
-			if(isset($this->dbc->error)){
-				$this->responseArray['error'] = $this->dbc->error;
-				if($this->IsNullOrEmptyString($this->dbc->error)){
+			if(!empty($this->dbc->error)){
+					array_push($this->responseArray_errs, $tempSQLError);
 					$this->responseArray['access_status'] = $this->access_status["SqlError"];
-				}
-			}else{
-				$this->responseArray['error'] = NULL;
-			}
+			}		
+		}else{
+			$this->responseArray["sql"] = "turn on debug mode to unhidden";
+			array_push($this->responseArray_errs, "turn on debug mode to unhidden");
 		}
-				
 		// End - Debug mode
+		if($this->IsNullOrEmptyString($tempSQLError) || $tempSQLError == null || $tempSQLError = ""){
+			$this->responseArray['access_status'] = $this->access_status['OK'];
+		}
+		else{
+			$this->responseArray['access_status'] = $this->access_status['Error'];
+		}
+
 		if(isset($result->num_rows)){
 			if($fetchType==MYSQLI_NUM){
 				while ($row = $result->fetch_array(MYSQLI_ASSOC)) { // MYSQLI_BOTH, MYSQLI_ASSOC, MYSQLI_NUM
@@ -231,17 +347,20 @@ class DatabaseManager {
 			}else if($fetchType=MYSQLI_ASSOC){
 			}
         }
-		return $this->responseArray;
+		return $this->GetResponseArray();
     }
     function queryResultToArrayVertical($sql_str, $fetchType=MYSQLI_NUM) {
+    	//$this->ResetResponseArray();
+		if($this->IsNullOrEmptyString($sql_str)){
+			$sql_str = $this->sql_str;
+
+			if($this->IsNullOrEmptyString($sql_str)){
+				array_push($this->responseArray_errs, $this->sys_err_msg["SQLNullOrEmpty"]);
+				return $this->GetResponseArray();
+			}
+		}
         $result = $this->query($sql_str);
 		
-		/*
-		$arrayIndex = array("data", "sql", "num_rows", "insert_id", "affected_rows", "error");
-		foreach ($arrayIndex as $indexValue){
-			$this->responseArray[$indexValue] = null;
-		}
-		*/
 		//error handling, if num_rows = null
 		// num_rows only work for select
 		if(isset($result->num_rows))
@@ -261,9 +380,7 @@ class DatabaseManager {
 		if($this->debug){
 			$this->responseArray["sql"] = $sql_str;
 			if(isset($this->dbc->error)){
-				$this->responseArray['error'] = $this->dbc->error;
-			}else{
-				$this->responseArray['error'] = NULL;
+				array_push($this->responseArray_errs, $this->dbc->error);
 			}
 		}
 		// End - Debug mode
@@ -280,7 +397,123 @@ class DatabaseManager {
 			}else if($fetchType=MYSQLI_ASSOC){
 			}
         }
-		return $this->responseArray;
+		return $this->GetResponseArray();
+    }
+
+    function beforeCreateInsertUpdateDelete($crudType){
+    	// i must here to clear the responseArray['data'] created by setDataSchemaForSet()
+    	$this->ResetResponseArray();
+    	$isPermissionAllow = $this->DBManager_CheckPermission($crudType);
+
+    	return $isPermissionAllow;
+    }
+
+    function afterCreateInsertUpdateDelete($crudType){
+    }
+
+    function DBManager_CheckPermission($crudTypePermission){
+    	if($this->topRightToken)
+    		return $this->topRightToken;
+    	$isPermissionAllow = false;
+
+    	if($this->enableSecurityModule){
+    		if(class_exists("SecurityManager") && isset($this->securityManager)){
+				//require_once 'SecurityManager.php';
+				//$this->securityManager = new SecurityManager();
+				$this->securityManager->SetDBContector($this->dbc);
+
+
+		    	$isPermissionAllow = $this->securityManager->CRUD_PermissionCheck($crudTypePermission);
+	    	}else{
+	    		$isPermissionAllow = true;
+	    	}
+    	}else{
+    		$isPermissionAllow = true;
+    	}
+
+    	if(!$isPermissionAllow){
+			$this->responseArray['access_status'] = $this->access_status["AuthorizationFail"];
+			array_push($this->responseArray_errs, $this->sys_err_msg["AuthorizationFail"]);
+		}
+
+    	return $isPermissionAllow;
+    }
+
+    function IsColumnExists($columnName){
+    	$search_array = $this->_;
+    	// echo array_search($columnName, $search_array);
+		if (array_key_exists($columnName, $search_array))
+		    return array_search($columnName, $search_array) >=0 ? true : false;
+		else
+			return false;
+    }
+
+    /**
+     * ExcelManager is record found in DB, insert for not found, update for found
+     *
+     */
+    function CheckKeyExists(){
+    	$isKeyExists = false;
+
+		$array = $this->_;
+		$dataSchema = $this->dataSchema;
+		//$updateSetColumn = "";
+		$updateWhereColumn = "";
+		$isPKMissing = true;
+
+		$primaryKeySchema = $this->getPrimaryKeyName();
+		
+		// error handling
+		// is primary key missing?
+		foreach ($primaryKeySchema['data']['Field'] as $index => $value){
+			if($this->IsNullOrEmptyString($array[$value])){
+				$isPKMissing = $isPKMissing && true;
+				//break;
+			}else{
+				$updateWhereColumn.="`".$value."` =".$this->GetSQLValueString($value)." AND ";
+				$isPKMissing = false;
+			}
+		}
+
+		// stop and return false if one/part of the Composite Primary Key are missing
+		if($isPKMissing)
+			return false;
+
+		
+		// stop and return error msg if PK missing
+/*		if($isPKMissing){
+			$missingPK = "";
+			foreach ($primaryKeySchema['data']['Field'] as $index => $value){
+				if($this->IsNullOrEmptyString($array[$value])){
+					$missingPK.=$value." , ";
+				}
+			}
+			$missingPK = rtrim($missingPK, " , ");
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			return $this->GetResponseArray();
+		}	*/	
+		
+		$updateWhereColumn = rtrim($updateWhereColumn, " AND ");
+		//$updateSetColumn = rtrim($updateSetColumn, " , ");		
+		//$nullOrEmptyColumn = rtrim($nullOrEmptyColumn, " , ");
+		// mapping a update sql
+		$sql_str = sprintf("SELECT * from %s where %s",
+			$this->table,
+        	$updateWhereColumn);
+			
+		$this->sql_str = $sql_str;
+
+		$this->queryForDataArray();
+
+		$responseArray = $this->GetResponseArray();
+
+		if($responseArray['num_rows'])
+			$isKeyExists = true;
+		else
+			$isKeyExists = false;
+
+		return $isKeyExists;
+		//return $this->GetResponseArray();
     }
 	
     /**
@@ -288,6 +521,48 @@ class DatabaseManager {
      *
      */
 	function select(){
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
+
+		$array = $this->_;
+		$dataSchema = $this->dataSchema;
+		$tempSelectWhichCols = "*";
+		if(!$this->isSelectAllColumns)
+			$tempSelectWhichCols = $this->selectWhichCols;
+		
+		$whereSQL = "";
+		$isWhere = false;
+		foreach ($array as $index => $value) {
+			// if TableManager->value =null, ignore
+			if(isset($value)){//$array[$index])){
+				if(isset($this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default']))
+					if ($value == $this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default'])
+						continue;
+				$whereSQL .= "`".$index."` = ". $value . " and ";
+				$isWhere = true;
+			}
+		}
+		if($isWhere){
+			$whereSQL = rtrim($whereSQL, " and "); //would cut trailing 'and'.
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s where %s",
+					$this->table,
+					$whereSQL);
+		}else{
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s",
+					$this->table);
+		}
+
+		$this->sql_str = $sql_str;
+		if(!$isBeforeSuccess){
+			return $this->GetResponseArray();
+		}
+		$this->queryForDataArray();
+
+		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
+		return $this->GetResponseArray();
+	}
+	function count(){
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
+
 		$array = $this->_;
 		$dataSchema = $this->dataSchema;
 		
@@ -299,23 +574,76 @@ class DatabaseManager {
 				if(isset($this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default']))
 					if ($value == $this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default'])
 						continue;
-				$whereSQL .= $index." = ". $value . " and ";
+				$whereSQL .= "`".$index."` = ". $value . " and ";
 				$isWhere = true;
 			}
 		}
 		if($isWhere){
 			$whereSQL = rtrim($whereSQL, " and "); //would cut trailing 'and'.
-			$sql_str = sprintf("SELECT * from %s where %s",
+			$sql_str = sprintf("SELECT count(*) as count from %s where %s",
 					$this->table,
 					$whereSQL);
 		}else{
-			$sql_str = sprintf("SELECT * from %s",
+			$sql_str = sprintf("SELECT count(*) as count from %s",
 					$this->table);
 		}
-		//echo $sql_str;
-		//return $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		return $this->responseArray;
+
+		$this->sql_str = $sql_str;
+		if(!$isBeforeSuccess){
+			return $this->GetResponseArray();
+		}
+		$this->queryForDataArray();
+
+		$this->afterCreateInsertUpdateDelete("select");
+		return $this->GetResponseArray();
+	}
+	function selectPage($pageNum=1, $tempStep=10){
+		$tempStep = $this->selectStep;
+		$tempLimit = $tempStep;
+		$tempOffset = ($pageNum-1) * $tempStep;
+
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
+
+		$array = $this->_;
+		$dataSchema = $this->dataSchema;
+		$tempSelectWhichCols = "*";
+		if(!$this->isSelectAllColumns)
+			$tempSelectWhichCols = $this->selectWhichCols;
+		
+		$whereSQL = "";
+		$isWhere = false;
+		foreach ($array as $index => $value) {
+			// if TableManager->value =null, ignore
+			if(isset($value)){//$array[$index])){
+				if(isset($this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default']))
+					if ($value == $this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default'])
+						continue;
+				$whereSQL .= "`".$index."` = ". $value . " and ";
+				$isWhere = true;
+			}
+		}
+		if($isWhere){
+			$whereSQL = rtrim($whereSQL, " and "); //would cut trailing 'and'.
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s where %s LIMIT %s OFFSET %s",
+					$this->table,
+					$whereSQL,
+					$tempLimit,
+					$tempOffset);
+		}else{
+			$sql_str = sprintf("SELECT $tempSelectWhichCols from %s LIMIT %s OFFSET %s",
+					$this->table,
+					$tempLimit,
+					$tempOffset);
+		}
+
+		$this->sql_str = $sql_str;
+		if(!$isBeforeSuccess){
+			return $this->GetResponseArray();
+		}
+		$this->queryForDataArray();
+
+		$this->afterCreateInsertUpdateDelete("select");
+		return $this->GetResponseArray();
 	}
 
     /**
@@ -323,7 +651,8 @@ class DatabaseManager {
      *
      */
 	function insert(){
-		$this->ResetResponseArray();
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
+
 		$array = $this->_;
 		$dataSchema = $this->dataSchema;
 
@@ -332,33 +661,11 @@ class DatabaseManager {
 		$isSpecifiesColumn = false;
 		$array_value = "";
 
-		/*
-		foreach ($array as $index => $value) {
-			// if TableManager->value =null, ignore
-			if(isset($array[$index])){
-				// if the array value = default value, than ignore
-				if(isset($this->SearchDataType($dataSchema['data'], 'Field', $index)['Default']))
-					if ($value == $this->SearchDataType($dataSchema['data'], 'Field', $index)['Default'])
-						continue;
-				// if the data schema not allow null
-				if(isset($this->SearchDataType($dataSchema['data'], 'Field', $index)['Default']))
-				{
-				}
-				$tableColumnSQL .= $index." , ";
-				$valuesSQL .= $value." , ";
-				$isSpecifiesColumn = true;
-			}
-		}
-		*/
 		foreach ($dataSchema['data'] as $index => $value){
 			$isColumnNullOrEmpty = false;
 			$column = $value['Field'];
 			$type = $value['Type'];
 			
-			//if($type == "datetime"){
-			//echo $array[$column].ToString();
-			//$array_value = "'".$array[$column]."'";
-			//}else{
 			// if value is null or empty
 			if($this->IsNullOrEmptyString($array[$column])){
 				$isColumnNullOrEmpty = true;
@@ -367,63 +674,44 @@ class DatabaseManager {
 			else {
 				$array_value = $this->GetSQLValueString($column);//$array[$column];
 			}
-			//}
 			// if column cannot null
 			if(strtolower($value['Null']) == 'no'){
-				// skip column if auto increment
+				// skip column if auto increment and have not defined the value
 				if(strtolower($value['Extra']) == 'auto_increment'){
-					continue;
+					if($this->IsNullOrEmptyString($array_value))
+						continue;
 				}
 				// ignore column if the value = default value
 				if(isset($value['Default']))
 					if($array_value == $value['Default'])
 						continue;
 			}
-			/*
-			switch($value['Type']){
-				case "date":
-				case "datetime":
-			}
-			*/
+
 			if(!$isColumnNullOrEmpty){
-				$tableColumnSQL .= $column." , ";
+				$tableColumnSQL .= "`".$column."` , ";
 				$valuesSQL .= $array_value." , ";
 				$isSpecifiesColumn = true;
 			}
 		}
 		
 		// add the createDate and createUser if table exists those fields
-		
-		$sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
+		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
 			$this->reserved_fields["createDate"]);
-		$resultData = $this->queryForDataArray($sql_str);
+		$resultData = $this->queryForDataArray($custom_sql_str);
 		if($resultData['num_rows'] > 0){
 			$tableColumnSQL .= $this->reserved_fields['createDate']." , ";
 			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
 		}
-		
-		/*
-		if($isSpecifiesColumn){
-			// cut the trailing commas.
-			$tableColumnSQL = rtrim($tableColumnSQL, " , ");
-			$valuesSQL = rtrim($valuesSQL, " , ");
-			
-			$sql_str = sprintf("INSERT into %s ( %s ) values ( %s )",
-				$this->table,
-				$tableColumnSQL,
-        		$valuesSQL);
-		}else{
-			
-		}
-		*/
 
-		$sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
+		// add the lastUpdateDate if table exists
+		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
 			$this->reserved_fields["lastUpdateDate"]);
-		$resultData = $this->queryForDataArray($sql_str);
+		$resultData = $this->queryForDataArray($custom_sql_str);
+
 		if($resultData['num_rows'] > 0){
 			$tableColumnSQL .= $this->reserved_fields['lastUpdateDate']." , ";
 			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
@@ -438,21 +726,30 @@ class DatabaseManager {
 				$this->table,
 				$tableColumnSQL,
         		$valuesSQL);
+			$this->sql_str = $sql_str;
+			if(!$isBeforeSuccess){
+				return $this->GetResponseArray();
+			}
+			$this->queryForDataArray();
 		}else{
-			
+			// if all fields are not specifies any value
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["InsertFailFieldsNullOrEmpty"]));
 		}
-		//echo $sql_str;
-		//return $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		return $this->responseArray;
+
+		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
+		return $this->GetResponseArray();
 	}
 
     /**
      * TableManager basic and simple UPDATE SQL Function
      * update but expect the key fields
      */
-	function update(){
-		$this->ResetResponseArray();
+	function update($ignoreTheLastDateCheck = false){
+		if($this->$ignoreTheLastDateCheck)
+			$ignoreTheLastDateCheck = true;
+
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
+
 		$array = $this->_;
 		$dataSchema = $this->dataSchema;
 		$updateSetColumn = "";
@@ -460,14 +757,6 @@ class DatabaseManager {
 		$isPKMissing = false;
 
 		$primaryKeySchema = $this->getPrimaryKeyName();
-		/*
-		// refer to http://mysql-0v34c10ck.blogspot.com/2011/05/better-way-to-get-primary-key-columns.html
-		//$showIndex_sql = "show index from ".$this->table;
-		$showPrimaryKey_sql = sprintf("SELECT `COLUMN_NAME` AS `Field` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = '%s') AND (`TABLE_NAME` = '%s') AND (`COLUMN_KEY` = 'PRI')",
-				$this->database_fyp,
-				$this->table);
-		$primaryKeySchema = $this->queryResultToArrayVertical($showPrimaryKey_sql);
-		*/
 		
 		// error handling
 		// is primary key missing?
@@ -476,7 +765,7 @@ class DatabaseManager {
 				$isPKMissing = true;
 				break;
 			}else{
-				$updateWhereColumn.=$value."=".$this->GetSQLValueString($value)." AND ";
+				$updateWhereColumn.="`".$value."` =".$this->GetSQLValueString($value)." AND ";
 			}
 		}
 		
@@ -489,9 +778,8 @@ class DatabaseManager {
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			//return array("error"=>"Primary Key: ($missingPK) have not set, cannot update.");
-			$this->responseArray['error'] = "Primary Key: ($missingPK) have not set, cannot update.";
-			return $this->responseArray;
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			return $this->GetResponseArray();
 		}
 		// stop and return error msg if all fields except PK are null or empty
 		$isAllColumnNullOrEmpty = true;
@@ -503,46 +791,38 @@ class DatabaseManager {
 			$isColumnAPK = array_search($key, $primaryKeySchema['data']['Field']);
 			// array_search return key index if found, false otherwise
 			if($isColumnAPK === false){
-				//$isAllColumnNullOrEmpty = false;
 
 				$isAllColumnNullOrEmpty = $isAllColumnNullOrEmpty && $this->IsNullOrEmptyString($value);
 				
-				//$columnType = $this->SearchDataType($dataSchema['data'], 'Field', $key)[0]['Type'];
-				
-				//print_r($this->SearchDataType($dataSchema['data'], 'Field', $key)[0]["Type"]);
-				
-				//if($columnType == "datetime" || $columnType == "timestamp"){
-				//	$updateSetColumn.=$key."=".$this->GetSQLValueString($key)." , ";
-				//	$updateSetColumn.=$key."='".$value."' , ";
-				//}
-				//else{
-					if(!$this->IsNullOrEmptyString($value)){
-						$updateSetColumn.=$key."=".$this->GetSQLValueString($key)." , ";
-					}else{
-						$nullOrEmptyColumn.=$key." , ";
-					}
-				//}
+				if(!$this->IsNullOrEmptyString($value)){
+					$updateSetColumn.="`".$key."` =".$this->GetSQLValueString($key)." , ";
+				}else{
+					$nullOrEmptyColumn.=$key." , ";
+				}
 			}
 		}
 		
 		if($isAllColumnNullOrEmpty){
-			//return array("error"=>"All Fields all null or empty: cannot update all fields to null or empty, it doesn't make sense.");
-			$this->responseArray['error'] = "All Fields all null or empty: cannot update all fields to null or empty, it doesn't make sense.";
-			return $this->responseArray;
+			array_push($this->responseArray_errs, $this->sys_err_msg["UpdateFailFieldsNullOrEmpty"]);
+			return $this->GetResponseArray();
 		}
 		
 		//// check table exists lastUpdateDate column, identify is this update action valid.
-		$sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
-			$this->database_fyp,
-			$this->table,
-			$this->reserved_fields["lastUpdateDate"]);
-		$this->queryForDataArray($sql_str);
+		$lastUpdateResponseArray = array();
+		if(!$ignoreTheLastDateCheck){
+			$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
+				$this->database_fyp,
+				$this->table,
+				$this->reserved_fields["lastUpdateDate"]);
+			$lastUpdateResponseArray = $this->queryForDataArray($custom_sql_str);
+		}
 		
 		$isLastUpdateDateFound = false;
-		if($this->responseArray['num_rows'] > 0)
-			$isLastUpdateDateFound = true;
+		if(!$ignoreTheLastDateCheck)
+			if($lastUpdateResponseArray['num_rows'])
+				$isLastUpdateDateFound = true;
 		
-		$this->ResetResponseArray();
+		//$this->ResetResponseArray();
 		
 		// assign last update date and set the last update date condition
 		if($isLastUpdateDateFound){
@@ -563,9 +843,14 @@ class DatabaseManager {
 			$updateSetColumn,
         	$updateWhereColumn);
 			
-		//return $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		return $this->responseArray;
+		$this->sql_str = $sql_str;
+		if(!$isBeforeSuccess){
+			return $this->GetResponseArray();
+		}
+		$this->queryForDataArray();
+
+		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
+		return $this->GetResponseArray();
 	}
 
     /**
@@ -573,15 +858,9 @@ class DatabaseManager {
      * update the instance value according to the parameter
      */
 	function updateAnyFieldTo($updateToMe){
-		$this->ResetResponseArray();
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
+
 		$tableObject = $this->_;
-		//$dataSchema = $this->dataSchema;
-		// refer to http://mysql-0v34c10ck.blogspot.com/2011/05/better-way-to-get-primary-key-columns.html
-		//$showIndex_sql = "show index from ".$this->table;
-// 		$showPrimaryKey_sql = sprintf("SELECT `COLUMN_NAME` AS `Field` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = '%s') AND (`TABLE_NAME` = '%s') AND (`COLUMN_KEY` = 'PRI')",
-// 				$this->database_fyp,
-// 				$this->table);
-// 		$primaryKeySchema = $this->queryResultToArrayVertical($showPrimaryKey_sql);
 
 		$updateSetColumn = "";
 		$updateWhereColumn = "";
@@ -606,7 +885,8 @@ class DatabaseManager {
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			return array("error"=>"Primary Key: ($missingPK) have not set, cannot update.");
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			return $this->GetResponseArray();
 		}
 		// stop and return error msg if all fields except PK are null or empty
 		$isAllColumnNullOrEmpty = true;
@@ -628,7 +908,9 @@ class DatabaseManager {
 		
 		$nullOrEmptyColumn = rtrim($nullOrEmptyColumn, " , ");
 		if($isAllColumnNullOrEmpty){
-			return array("error"=>"All Fields all null or empty: cannot update all fields to null or empty, it doesn't make sense.");
+			//return array("error"=>"All Fields all null or empty: cannot update all fields to null or empty, it doesn't make sense.");
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailFieldsNullOrEmpty"], $missingPK));
+			return $this->GetResponseArray();
 		}
 		
 		// mapping a update sql
@@ -636,10 +918,14 @@ class DatabaseManager {
 			$this->table,
 			$updateSetColumn,
         	$updateWhereColumn);
-		echo $sql_str;
-		//return $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		return $this->responseArray;
+		$this->sql_str = $sql_str;
+		if(!$isBeforeSuccess){
+			return $this->GetResponseArray();
+		}
+		$this->queryForDataArray();
+
+		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
+		return $this->GetResponseArray();
 	}
 	
     /**
@@ -647,7 +933,8 @@ class DatabaseManager {
      *
      */
 	function delete(){
-		$this->ResetResponseArray();
+		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete(__FUNCTION__);
+
 		$array = $this->_;
 		$dataSchema = $this->dataSchema;
 
@@ -663,7 +950,7 @@ class DatabaseManager {
 				$isPKMissing = true;
 				break;
 			}else{
-				$deleteWhereColumn.=$value."=".$this->GetSQLValueString($value)." AND ";
+				$deleteWhereColumn.="`".$value."` =".$this->GetSQLValueString($value)." AND ";
 			}
 		}
 		// stop and return error msg if PK missing
@@ -676,8 +963,8 @@ class DatabaseManager {
 			}
 			$missingPK = rtrim($missingPK, " , ");
 			$this->responseArray['access_status'] = $this->access_status['Fail'];
-			$this->responseArray['error'] = "Primary Key: ($missingPK) have not set, cannot delete.";
-			return $this->responseArray;
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["DeleteFailNoPK"], $missingPK));
+			return $this->GetResponseArray();
 		}
 		// stop the delete action if all fields are null or empty under the case if table no PK
 		$isAllColumnNullOrEmpty = true;
@@ -696,23 +983,21 @@ class DatabaseManager {
 			}
 		}
 		if($isAllColumnNullOrEmpty || $isPKMissing){
-			$this->responseArray['error'] = "All Fields all null or empty: cannot allocate a record to delete.";
-			return $this->responseArray;
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["DeleteFailFieldsNullOrEmpty"], $missingPK));
+			return $this->GetResponseArray();
 		}
 
 		//// check table exists lastUpdateDate column, identify is this update action valid.
-		$sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
+		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
 			$this->reserved_fields["lastUpdateDate"]);
-		$this->queryForDataArray($sql_str);
+		$this->queryForDataArray($custom_sql_str);
 		
 		$isLastUpdateDateFound = false;
 		if($this->responseArray['num_rows'] > 0)
 			$isLastUpdateDateFound = true;
-		
-		$this->ResetResponseArray();
-		
+				
 		// assign last update date and set the last update date condition
 		if($isLastUpdateDateFound){
 			//$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
@@ -730,53 +1015,130 @@ class DatabaseManager {
 			$this->table,
 			$deleteWhereColumn);
 
-		$this->queryForDataArray($sql_str);
-		return $this->responseArray;
+		$this->sql_str = $sql_str;
+		if(!$isBeforeSuccess){
+			return $this->GetResponseArray();
+		}
+		$this->queryForDataArray();
+
+		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
+		return $this->GetResponseArray();
 	}
 	
 	/*
 	 * TableManager Initialize() function call, for futher action that is initialize getter and setter
 	 */
-	function getDataSchemaForSet(){
-		$this->ResetResponseArray();
+	function setDataSchemaForSet($isClearResponseArrayDataIndex = false){
+		//$this->ResetResponseArray();
+
 		$sql_str = sprintf("describe %s",
 			$this->table);
-		//$result = $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		//print_r($result);
-		//$this->dataSchema = $result;
-		$this->dataSchema = $this->responseArray;
-		/*
+		$this->sql_str = $sql_str;
+		$this->queryForDataArray();
+		$this->dataSchema = $this->GetResponseArray();
 		
-		$this->ResetResponseArray();
-		$sql_str = sprintf("show %s columns",
-			$this->table);
-		$this->queryForDataArray($sql_str);
+		// extract data schema to increase readability
+		$colDetailsIndex = array(
+			"type", 
+			"length", 
+			"decimalPoint", 
+			"null", 
+			"key", 
+			"default",
+			"extra"
+		);
 		
-		$this->showColumnList = $this->responseArray;
-		*/
+		// Start - build the high readability dataSchema
+		$this->dataSchemaCSharp = array();
+		if(isset($this->dataSchema) && !empty($this->dataSchema["data"]))
+		foreach($this->dataSchema["data"] as $arrayIndex => $columnDetails){
+			$columnName = $columnDetails['Field'];
+			$this->dataSchemaCSharp[$columnName] = array();
+			
+			$colType = $columnDetails['Type'];
+				
+			$tempColType = explode("(", $colType);
+			
+			if(isset($tempColType[0]))
+				$colType = $tempColType[0];
+			if(isset($tempColType[1]))
+				$colLength = substr($tempColType[1], 0, strlen($tempColType[1])-1);
+				
+			$tempColLength = explode(",", $colLength);
+			
+			if(isset($tempColLength[0]))
+				$colLength = $tempColLength[0];
+			if(isset($tempColLength[1]))
+				$colDecimalPoint = $tempColLength[1];
+			else
+				$colDecimalPoint = Null;
+			
+			foreach ($colDetailsIndex as $newArrayIndex){
+				$this->dataSchemaCSharp[$columnName][$newArrayIndex] = null;
+				
+				switch ($newArrayIndex){
+					case "type":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $colType;
+						break;
+					case "length":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $colLength;
+						break;
+					case "decimalPoint":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $colDecimalPoint;
+						break;
+					case "null":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $columnDetails['Null'];
+						break;
+					case "key":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $columnDetails['Key'];
+						break;
+					case "default":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $columnDetails['Default'];
+						break;
+					case "extra":
+						$this->dataSchemaCSharp[$columnName][$newArrayIndex] = $columnDetails['Extra'];
+						break;
+				}
+			}
+		}
+		// End - high readability dataSchema builded
+
+		if($isClearResponseArrayDataIndex)
+			$this->responseArray["data"] = array();
 	}
 	function getTableIndex(){
-		$this->ResetResponseArray();
+		//$this->ResetResponseArray();
 		$sql_str = sprintf("show index from %s",
 			$this->table);
-		//$result = $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		//$this->tableIndex = $result;
-		$this->tableIndex = $this->responseArray;
+		$this->sql_str = $sql_str;
+		$this->queryForDataArray();
+		$this->tableIndex = $this->GetResponseArray();
 	}
-	/*
-	function getTablePrimaryKey(){
-		$this->ResetResponseArray();
-		$sql_str = sprintf("show index from %s where key_name='primary'",
-			$this->table);
-		//$result = $this->queryForDataArray($sql_str);
-		$this->queryForDataArray($sql_str);
-		//$this->tablePrimaryKey = $result;
-		$this->tablePrimaryKey = $this->responseArray;
-		return $this->tablePrimaryKey;
+	function getColumnInfo($columnName){
+		$columnInfo = array();
+
+		$isFound = false;
+
+		$dataSchema = $this->dataSchema['data'];
+
+		if($dataSchema){
+			foreach($dataSchema as $arrayIndex => $arrayVal){
+				if($arrayVal['Field'] == $columnName){
+					$columnInfo = $arrayVal;
+					$isFound = true;
+					break;
+				}
+			}
+		}else{
+			return false;
+		}
+
+		if(!$isFound)
+			return false;
+
+		return $columnInfo;
 	}
-	*/
+
 	function getPrimaryKeyName(){
 		// refer to http://mysql-0v34c10ck.blogspot.com/2011/05/better-way-to-get-primary-key-columns.html
 		//$showIndex_sql = "show index from ".$this->table;
@@ -811,13 +1173,13 @@ class DatabaseManager {
 			}
 			$this->isDefaultValueSet = true;
 		}
+
 	}
 	// End - TableManager Initialize() function call
-	/*
     function close() {
+        //$this->dbc->close();
         $this->dbc->close();
     }
-    */
 	
 	/**
 	 * Magic Methods: __destruct(), The destructor method will be called
@@ -826,7 +1188,17 @@ class DatabaseManager {
 	 * 
 	 */
     function __destruct() {
-        $this->dbc->close();
+    	/*
+    	print_r($this->dbc);
+        if(isset($this->dbc)){
+        		$this->dbc->close();
+        }
+        */
+        // if(isset($this->dbc))
+        // 	$this->dbc->close();
+
+        // if(isset($this->dbc))
+        // 	$this->close();
     }
 
     /**
@@ -838,24 +1210,20 @@ class DatabaseManager {
      */
     function __set($name, $value) {
         $method = 'set' . ucfirst($name);
-		//if($this->issetDefaultValue){
 			if (method_exists($this, $method)) {
 				// Top Priority - if TableNameManager have setName method
 				$this->$method($value);
 			}else if (array_key_exists($name, $this->_)) {//(isset($this->_[$name])) {
 				// Second Priority - if TableNameManager have column name as $name
 				//$this->_[$name] = $value;
-				
-				$this->SetSQLValueString($name, $value);
+				//if(!IsSystemField($name))
+					$this->SetSQLValueString($name, $value);
 			}else if (isset($this->$name)) {
-				// Last Priority - it DatabaseManager have variable name as $name
+				// Last Priority - if DatabaseManager have variable name as $name
 				$this->$name = $value;
 			}else {
 				//throw new Exception('Manager cannot found and set table column or Parent variable!');
 			}
-		//}else {
-		//	$this->_[$name] = $value;
-		//}
     }
     
 	/**
@@ -867,12 +1235,14 @@ class DatabaseManager {
     function __get($name) {
         $method = 'get' . ucfirst($name);
 		//if($this->issetDefaultValue){
-        if (method_exists($this, $method))
+        if (method_exists($this, $method)){
             return $this->$method();
-        else if (isset($this->_[$name]))
-            return $this->_[$name];
-		else if (isset($this->$name))
+        }else if (isset($this->_[$name])){
+            //return $this->_[$name];
+            return $this->GetSQLValueString($name);
+        }else if (isset($this->$name)){
 			return $this->$name;
+        }
         //else
             //throw new Exception('Manager cannot found and get table column or Parent variable!');
 		//}
@@ -898,7 +1268,7 @@ class DatabaseManager {
                 }
             }
         }
-        throw new Exception('property undefined!');
+        throw new Exception('tableObject call undefined function() or property!');
     }
 	
 	/**
@@ -936,69 +1306,40 @@ class DatabaseManager {
 		//		)
 		//)
 		$type = $structure[0]['Type'];
+
+		// for debug and checking,
+		// i don't kown why it must coding as $type===, otherwise $type='datetime' will cased as float/double
+		$typeCaseAs = "";
+
 		//echo "I am a $type type.";
 		switch (true) {
-			case strstr($type, "char"):
-			case strstr($type, "varchar"):
-			case strstr($type, "text"):
+			case strpos($type, "char") !== FALSE:
+			case strpos($type, "varchar") !== FALSE:
+			case strpos($type, "text") !== FALSE:
+				$typeCaseAs = "text";
+				if(strpos($setValue, "'")==0 && strrpos($setValue, "'")==strlen($setValue)-1 && strlen($setValue)!=1){
+					break;
+				}
 				$setValue = ($setValue != "") ? "'" . $setValue . "'" : "NULL";
-				break;    
+				break;
 			//http://dev.mysql.com/doc/refman/5.0/en/integer-types.html
-			case strstr($type, "tinyint"): // -128 to 127, 0 to 255
-			case strstr($type, "smallint"): // -32768 to 32767, 0 to 65535
-			case strstr($type, "mediumint"): // -8388608 to 8388607, 0 to 16777215
-			case strstr($type, "int"): // -2147483648 to 2147483647, 0 to 4294967295
-			case strstr($type, "bigint"): // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
+			case strpos($type, "tinyint") !== FALSE: // -128 to 127, 0 to 255
+			case strpos($type, "smallint") !== FALSE: // -32768 to 32767, 0 to 65535
+			case strpos($type, "mediumint") !== FALSE: // -8388608 to 8388607, 0 to 16777215
+			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
+			case strpos($type, "bigint") !== FALSE: // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
 				$setValue = ($setValue != "") ? intval($setValue) : "NULL";
+				$typeCaseAs = "integer";
 				break;
 			//http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
 			//http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
-			case strstr($type, "float"):
-			case strstr($type, "double"):
+			case strpos($type, "float") !== FALSE:
+			case strpos($type, "double") !== FALSE:
 				$setValue = ($setValue != "") ? doubleval($setValue) : "NULL";
+				$typeCaseAs = "decimal";
 				break;
-			case strstr($type, "datetime"):
-			case strstr($type, "timestamp"):
-			/*
-				if($setValue==null || $setValue=='' || strlen($setValue) == 0){
-					$setValue = date("Y-m-d H:i:s");
-				}else{
-					// convert string to date
-					$tmpDate = date_parse($setValue);
-					print_r($tmpDate);
-					if(count($tmpDate["errors"]) == 0 && checkdate($tmpDate["month"], $tmpDate["day"], $tmpDate["year"]))
-						$setValue = date("Y-m-d H:i:s"); // if convert with error, use the current date
-					else
-						$setValue = $tmpDate->format("Y-m-d H:i:s");
-				}
-				*/
-					// convert string to date
-					$tmpDate = date_parse($setValue);
-					//print_r($tmpDate);
-					if($tmpDate["error_count"] > 0)
-						$setValue = date("Y-m-d H:i:s"); // if convert with error, use the current date
-					else
-						//$date = date_create_from_format("Y-m-d H:i:s", $setValue);
-						$setValue = new DateTime($setValue);
-				
-				//echo $setValue." end";
-				$setValue = $setValue->format("Y-m-d H:i:s");
-				//$setValue = "'" . $setValue . "'";
-				//echo $setValue;
-				break;
-			case strstr($type, "date"):
-			/*
-				if($this->IsNullOrEmptyString($setValue)){
-					$setValue = date("Y-m-d");
-				}else{
-					// convert string to date
-					$tmpDate = date_parse($setValue);
-					if(!$tmpDate["errors"] == 0 && checkdate($tmpDate["month"], $tmpDate["day"], $tmpDate["year"]))
-						$setValue = date("Y-m-d"); // if convert with error, use the current date
-					else
-						$setValue = $tmpDate->format("Y-m-d");
-				}
-				*/
+
+			case $type==="date":
 					$tmpDate = date_parse($setValue);
 					if($tmpDate["error_count"] > 0)
 						$setValue = date("Y-m-d"); // if convert with error, use the current date
@@ -1007,8 +1348,38 @@ class DatabaseManager {
 				
 				$setValue = $setValue->format("Y-m-d");
 				$setValue = "'" . $setValue . "'";
+				$typeCaseAs = "date";
+				break;
+
+			case $type==="datetime":
+			case $type==="timestamp":
+					// convert string to date
+					$tmpDate = date_parse($setValue);
+					//print_r($tmpDate);
+					if($tmpDate["error_count"] > 0)
+						$setValue = date("Y-m-d H:i:s"); // if convert with error, use the current date
+					else
+						$setValue = new DateTime($setValue);
+
+				$setValue = $setValue->format("Y-m-d H:i:s");
+				$typeCaseAs = "datetime";
+				break;
+			case $type==="time":
+					$tmpDate = date_parse($setValue);
+					if($tmpDate["error_count"] > 0)
+						$setValue = date("H:i:s"); // if convert with error, use the current date
+					else
+						$setValue = new DateTime($setValue);
+				
+				$setValue = $setValue->format("H:i:s");
+				$setValue = "'" . $setValue . "'";
+				$typeCaseAs = "time";
 				break;
 		}
+		
+		// if(strpos($setValue, '@')!==false)
+		// 	echo "value in:$setValue, type:$type, entryType:$typeCaseAs<br>";
+
 		$this->_[$setColumn] = $setValue;
 	}
 	
@@ -1020,77 +1391,89 @@ class DatabaseManager {
 	 */
 	function GetSQLValueString($getColumn)
 	{
+		//return;
 		$dataSchema = $this->dataSchema['data'];
 		$structure = $this->SearchDataType($dataSchema, 'Field', $getColumn);
 		$type = $structure[0]['Type'];
-		$columnValue = $this->_[$getColumn];
-		$returnValue = "NULL";
+		$valueIn = $this->_[$getColumn];
+		$valueOut = "NULL";
 		
 		// for debug and checking,
 		// i don't kown why it must coding as $type===, otherwise $type='datetime' will cased as float/double
 		$typeCaseAs = "";
 		
 		switch (true) {
-			case strstr($type, "char"):
-			case strstr($type, "varchar"):
-			case strstr($type, "text"):
-				if(is_string($columnValue)){
-					$returnValue = $columnValue;
+			case strpos($type, "char") !== FALSE:
+			case strpos($type, "varchar") !== FALSE:
+			case strpos($type, "text") !== FALSE:
+				if(strpos($valueIn, "'")==0 && strrpos($valueIn, "'")==strlen($valueIn)-1){
+					$valueOut = $valueIn;
 				}else{
-					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
+					$valueOut = ($valueIn != "") ? "'" . $valueIn . "'" : "NULL";
 				}
 				$typeCaseAs = "text";
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/integer-types.html
-			case strstr($type, "tinyint"): // -128 to 127, 0 to 255
-			case strstr($type, "smallint"): // -32768 to 32767, 0 to 65535
-			case strstr($type, "mediumint"): // -8388608 to 8388607, 0 to 16777215
-			case strstr($type, "int"): // -2147483648 to 2147483647, 0 to 4294967295
-			case strstr($type, "bigint"): // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
-				$returnValue = ($columnValue != "") ? intval($columnValue) : "NULL";
+			case strpos($type, "tinyint") !== FALSE: // -128 to 127, 0 to 255
+			case strpos($type, "smallint") !== FALSE: // -32768 to 32767, 0 to 65535
+			case strpos($type, "mediumint") !== FALSE: // -8388608 to 8388607, 0 to 16777215
+			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
+			case strpos($type, "bigint") !== FALSE: // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
+				$valueOut = ($valueIn != "") ? intval($valueIn) : "NULL";
 				$typeCaseAs = "integer";
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
 				//http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
 			case $type==="float":
 			case $type==="double":
-				$returnValue = ($columnValue != "") ? doubleval($columnValue) : "NULL";
+				$valueOut = ($valueIn != "") ? doubleval($valueIn) : "NULL";
 				$typeCaseAs = "decimal";
 				break;
 			case $type==="date":
-			/*
-				if($this->IsNullOrEmptyString($columnValue)){
-					$returnValue = date("Y-m-d");
+				if($this->IsNullOrEmptyString($valueIn)){
+					$valueOut = date("Y-m-d");
 				}else{
+					$valueIn = trim($valueIn, "'");
 					// convert string to date
-					$tmpDate = date_parse($columnValue);
-					if(!$tmpDate["errors"] == 0 && checkdate($tmpDate["month"], $tmpDate["day"], $tmpDate["year"]))
-						$returnValue = date("Y-m-d"); // if convert with error, use the current date
+					$tmpDate = date_parse($valueIn);
+					if(count($tmpDate["errors"]) > 0)
+						$valueOut = date("Y-m-d"); // if convert with error, use the current date
 					else
-						$returnValue = $tmpDate->format("Y-m-d");
+						//$valueOut = $tmpDate->format("Y-m-d H:i:s");
+						// mktime(hour,minute,second,month,day,year)
+						$valueOut = date("Y-m-d", mktime(
+							0, 
+							0, 
+							0, 
+							$tmpDate["month"], 
+							$tmpDate["day"], 
+							$tmpDate["year"])
+					);
 				}
-				$returnValue = "'" . $returnValue . "'";
-				*/
-				if(is_string($columnValue)){
-					$returnValue = $columnValue;
+				$valueOut = "'" . $valueOut . "'";
+				/*
+				if(is_string($valueIn)){
+					$valueOut = $valueIn;
 				}else{
-					$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
+					$valueOut = ($valueIn != "") ? "'" . $valueIn . "'" : "NULL";
 				}
+				*/
 				$typeCaseAs = "date";
 				break;
 			case $type==="datetime":
 			case $type==="timestamp":
-				if($this->IsNullOrEmptyString($columnValue)){
-					$returnValue = date("Y-m-d H:i:s");
+				if($this->IsNullOrEmptyString($valueIn)){
+					$valueOut = date("Y-m-d H:i:s");
 				}else{
+					$valueIn = trim($valueIn, "'");
 					// convert string to date
-					$tmpDate = date_parse($columnValue);
+					$tmpDate = date_parse($valueIn);
 					if(count($tmpDate["errors"]) > 0)
-						$returnValue = date("Y-m-d H:i:s"); // if convert with error, use the current date
+						$valueOut = date("Y-m-d H:i:s"); // if convert with error, use the current date
 					else
-						//$returnValue = $tmpDate->format("Y-m-d H:i:s");
+						//$valueOut = $tmpDate->format("Y-m-d H:i:s");
 						// mktime(hour,minute,second,month,day,year)
-						$returnValue = date("Y-m-d H:i:s", mktime(
+						$valueOut = date("Y-m-d H:i:s", mktime(
 							$tmpDate["hour"], 
 							$tmpDate["minute"], 
 							$tmpDate["second"], 
@@ -1099,39 +1482,41 @@ class DatabaseManager {
 							$tmpDate["year"])
 					);
 				}
-				$returnValue = "'" . $returnValue . "'";
-				//return $columnValue;
-				//if(is_string($columnValue)){
-				//	$returnValue = $columnValue;
-				//}else{
-					//$returnValue = ($columnValue != "") ? "'" . $columnValue . "'" : "NULL";
-				//}
+				$valueOut = "'" . $valueOut . "'";
+
 				$typeCaseAs = "datetime";
+				break;
+			case $type==="time":
+				if($this->IsNullOrEmptyString($valueIn)){
+					$valueOut = date("H:i:s");
+				}else{
+					$valueIn = trim($valueIn, "'");
+					// convert string to date
+					$tmpDate = date_parse($valueIn);
+					if(count($tmpDate["errors"]) > 0)
+						$valueOut = date("H:i:s"); // if convert with error, use the current date
+					else
+						//$valueOut = $tmpDate->format("Y-m-d H:i:s");
+						// mktime(hour,minute,second,month,day,year)
+						$valueOut = date("H:i:s", mktime(
+							$tmpDate["hour"], 
+							$tmpDate["minute"], 
+							$tmpDate["second"])
+					);
+				}
+				$valueOut = "'" . $valueOut . "'";
+				$typeCaseAs = "time";
 				break;
 		}
 		
-		//echo "value in:$columnValue, type:$type, entryType:$typeCaseAs, value out:$returnValue";
-		return $returnValue;
+		//echo "value in:$valueIn, type:$type, entryType:$typeCaseAs, value out:$valueOut";
+		return $valueOut;
 	}
 	
 	function IsSystemField($fields){
 		$isSystemField = false;
 		
 		$isSystemField = array_search($fields, $this->reserved_fields);
-		/*
-		switch($fields){
-			case "systemCreateDate":
-			case "systemUpdateDate":
-			case "systemUpdateProgram":
-			case "userUpdateDate":
-			case "userUpdateProgram":
-			case "createDate":
-			case "createUser":
-				$isSystemField = true;
-				break;
-		}*/
-		
-		
 		return $isSystemField;
 	}
 	
@@ -1163,7 +1548,7 @@ class DatabaseManager {
 	 * @param string $question input a sting
 	 * @return boolean, true means that the string is null or empty otherwise false
 	 */
-	function IsNullOrEmptyString($question){
+	static function IsNullOrEmptyString($question){
 		return (!isset($question) || trim($question)==='');
 	}
 }

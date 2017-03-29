@@ -1,26 +1,29 @@
 <?php
 // require_once 'DatabaseManager.php';
 
-class SimpleSQLManager extends DatabaseManager {
+class ProductManager extends DatabaseManager {
     protected $_ = array(
 		// this Array structure By Initialize()
         // 'columnName1' => value,
         // 'columnName2' => value,
     );
 	
-	protected $table = "";
-	protected $sql = "";
-	protected $printDataAsVertical = false;
+	protected $table = "product";
     
     function __construct() {
 		parent::__construct();
-		$this->debug = true;
+        $this->Initialize();
     }
 	function Initialize(){
+		$this->debug = true;
+
 		// set parent dataSchema
-		//parent::setDataSchemaForSet();
+		parent::setDataSchemaForSet();
 		// set construct _ index
-		//parent::setArrayIndex();
+		parent::setArrayIndex();
+        
+        //$this->isSelectAllColumns = false;
+        //$this->selectWhichCols = "userID, loginID, status, isDisable, activeDate, premissionID";
 	}
 	function SetDefaultValue(){
 		parent::setDefaultValue();
@@ -29,14 +32,5 @@ class SimpleSQLManager extends DatabaseManager {
     function __isset($name) {
         return isset($this->_[$name]);
     }
-	
-	function Execute($sql_str = ""){
-		if(!isset($sql_str) || $sql_str == "")
-			$sql_str = $this->sql;
-		if(!$this->printDataAsVertical)
-			return $this->queryForDataArray($sql_str);
-		else
-			return $this->queryResultToArrayVertical($sql_str);
-	}
 }
 ?>

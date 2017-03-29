@@ -3,29 +3,12 @@ var app = angular.module("CRUD-read", []);
 
 app.controller('CRUD-read-controller', function($scope, $rootScope, $http, $element, $attrs, $log) {
 	// type = crud type[create/read/update/delete]
-	$scope.table.type = $attrs.type;
+	//$scope.table.type = $attrs.type;
 	
 	// table = tableName
-	$scope.table.name = $attrs.table;
-	/*
-	 *	defaultPath = [default/custom]
-	 *		default = root/Templates/crud-type.html
-	 *		custom 	= root/Templates/crud/crud-type-table.html
-	 */
-	$scope.defaultPath = $attrs.defaultPath;
+	//$scope.table.name = $attrs.table;
 	
-	// table structure in array for default template use to repeat the form control
-	/*
-	 * format = {
-	 *   "fieldName": {
-	 *    "type": "int(10)",
-	 *    "length": "10",
-	 *    "null": 1,
-	 *    "default": null
-	 *	}, ...
-	 * }
-	 */
-	$scope.fields = {};
+	$scope.GetCRUDActionType($attrs);
 	
 	/*
 	 *	control the default template, hidden can hide the
@@ -34,8 +17,8 @@ app.controller('CRUD-read-controller', function($scope, $rootScope, $http, $elem
 	 *	label = {columnName:'display name'}
 	 *	hidden = {'fieldName', 'field'}
 	*/
-	//$scope.label = {};
-	//$scope.hidden = [];
+	$scope.label = {};
+	$scope.hidden = [];
 	
 	$scope.formData = $scope.read;
 	
@@ -51,35 +34,33 @@ app.controller('CRUD-read-controller', function($scope, $rootScope, $http, $elem
 	
 	$scope.readStatus = {}
 	$scope.readStatus.disableRefresh = false;
+	
+	$scope.FirstReadFinished = false;
 		
 	// get table structure for gen table tree node
-	
-	if($rootScope.table[$scope.table.name] == null){
-		$log.debug("read controller call: GetTableSchema()");
-		$log.debug($rootScope.table[$scope.table.name]);
+	if(typeof($rootScope.table[$scope.table.name]) == "undefined"){
 		$scope.GetTableSchema($scope.table.type);
-	/*
-		$http(
-			{
-				method:"POST",
-				url:$rootScope.controller+"simple-selectTableStructure.php",
-				params:{table:$scope.table.name},
-				responseType:'json'
-			}).
-			success(function(data, status, headers, config) {
-				//console.dir(data);
-				// this callback will be called asynchronously
-				// when the response is available
-				$scope.dataSchema = data.data;
-				$rootScope.table[$scope.table.name] = data.data;
-			}).
-			error(function(data, status, headers, config) {
-				// called asynchronously if an error occurs
-				// or server returns response with an error status.
-				$scope.data = "fail";
-			});
-			*/
 	}
+	
+	/*
+	 *	When the same get table schema request are sent and wait for the response,
+	 *	the next same name of table schema request will not sent, now will watch and
+	 *	wait for the response.
+	 */
+	$rootScope.$watch(
+		function($rootScope){
+			return $rootScope.tableSource[$scope.table.name];
+		}, function(newVal, oldVal){
+		if(typeof(newVal) != "undefined" ){
+			if(typeof(newVal)=="string"){
+				if(newVal != null && newVal!=""){
+					$scope.ConvertSchema2Fields(newVal)
+				}
+			}else{
+				$scope.ConvertSchema2Fields(newVal)
+			}
+		}
+	})
 	
 	$scope.DisableRefreshButton = function(){
 		$scope.readStatus.disableRefresh = true;
@@ -104,14 +85,28 @@ app.controller('CRUD-read-controller', function($scope, $rootScope, $http, $elem
 			success(function(data, status, headers, config) {
 				$scope.displayData = data.data;
 				$scope.EnableRefreshButton();
+				$scope.FirstReadFinished = true;
 			}).
 			error(function(data, status, headers, config) {
 				$scope.displayError = data;
 				$scope.EnableRefreshButton();
+				$scope.FirstReadFinished = true;
 			});
 	}
 	
-	$scope.RefreshData();
-	//console.log("Controller<crud crud-read-controller> - executed.");
+	
+	$rootScope.$watch(
+		function(){return $rootScope.getSchemaStatus[$scope.table.name]},
+		function(newValue, oldValue){
+			if ( newValue !== oldValue )
+			if($rootScope.getSchemaStatus[$scope.table.name]=="ok"){
+				$scope.RefreshData();
+			}else{
+				console.warn("Read Controller: ");
+				console.warn("Obtain table structure 'fail', cancel to read data from table "+$scope.table.name);
+			}
+		}
+	);
+	
 	$log.info("Controller<crud crud-read-controller> - executed.");
 });
