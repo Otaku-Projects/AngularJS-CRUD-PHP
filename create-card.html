@@ -199,18 +199,10 @@ app.controller('createCardController', ['$scope', 'Security', function ($scope, 
     實體書︰<br>
     <a href="http://blogs.yahoo.co.jp/hayatosasaki147/33674166.html" target="_blank">http://blogs.yahoo.co.jp/hayatosasaki147/33674166.html</a>
     
-        
-        <div class="panel panel-default">
-          <div class="panel-heading">Process Message</div>
-          <div class="panel-body">
-            <message ng-model="processMsg">
-              <div class="well well-sm" ng-if="msgCtrl.ngModel.length > 0">
-                <div ng-repeat="dspMsg in msgCtrl.ngModel track by $index" ng-bind="dspMsg"></div>
-              </div>
-            </message>
-          </div>
-        </div>
     <entry ng-model="entryForm" program-id="hs01ca" edit-mode="create">
+      <div class="well well-sm">
+        <div ng-repeat="dspMsg in DisplayMessageList track by $index" ng-bind="dspMsg"></div>
+      </div>
         <editbox ng-model="cardEditBox" program-id="hw01ca">
 		  <div class="form-inline">
 			<label for="card_cardID">Card ID</label>

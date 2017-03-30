@@ -151,16 +151,7 @@ app.controller('senseiCtrl', ['$scope', 'Security', function ($scope, Security, 
             </table>
       </div>
     </pageview>
-        <div class="panel panel-default">
-          <div class="panel-heading">Process Message</div>
-          <div class="panel-body">
-            <message ng-model="processMsg">
-              <div class="well well-sm" ng-if="msgCtrl.ngModel.length > 0">
-                <div ng-repeat="dspMsg in msgCtrl.ngModel track by $index" ng-bind="dspMsg"></div>
-              </div>
-            </message>
-          </div>
-        </div>
+    
 <entry ng-model="entryForm" program-id="hs01se" edit-mode="amend">
       <form ng-submit="SubmitData()">
         <fieldset>
