@@ -42,7 +42,7 @@ This project design for the function base, a page can be a function, a directive
 ## Functional Implementation
 - [x] \<entry\> provide CRUD action
 - [x] \<pageview\> display the records set in pagination
-- [x] \<screen\> as a template directive for reuseable \<pageview\>, \<entry>\
+- [x] \<screen\> as a template directive for reuseable \<pageview\>, \<entry\>
 - [x] \<editbox\> is a control set to handle foreign key, click to popup a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
 - [x] \<export\> convert the responsed Base64 to a Blob object and download to the client
 - [x] \<upload\> send one or more file to the server
@@ -81,7 +81,7 @@ In the future, some existing problems must be solved
       ├---bootstrap-3.3.0
       └---... and so on (please refer to the dependency)
 ```
-![System Architecture Design](./System Architecture.png)
+![System Architecture Design](./System%20Architecture.png)
 
 ## Download
 Go to [released version](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip) on GitHub
