@@ -6,6 +6,7 @@
  */
 //require_once dirname(__FILE__).'/../globalVariable.php';
 // require_once dirname(__FILE__).'/config.php';
+require_once 'Core.php';
 
 class DatabaseManager{
 	private $hostname_fyp;
@@ -38,10 +39,7 @@ class DatabaseManager{
 	protected $double = "double";
 	protected $date = "date";
 	
-	private	$reserved_fields = array();
 	private $responseArray = array("data"=>null, "sql"=>null);
-	private $access_status = array();
-	private $sys_err_msg = array();
 	private $responseArray_errs = array();
 
 	// config the select mechanism.
@@ -95,20 +93,6 @@ class DatabaseManager{
 		$this->responseArray_errs = array();
 
 		$this->responseArray = $this->CreateResponseArray();
-		
-		// $arrayIndex = array("data", 
-		// 	"sql", 
-		// 	"num_rows", 
-		// 	"insert_id", 
-		// 	"affected_rows", 
-		// 	"access_status", 
-		// 	"error");
-		// foreach ($arrayIndex as $indexValue){
-		// 	$this->responseArray[$indexValue] = null;
-		// }
-		// $this->responseArray["sql"] = null;
-		// $this->responseArray["access_status"] = $this->access_status["None"];
-		// return $this->GetResponseArray();
 	}
     
 	function CreateResponseArray(){
@@ -129,7 +113,7 @@ class DatabaseManager{
 		}
 		$responseArray["data"] = [];
 		$responseArray["sql"] = null;
-		$responseArray["access_status"] = $this->access_status["None"];
+		$responseArray["access_status"] = Core::$access_status["None"];
 		return $responseArray;
 	}
 
@@ -176,61 +160,7 @@ class DatabaseManager{
 			when controll.php call manager.php file, __FILE__ will be come file_path/controll.php						
 		*/
 		$this->permsCtrlName = basename($_SERVER['PHP_SELF']);
-
-		$this->reserved_fields = array(
-			"createUser"=>"createUser",
-			"createDate"=>"createDate",
-			"lastUpdateUser"=>"lastUpdateUser",
-			"lastUpdateDate"=>"lastUpdateDate",
-			"systemUpdateDate"=>"systemUpdateDate",
-			"systemUpdateUser"=>"systemUpdateUser",
-			"systemUpdateProgram"=>"systemUpdateProgram"
-		);
-		$this->access_status = array(
-			"None" => "None",
-			"OK" => "OK",
-			"Duplicate" => "Duplicate",
-			"Fail" => "Fail",
-			"Error" => "Error",
-			"TopOfFile" => "TopOfFile",
-			"EndOfFile" => "EndOfFile",
-			"Locked" => "Locked",
-			"RecordNotFound" => "RecordNotFound",
-			"SqlError" => "SqlExecuteError",
-			"NoPermission" => "NoPermission",
-			"AuthorizationFail" => "AuthorizationFail", // permissions (what you are allowed to do)
-			"AuthenticationFail" => "AuthenticationFail"
-		);
-
-		$this->sys_err_msg = array(
-			// registration
-			"UserNameDuplicate" => "The username already in used by someone.",
-
-			// sql level
-			"SQLNullOrEmpty" => "sql query is empty",
-
-			// insert error
-			"InsertFailFieldsNullOrEmpty" => "All Fields are null or empty: insert a record with all null or empty cols, what you are doing?",
-
-			// update error
-			"UpdateFailNoPK" => "Primary Key: (%s) have not set, cannot update.",
-			"UpdateFailFieldsNullOrEmpty" => "All Fields are null or empty: did't update all fields to null or empty, it doesn't make sense.",
-
-			// delete error
-			"DeleteFailNoPK" => "Primary Key: (%s) have not set, cannot delete.",
-			"DeleteFailFieldsNullOrEmpty" => "All Fields are null or empty: cannot allocate a record to delete.",
-
-			// Authorization || login
-			"AuthorizationFail" => "Not enough permission to perform operation.", // permissions (what you are allowed to do)
-
-			// Permission
-			"NoPermission" => "Not enough permission to perform operation.",
-			"AuthenticationFail" => "Invalid login ID or password.",
-
-			"SecurityManagerNotFound" => "Security module enabled, but not inlcuded manager.php in ".$this->permsCtrlName,
-
-			"TableNameNotFound" => "Table name was undefined."
-		);
+        
 		$this->ResetResponseArray();
 		$this->Initialize();
     }
@@ -242,7 +172,6 @@ class DatabaseManager{
 
 		// set parent dataSchema
 		$this->setDataSchemaForSet();
-		// set construct _ index
 		$this->setArrayIndex();
     }
 
@@ -275,36 +204,37 @@ class DatabaseManager{
         return $result;
     }
 	
-	function selectFirstRowFirstElement($sql_str, $isDebug=false) {
-		$result = $this->dbc->query($sql_str);
-		$row = $result->fetch_array(MYSQLI_NUM);
-		//	echo $row[0]."hellp";
-		//ec
-		if($isDebug===true){
-			echo "<br>";
-			$this->debug($sql_str);  //debug
-			echo "<br>";
-			echo "result: ".var_dump($result);
-			echo "<br>";
-			echo "elelment".$row[0]."elelment";
-		}
-		if($row[0])
-			return $row[0];
-		else
-			return false;
-		/*
-		if($result->num_rows)
-		{
-			$row = $result->fetch_array(MYSQLI_BOTH);
-			echo $row[0]
-			return $result->num_rows;
-		}
-		*/
-        if($result===false){
-        	return $this->debug($sql_str)."<br><br>".$result."<br><br><pre>".print_r($this->dbc->error_list)."</pre>";
-        }
-        return $result;
-	}
+    // Deprecated, can be remove on the next time you see
+//	function selectFirstRowFirstElement($sql_str, $isDebug=false) {
+//		$result = $this->dbc->query($sql_str);
+//		$row = $result->fetch_array(MYSQLI_NUM);
+//		//	echo $row[0]."hellp";
+//		//ec
+//		if($isDebug===true){
+//			echo "<br>";
+//			$this->debug($sql_str);  //debug
+//			echo "<br>";
+//			echo "result: ".var_dump($result);
+//			echo "<br>";
+//			echo "elelment".$row[0]."elelment";
+//		}
+//		if($row[0])
+//			return $row[0];
+//		else
+//			return false;
+//		/*
+//		if($result->num_rows)
+//		{
+//			$row = $result->fetch_array(MYSQLI_BOTH);
+//			echo $row[0]
+//			return $result->num_rows;
+//		}
+//		*/
+//        if($result===false){
+//        	return $this->debug($sql_str)."<br><br>".$result."<br><br><pre>".print_r($this->dbc->error_list)."</pre>";
+//        }
+//        return $result;
+//	}
 
 	/**
 	 * call query() to execute sql query,
@@ -329,7 +259,7 @@ class DatabaseManager{
 			$sql_str = $this->sql_str;
 
 			if($this->IsNullOrEmptyString($sql_str)){
-				array_push($this->responseArray_errs, $this->sys_err_msg["SQLNullOrEmpty"]);
+				array_push($this->responseArray_errs, Core::$sys_err_msg["SQLNullOrEmpty"]);
 				return $this->GetResponseArray();
 			}
 		}
@@ -362,13 +292,13 @@ class DatabaseManager{
 		}
 		// End - Debug mode
 		if(empty($tempSQLError)){
-			$responseArray['access_status'] = $this->access_status['OK'];
+			$responseArray['access_status'] = Core::$access_status['OK'];
 		}
 		else if(!empty($tempSQLError)){
-			$responseArray['access_status'] = $this->access_status["SqlError"];
+			$responseArray['access_status'] = Core::$access_status["SqlError"];
 		}
 		else{
-			$responseArray['access_status'] = $this->access_status['Error'];
+			$responseArray['access_status'] = Core::$access_status['Error'];
 		}
 
 		if(isset($result->num_rows)){
@@ -392,7 +322,7 @@ class DatabaseManager{
 			$sql_str = $this->sql_str;
 
 			if($this->IsNullOrEmptyString($sql_str)){
-				array_push($responseArray_errs, $this->sys_err_msg["SQLNullOrEmpty"]);
+				array_push($responseArray_errs, Core::$sys_err_msg["SQLNullOrEmpty"]);
 				return $this->GetResponseArray();
 			}
 		}
@@ -420,6 +350,17 @@ class DatabaseManager{
 			}
 		}
 		// End - Debug mode
+		$tempSQLError = $this->dbc->error;
+		if(empty($tempSQLError)){
+			$responseArray['access_status'] = Core::$access_status['OK'];
+		}
+		else if(!empty($tempSQLError)){
+			$responseArray['access_status'] = Core::$access_status["SqlError"];
+		}
+		else{
+			$responseArray['access_status'] = Core::$access_status['Error'];
+		}
+        
 		if(isset($result->num_rows)){
 			if($fetchType==MYSQLI_NUM){
 				while ($row = $result->fetch_array(MYSQLI_ASSOC)) { // MYSQLI_BOTH, MYSQLI_ASSOC, MYSQLI_NUM
@@ -468,8 +409,8 @@ class DatabaseManager{
     	}
 
     	if(!$isPermissionAllow){
-			$this->responseArray['access_status'] = $this->access_status["AuthorizationFail"];
-			array_push($this->responseArray_errs, $this->sys_err_msg["AuthorizationFail"]);
+			$this->responseArray['access_status'] = Core::$access_status["AuthorizationFail"];
+			array_push($this->responseArray_errs, Core::$sys_err_msg["AuthorizationFail"]);
 		}
 
     	return $isPermissionAllow;
@@ -493,7 +434,6 @@ class DatabaseManager{
 
 		$array = $this->_;
 		$dataSchema = $this->dataSchema;
-		//$updateSetColumn = "";
 		$updateWhereColumn = "";
 		$isPKMissing = true;
 
@@ -525,13 +465,11 @@ class DatabaseManager{
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["UpdateFailNoPK"], $missingPK));
 			return $this->GetResponseArray();
 		}	*/	
 		
 		$updateWhereColumn = rtrim($updateWhereColumn, " AND ");
-		//$updateSetColumn = rtrim($updateSetColumn, " , ");		
-		//$nullOrEmptyColumn = rtrim($nullOrEmptyColumn, " , ");
 		// mapping a update sql
 		$sql_str = sprintf("SELECT * from `%s` where %s",
 			$this->table,
@@ -593,6 +531,17 @@ class DatabaseManager{
 		$this->afterCreateInsertUpdateDelete(__FUNCTION__);
 		return $this->GetResponseArray();
 	}
+    public function selectPrimaryKeyList(){
+        $responseArray = array();
+        $responseArray = $this->getPrimaryKeyName();
+        
+        $responseArray["DataColumns"] = $this->dataSchemaCSharp;
+        
+        if($responseArray["num_rows"] > 0)
+            $responseArray["KeyColumns"] = $responseArray["data"]["Field"];
+
+        return $responseArray;
+    }
 	public function count(){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
 
@@ -724,8 +673,8 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
-			$this->responseArray['access_status'] = $this->access_status["Error"];
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["UpdateFailNoPK"], $missingPK));
+			$this->responseArray['access_status'] = Core::$access_status["Error"];
 			return $this->GetResponseArray();
 		}
 
@@ -775,11 +724,11 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
-			$this->reserved_fields["createDate"]);
+			Core::$reserved_fields["createDate"]);
 		$this->sql_str = $custom_sql_str;
 		$resultData = $this->queryForDataArray();
 		if($resultData['num_rows'] > 0){
-			$tableColumnSQL .= $this->reserved_fields['createDate']." , ";
+			$tableColumnSQL .= Core::$reserved_fields['createDate']." , ";
 			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
 		}
 
@@ -787,12 +736,12 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
-			$this->reserved_fields["lastUpdateDate"]);
+			Core::$reserved_fields["lastUpdateDate"]);
 		$this->sql_str = $custom_sql_str;
 		$resultData = $this->queryForDataArray();
 
 		if($resultData['num_rows'] > 0){
-			$tableColumnSQL .= $this->reserved_fields['lastUpdateDate']." , ";
+			$tableColumnSQL .= Core::$reserved_fields['lastUpdateDate']." , ";
 			$valuesSQL .= "'". date("Y-m-d H:i:s")."' , ";
 		}
 		
@@ -809,13 +758,11 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			if(!$isBeforeSuccess){
 				return $this->GetResponseArray();
 			}
-		// print_r($this->responseArray);
 			$this->responseArray = $this->queryForDataArray();
-		// print_r($this->responseArray);
 		}else{
 			// if all fields are not specifies any value
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["InsertFailFieldsNullOrEmpty"]));
-			$this->responseArray['access_status'] = $this->access_status["Error"];
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["InsertFailFieldsNullOrEmpty"]));
+			$this->responseArray['access_status'] = Core::$access_status["Error"];
 		}
 
 		$this->responseArray['table_schema'] = $this->dataSchema['data'];
@@ -828,7 +775,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
      * TableManager basic and simple UPDATE SQL Function
      * update but expect the key fields
      */
-	public function update($ignoreTheLastDateCheck = false, $allowUpdateToEmptyValue = false){
+	public function update($ignoreTheLastDateCheck = false){
 		if($this->$ignoreTheLastDateCheck)
 			$ignoreTheLastDateCheck = true;
 
@@ -862,7 +809,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["UpdateFailNoPK"], $missingPK));
 			return $this->GetResponseArray();
 		}
 		// stop and return error msg if all fields except PK are null or empty
@@ -883,16 +830,12 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				}else{
                     // 20170111, keithpoon, also allowed to assign empty, if the user want to update the record from text to empty
                     $updateSetColumn.="`".$key."` ='', ";
-//					if($allowUpdateToEmptyValue)
-//						$updateSetColumn.="`".$key."` ='', ";
-//					else
-//						$nullOrEmptyColumn.=$key." , ";
 				}
 			}
 		}
 		
 		if($isAllColumnNullOrEmpty){
-			array_push($this->responseArray_errs, $this->sys_err_msg["UpdateFailFieldsNullOrEmpty"]);
+			array_push($this->responseArray_errs, Core::$sys_err_msg["UpdateFailFieldsNullOrEmpty"]);
 			return $this->GetResponseArray();
 		}
 		
@@ -902,7 +845,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 				$this->database_fyp,
 				$this->table,
-				$this->reserved_fields["lastUpdateDate"]);
+				Core::$reserved_fields["lastUpdateDate"]);
 			$this->sql_str = $custom_sql_str;
 			$lastUpdateResponseArray = $this->queryForDataArray();
 		}
@@ -916,10 +859,10 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		
 		// assign last update date and set the last update date condition
 		if($isLastUpdateDateFound){
-			$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
-			$updateWhereColumn .= $this->reserved_fields["lastUpdateDate"] . 
+			$updateSetColumn .= Core::$reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
+			$updateWhereColumn .= Core::$reserved_fields["lastUpdateDate"] . 
 				"=" . 
-				$this->GetSQLValueString($this->reserved_fields["lastUpdateDate"]) . 
+				$this->GetSQLValueString(Core::$reserved_fields["lastUpdateDate"]) . 
 				" AND ";
 		}
 		//// END - check the lastUpdateDate column
@@ -977,7 +920,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailNoPK"], $missingPK));
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["UpdateFailNoPK"], $missingPK));
 			return $this->GetResponseArray();
 		}
 		// stop and return error msg if all fields except PK are null or empty
@@ -1001,7 +944,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$nullOrEmptyColumn = rtrim($nullOrEmptyColumn, " , ");
 		if($isAllColumnNullOrEmpty){
 			//return array("error"=>"All Fields all null or empty: cannot update all fields to null or empty, it doesn't make sense.");
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["UpdateFailFieldsNullOrEmpty"], $missingPK));
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["UpdateFailFieldsNullOrEmpty"], $missingPK));
 			return $this->GetResponseArray();
 		}
 		
@@ -1055,8 +998,8 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				}
 			}
 			$missingPK = rtrim($missingPK, " , ");
-			$this->responseArray['access_status'] = $this->access_status['Fail'];
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["DeleteFailNoPK"], $missingPK));
+			$this->responseArray['access_status'] = Core::$access_status['Fail'];
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["DeleteFailNoPK"], $missingPK));
 			return $this->GetResponseArray();
 		}
 		// stop the delete action if all fields are null or empty under the case if table no PK
@@ -1076,7 +1019,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			}
 		}
 		if($isAllColumnNullOrEmpty && $isPKMissing){
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["DeleteFailFieldsNullOrEmpty"], $nullOrEmptyColumn));
+			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["DeleteFailFieldsNullOrEmpty"], $nullOrEmptyColumn));
 			return $this->GetResponseArray();
 		}
 
@@ -1084,7 +1027,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$custom_sql_str = sprintf("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' AND COLUMN_NAME = '%s'",
 			$this->database_fyp,
 			$this->table,
-			$this->reserved_fields["lastUpdateDate"]);
+			Core::$reserved_fields["lastUpdateDate"]);
 		$this->queryForDataArray($custom_sql_str);
 		
 		$isLastUpdateDateFound = false;
@@ -1093,10 +1036,10 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				
 		// assign last update date and set the last update date condition
 		if($isLastUpdateDateFound){
-			//$updateSetColumn .= $this->reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
-			$deleteWhereColumn .= $this->reserved_fields["lastUpdateDate"] . 
+			//$updateSetColumn .= Core::$reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
+			$deleteWhereColumn .= Core::$reserved_fields["lastUpdateDate"] . 
 				"=" . 
-				$this->GetSQLValueString($this->reserved_fields["lastUpdateDate"]) . 
+				$this->GetSQLValueString(Core::$reserved_fields["lastUpdateDate"]) . 
 				" AND ";
 		}
 		//// END - check the lastUpdateDate column
@@ -1124,12 +1067,9 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 	 * TableManager Initialize() function call, for futher action that is initialize getter and setter
 	 */
 	function setDataSchemaForSet($isClearResponseArrayDataIndex = false){
-		//$this->ResetResponseArray();
-
 		$sql_str = sprintf("describe %s",
 			$this->table);
 		$this->sql_str = $sql_str;
-		// $this->responseArray = $this->queryForDataArray();
 		$this->dataSchema = $this->queryForDataArray();
 
 		// extract data schema to increase readability
@@ -1202,7 +1142,6 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			$this->responseArray["data"] = array();
 	}
 	function getTableIndex(){
-		//$this->ResetResponseArray();
 		$sql_str = sprintf("show index from `%s`",
 			$this->table);
 		$this->sql_str = $sql_str;
@@ -1236,7 +1175,6 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 
 	function getPrimaryKeyName(){
 		// refer to http://mysql-0v34c10ck.blogspot.com/2011/05/better-way-to-get-primary-key-columns.html
-		//$showIndex_sql = "show index from ".$this->table;
 		$showPrimaryKey_sql = sprintf("SELECT `COLUMN_NAME` AS `Field` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = '%s') AND (`TABLE_NAME` = '%s') AND (`COLUMN_KEY` = 'PRI')",
 				$this->database_fyp,
 				$this->table);
@@ -1245,7 +1183,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 	}
 	
 	/**
-	 * according to the data schema, create the array index of table object
+	 * according to the data schema, create the index _ of the table object instance
 	 */
 	function setArrayIndex(){
 		$dataSchema = $this->dataSchema['data'];
@@ -1272,7 +1210,6 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 	}
 	// End - TableManager Initialize() function call
     function close() {
-        //$this->dbc->close();
         $this->dbc->close();
     }
 	
@@ -1641,7 +1578,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 	function IsSystemField($fields){
 		$isSystemField = false;
 		
-		$isSystemField = array_search($fields, $this->reserved_fields);
+		$isSystemField = array_search($fields, Core::$reserved_fields);
 		return $isSystemField;
 	}
 	

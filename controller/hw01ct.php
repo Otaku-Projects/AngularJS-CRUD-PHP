@@ -6,9 +6,7 @@ $data 			= array(); 		// array to pass back data
 function GetTableStructure(){
 	$responseArray = array();
 	$cardTypeManager = new CardTypeManager();
-	$responseArray["DataColumns"] = $cardTypeManager->dataSchemaCSharp;
-	$responseArray["KeyColumns"] = $cardTypeManager->getPrimaryKeyName()["data"]["Field"];
-	return $responseArray;
+    return $cardTypeManager->selectPrimaryKeyList();
 }
 
 function CreateData($requestData){

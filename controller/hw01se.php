@@ -14,9 +14,7 @@ $responseArray = array();
 function GetTableStructure(){
 	$senseiManager = new SenseiManager();
 	$responseArray = array();
-	$responseArray["DataColumns"] = $senseiManager->dataSchemaCSharp;
-	$responseArray["KeyColumns"] = $senseiManager->getPrimaryKeyName()["data"]["Field"];
-	return $responseArray;
+    return $senseiManager->selectPrimaryKeyList();
 }
 
 function GetData($requestData){

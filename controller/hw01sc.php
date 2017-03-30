@@ -6,9 +6,7 @@ $data 			= array(); 		// array to pass back data
 function GetTableStructure(){
 	$responseArray = array();
 	$spellClassManager = new SpellClass();
-	$responseArray["DataColumns"] = $spellClassManager->dataSchemaCSharp;
-	$responseArray["KeyColumns"] = $spellClassManager->getPrimaryKeyName()["data"]["Field"];
-	return $responseArray;
+    return $spellClassManager->selectPrimaryKeyList();
 }
 
 function CreateData($requestData){

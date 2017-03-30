@@ -112,7 +112,7 @@ app.controller('createCardController', ['$scope', 'Security', function ($scope, 
 	}
 	
 	
-  $scope.CustomSelectedToRecord = function(sRecord, scope, iElement, controller){
+  $scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
     console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
 
     var tagName = iElement[0].tagName.toLowerCase();

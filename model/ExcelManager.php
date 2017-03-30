@@ -1,9 +1,9 @@
 <?php
 // require_once 'DatabaseManager.php';
+require_once 'Core.php';
 require_once '../third-party/PHPExcel_1.8.1/PHPExcel.php';
-// require_once 'SimpleTableManager.php';
 
-class ExcelManager extends DatabaseManager {
+class ExcelManager {
 
 	/* 
 		Construct attributes (table column)
@@ -36,15 +36,15 @@ class ExcelManager extends DatabaseManager {
     
     function __construct($tableName="") {
     	$this->table = $tableName;
-		parent::__construct();
+//		parent::__construct();
 		error_reporting(E_ALL);
 		ini_set('display_errors', TRUE);
 		ini_set('display_startup_errors', TRUE);
 		$this->tableList = array();
     }
 	function Initialize(){
-		if($this->IsNullOrEmptyString($this->table)){
-			$response = $this->ResetResponseArray();
+		if(Core::IsNullOrEmptyString($this->table)){
+			$response = Core::CreateResponseArray();
 			$response['access_status'] = $this->access_status['Error'];
 			$response['error'] = $this->sys_err_msg['TableNameNotFound'];
 			return $response;
@@ -54,6 +54,7 @@ class ExcelManager extends DatabaseManager {
 		//parent::setArrayIndex();
 		// Default value
 		$this->isTemplate = false;
+        
 		$this->filename = $this->table."_Export_Excel_" . date('Y-m-d_His');
 		$this->outputAsFileType = $this->fileType["xlsx"];
 		$this->ClearExportColumnSequence();
@@ -118,12 +119,13 @@ class ExcelManager extends DatabaseManager {
 			//$excelCellCoordinate = $this->getNameFromNumber($columnIndex).$rowCount;
 			$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
 			$excelColumnCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).":".PHPExcel_Cell::stringFromColumnIndex($columnIndex);
-			if(parent::IsSystemField($headerColumn))
+//			if(parent::IsSystemField($headerColumn))
+			if(Core::IsSystemField($headerColumn))
 				continue;
 			//$objPHPExcel->setActiveSheetIndex(0)->SetCellValue($excelCellCoordinate, $headerColumn);
 			$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $headerColumn);
 
-			$tempDataType = $this->SearchDataType($tableObject->dataSchema['data'], 'Field', $headerColumn)[0]['Type'];
+			$tempDataType = Core::SearchDataType($tableObject->dataSchema['data'], 'Field', $headerColumn)[0]['Type'];
 
 			switch (true) {
 				case strpos($tempDataType, "char") !== FALSE:
@@ -233,7 +235,7 @@ class ExcelManager extends DatabaseManager {
 
 		// 	//$excelCellCoordinate = $this->getNameFromNumber($columnIndex).$rowCount;
 		// 	$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
-		// 	if(parent::IsSystemField($headerColumn))
+		// 	if(Core::IsSystemField($headerColumn))
 		// 		continue;
 		// 	//$objPHPExcel->setActiveSheetIndex(0)->SetCellValue($excelCellCoordinate, $headerColumn);
 		// 	$objPHPExcel->getActiveSheet()->SetCellValue($excelCellCoordinate, $headerColumn);
@@ -290,11 +292,11 @@ class ExcelManager extends DatabaseManager {
 					{
 						$tempColValue = $row[$colName];
 
-						if(parent::IsSystemField($colName)) // skip export value when system fields
+						if(Core::IsSystemField($colName)) // skip export value when system fields
 							continue;
 						$excelCellCoordinate = PHPExcel_Cell::stringFromColumnIndex($columnIndex).$rowCount;
 
-						$tempDataType = $this->SearchDataType($tableObject->dataSchema['data'], 'Field', $colName)[0]['Type'];
+						$tempDataType = Core::SearchDataType($tableObject->dataSchema['data'], 'Field', $colName)[0]['Type'];
 
 								// echo $tempDataType;
 
@@ -426,7 +428,7 @@ class ExcelManager extends DatabaseManager {
 		}
 
 		// column sequence index
-		if($this->IsNullOrEmptyString($index))
+		if(Core::IsNullOrEmptyString($index))
 		{
 			$index = count($exportColumnSequence[$tableName]);
 		}
@@ -574,7 +576,7 @@ class ExcelManager extends DatabaseManager {
 		}
 
 		// assign the output file type
-		if($this->IsNullOrEmptyString($this->outputAsFileType)){
+		if(Core::IsNullOrEmptyString($this->outputAsFileType)){
 			//$this->outputAsFileType = $this->fileType["xlsx"];
 			$this->outputAsFileType = "xlsx";
 		}else if(!array_key_exists($this->outputAsFileType, $this->fileType)){
@@ -582,7 +584,7 @@ class ExcelManager extends DatabaseManager {
 		}
 
 		// assign the filename
-		if($this->IsNullOrEmptyString($this->filename))
+		if(Core::IsNullOrEmptyString($this->filename))
 		if(count($this->tableList) == 1)
 			$this->filename = $this->tableList[0];
 		else
@@ -598,16 +600,16 @@ class ExcelManager extends DatabaseManager {
 		// Change these values to select the Rendering library that you wish to use and its directory location on your server
 
 		// $rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
-		// $rendererLibrary = 'dompdf/dompdf-0.6.2/';
+		// $rendererLibrary = 'PDF engine/dompdf/dompdf-0.6.2/';
 		// local the dompdf enginer folder, PHPExcel 1.8.0+ not support dompdf 0.7.0+
-		//$rendererLibrary = 'dompdf/dompdf-0.7.0/';
+		//$rendererLibrary = 'PDF engine/dompdf/dompdf-0.7.0/';
 
 		// extremely slow performance
 		// $rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
-		// $rendererLibrary = 'TCPDF/TCPDF-6.2.13/';
+		// $rendererLibrary = 'PDF engine/TCPDF/TCPDF-6.2.13/';
 
 		$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
-		$rendererLibrary = 'MPDF/mpdf-6.1.3/';
+		$rendererLibrary = 'PDF engine/MPDF/mpdf-6.1.3/';
 		
 		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
 
@@ -718,7 +720,7 @@ class ExcelManager extends DatabaseManager {
 		}
 
 		// assign the output file type
-		if($this->IsNullOrEmptyString($this->outputAsFileType)){
+		if(Core::IsNullOrEmptyString($this->outputAsFileType)){
 			//$this->outputAsFileType = $this->fileType["xlsx"];
 			$this->outputAsFileType = "xlsx";
 		}else if(!array_key_exists($this->outputAsFileType, $this->fileType)){
@@ -726,18 +728,15 @@ class ExcelManager extends DatabaseManager {
 		}
 
 		// assign the filename
-		if($this->IsNullOrEmptyString($this->filename))
-		if(count($this->tableList) == 1)
-			$this->filename = $this->tableList[0];
-		else
-			$this->filename = basename($_SERVER['PHP_SELF']);
+		if(Core::IsNullOrEmptyString($this->filename))
+            if(count($this->tableList) == 1)
+                $this->filename = $this->tableList[0];
+            else
+                $this->filename = basename($_SERVER['PHP_SELF']);
 
+        $this->setFileName($this->tableList[0]);
 		$this->filenamePost = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
-
-		// $exportFilename = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
 		$exportedPath = BASE_EXPORT.$this->filenamePost;
-
-		// echo $this->filenamePost;
 
 		// Change these values to select the Rendering library that you wish to use and its directory location on your server
 
@@ -751,7 +750,7 @@ class ExcelManager extends DatabaseManager {
 		// $rendererLibrary = 'TCPDF/TCPDF-6.2.13/';
 
 		$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
-		$rendererLibrary = 'MPDF/mpdf-6.1.3/';
+		$rendererLibrary = 'PDF engine/MPDF/mpdf-6.1.3/';
 		
 		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
 		
@@ -953,7 +952,7 @@ class ExcelManager extends DatabaseManager {
 		$keyString = "";
 
 		foreach ($primaryKeySchema['data']['Field'] as $index => $value){
-			if($this->IsNullOrEmptyString($tableObject->_[$value])){
+			if(Core::IsNullOrEmptyString($tableObject->_[$value])){
 				$isPKMissing = $isPKMissing && true;
 				//break;
 			}else{

@@ -76,7 +76,7 @@ class WordManager extends DatabaseManager {
 
 		$document->save($this->docFullExportPath);
 		/*
-		// Redirect output to a client¡¦s web browser (Excel2007)
+		// Redirect output to a clientâ€™s web browser (Excel2007)
 		header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 		header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 		header('Cache-Control: max-age=0');
@@ -98,7 +98,7 @@ class WordManager extends DatabaseManager {
 		*/
 		
 		
-		// Redirect output to a client¡¦s web browser (Excel2007)
+		// Redirect output to a clientâ€™s web browser (Excel2007)
 		header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 		header('Content-Disposition: attachment;filename="'.$this->filenamePost.'"');
 		header('Cache-Control: max-age=0');

@@ -85,7 +85,7 @@ app.controller('senseiCtrl', ['$scope', 'Security', function ($scope, Security, 
 	}
   */
 
-	$scope.CustomSelectedToRecord = function(sRecord, scope, iElement, controller){
+	$scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
 		console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
 		$scope.entryForm = sRecord;
 	}

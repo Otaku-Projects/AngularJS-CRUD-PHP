@@ -371,7 +371,7 @@ app.directive('pageview', ['$rootScope',
 
                     var lastRecordIndex = $scope.sortedDataSource.length;
                     
-                    console.log("TryToCallSetCriteriaBeforeGet() - pageNum: "+pageNum+", lastRecordIndex: "+lastRecordIndex+", ")
+//                    console.log("TryToCallSetCriteriaBeforeGet() - pageNum: "+pageNum+", lastRecordIndex: "+lastRecordIndex+", ")
 
                     TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
 

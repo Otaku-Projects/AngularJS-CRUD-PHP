@@ -9,11 +9,7 @@ function GetTableStructure(){
 	$departmentManager = new SimpleTableManager();
     $departmentManager->Initialize("department");
     
-	$responseArray = array();
-	$responseArray["DataColumns"] = $departmentManager->dataSchemaCSharp;
-	$responseArray["KeyColumns"] = $departmentManager->getPrimaryKeyName()["data"]["Field"];
-    
-	return $responseArray;
+    return $departmentManager->selectPrimaryKeyList();
 }
 
 function GetData($requestData){

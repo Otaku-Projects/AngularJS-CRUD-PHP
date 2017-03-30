@@ -12,9 +12,7 @@ $data 			= array(); 		// array to pass back data
 function GetTableStructure(){
 	$responseArray = array();
 	$cardManager = new CardManager();
-	$responseArray["DataColumns"] = $cardManager->dataSchemaCSharp;
-	$responseArray["KeyColumns"] = $cardManager->getPrimaryKeyName()["data"]["Field"];
-	return $responseArray;
+    return $cardManager->selectPrimaryKeyList();
 }
 
 function CreateData($requestData){

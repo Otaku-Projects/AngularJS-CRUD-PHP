@@ -29,7 +29,7 @@ define("DOMIAN_NAME", "192.168.0.190/Deveop/");
 /**
  * Configuration for: SecurityManager
  *
- * PASSWORD_HASH: database host, usually it's "127.0.0.1" or "localhost", some servers also need port info
+ * PASSWORD_HASH: hash method
  */
 define("PASSWORD_HASH", "sha1");
 
@@ -38,29 +38,4 @@ define("PASSWORD_HASH", "sha1");
  *
  * INCLUDE_PHPMAILER: PHPMailer open source, create email, set from/to, add cc, add bcc, add attachment in object oriented
  */
-
-
-define("BASE_ROOT", dirname(__FILE__)."/../");
-
-
-define("BASE_RESOURSE", BASE_ROOT."resourse/");
-define("BASE_CONTROLLER", BASE_ROOT."controller/");
-define("BASE_MODEL", BASE_ROOT."model/");
-define("BASE_TEMPLATE", BASE_ROOT."Templates/");
-define("BASE_TEST", BASE_ROOT."test/");
-define("BASE_3RD", BASE_ROOT."third-party/");
-define("BASE_3RD_SOURCE", BASE_ROOT."third-part-sources/");
-define("BASE_RESOURCE", BASE_ROOT."resourse/");
-define("BASE_TEMPORARY", BASE_ROOT."temp/");
-
-define("BASE_WORD_TEMPLATE", BASE_RESOURCE."word-template/");
-
-define("BASE_UPLOAD", BASE_TEMPORARY."upload/");
-define("BASE_EXPORT", BASE_TEMPORARY."export/");
-
-define("INCLUDE_PHPMAILER", BASE_3RD."PHPMailer-5.2.9/PHPMailerAutoload.php");
-
-	define("IMPORTTYPE_INSERTANDUPDATE", "1");
-	define("IMPORTTYPE_INSERT", "2");
-	define("IMPORTTYPE_UPDATE", "3");
 ?>
