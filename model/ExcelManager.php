@@ -94,6 +94,11 @@ class ExcelManager extends DatabaseManager {
 		$myWorkSheet = new PHPExcel_Worksheet($objPHPExcel, $currentTableName);
 		$objPHPExcel->addSheet($myWorkSheet, $worksheetIndex);
 		$objPHPExcel->setActiveSheetIndex($worksheetIndex);
+        
+        // 'Arial Unicode MS' is a common unicode font style installed with some popular MS product such as MS Office
+        // use this font will support to display chinese, japanese in PDf file
+//        $objPHPExcel->getDefaultStyle()->getFont()->setName('Arial Unicode MS')->setSize(12);
+        $objPHPExcel->getDefaultStyle()->getFont()->setName('sun-exta')->setSize(12);
 		
 		$tableObject->topRightToken = true;
 		$resultSet = $tableObject->select();
@@ -602,7 +607,7 @@ class ExcelManager extends DatabaseManager {
 		// $rendererLibrary = 'TCPDF/TCPDF-6.2.13/';
 
 		$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
-		$rendererLibrary = 'MPDF/mpdf_6.1.0/';
+		$rendererLibrary = 'MPDF/mpdf-6.1.3/';
 		
 		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
 
@@ -643,9 +648,6 @@ class ExcelManager extends DatabaseManager {
 				// header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
 				// header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 				// header ('Pragma: public'); // HTTP/1.0
-
-				$sheetCount = $excel->getSheetCount();
-				$objWriter->setSheetIndex(1);
 				
 				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 				// $objWriter->save('php://output');
@@ -737,16 +739,20 @@ class ExcelManager extends DatabaseManager {
 
 		// echo $this->filenamePost;
 
-		//	Change these values to select the Rendering library that you wish to use
-		//		and its directory location on your server
-		//$rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
-		//$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
-		$rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
-		//$rendererLibrary = 'tcPDF5.9';
-		$rendererLibrary = 'dompdf-master/';
-		//$rendererLibrary = 'domPDF0.6.0beta3';
-		//$rendererLibraryPath = dirname(__FILE__).'/../../' . $rendererLibrary;
-		//$rendererLibraryPath = dirname(__FILE__).'/../third-party/'. $rendererLibrary;
+		// Change these values to select the Rendering library that you wish to use and its directory location on your server
+
+		// $rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
+		// $rendererLibrary = 'dompdf/dompdf-0.6.2/';
+		// local the dompdf enginer folder, PHPExcel 1.8.0+ not support dompdf 0.7.0+
+		//$rendererLibrary = 'dompdf/dompdf-0.7.0/';
+
+		// extremely slow performance
+		// $rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+		// $rendererLibrary = 'TCPDF/TCPDF-6.2.13/';
+
+		$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
+		$rendererLibrary = 'MPDF/mpdf-6.1.3/';
+		
 		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
 		
 		//$rendererLibraryPath = $this->base_Path["serverHost"].$this->base_Path["thrid-party"].$rendererLibrary;
