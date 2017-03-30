@@ -17,7 +17,7 @@ class DatabaseManager{
     protected $sql_str;
     protected $previousInsertID;
     protected $i;
-	
+    
 	// define by the getTheDataSchemaForSet;
 	protected $showColumnList;
 	protected $dataSchema;
@@ -881,10 +881,12 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				if(!$this->IsNullOrEmptyString($value)){
 					$updateSetColumn.="`".$key."` =".$this->GetSQLValueString($key)." , ";
 				}else{
-					if($allowUpdateToEmptyValue)
-						$updateSetColumn.="`".$key."` ='', ";
-					else
-						$nullOrEmptyColumn.=$key." , ";
+                    // 20170111, keithpoon, also allowed to assign empty, if the user want to update the record from text to empty
+                    $updateSetColumn.="`".$key."` ='', ";
+//					if($allowUpdateToEmptyValue)
+//						$updateSetColumn.="`".$key."` ='', ";
+//					else
+//						$nullOrEmptyColumn.=$key." , ";
 				}
 			}
 		}
@@ -1034,7 +1036,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$isPKMissing = false;
 
 		$primaryKeySchema = $this->getPrimaryKeyName();
-
+        
 		// error handling
 		// is primary key missing?
 		foreach ($primaryKeySchema['data']['Field'] as $index => $value){
@@ -1047,7 +1049,6 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		}
 		// stop and return error msg if PK missing
 		if($isPKMissing){
-			$missingPK = "";
 			foreach ($primaryKeySchema['data']['Field'] as $index => $value){
 				if($this->IsNullOrEmptyString($array[$value])){
 					$missingPK.=$value." , ";
@@ -1074,8 +1075,8 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 					}
 			}
 		}
-		if($isAllColumnNullOrEmpty || $isPKMissing){
-			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["DeleteFailFieldsNullOrEmpty"], $missingPK));
+		if($isAllColumnNullOrEmpty && $isPKMissing){
+			array_push($this->responseArray_errs, sprintf($this->sys_err_msg["DeleteFailFieldsNullOrEmpty"], $nullOrEmptyColumn));
 			return $this->GetResponseArray();
 		}
 

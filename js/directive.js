@@ -102,8 +102,8 @@ app.directive('pageview', ['$rootScope',
         function EventListener(){
             console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
         }
-        function ValidateBuffer(){
-            console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateBuffer() function in webapge"); 
+        function ValidateRecord(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateRecord() function in webapge"); 
             return true;
         }
         function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
@@ -152,6 +152,9 @@ app.directive('pageview', ['$rootScope',
             var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
 
         	var dataSourceArray = jQuery.extend([], $scope.dataSource);
+            // 20170112, keithpoon, fixed: total records count less than a page, delete one record in database and than refresh in pageview, the record set display incorrect
+            if(dataSourceArray.length < $rootScope.serEnv.phpRecordLimit)
+                dataSourceArray = [];
 
             var counter = recordNumberStart;
         	// add each getted row into DataSource
@@ -180,8 +183,6 @@ app.directive('pageview', ['$rootScope',
 
         			newRecordRow[columnName] = newColumn;
             	} // columns end
-            	//dataSourceArray.psuh(newRecordRow);
-            	// dataSourceArray[dataSourceArray.length] = newRecordRow;
                 dataSourceArray[counter] = newRecordRow;
                 counter++;
 
@@ -253,7 +254,7 @@ app.directive('pageview', ['$rootScope',
             
             var sRecord = $scope.selectedRecord;
             if(typeof $scope.CustomSelectedToRecord == "function"){
-                $scope.CustomSelectedToRecord(sRecord, $scope, $element, $ctrl);
+                $scope.CustomSelectedToRecord(sRecord, rowScope, $scope, $element, $ctrl);
             }else{
                 console.log("<"+$element[0].tagName+">" +" Directive function CustomSelectedToRecord() should be override.");
             }
@@ -353,22 +354,24 @@ app.directive('pageview', ['$rootScope',
             }else{
                 isAllRecordsExists = false;
             }
-
+            
     		if($scope.maxRecordsCount != $scope.dataSource.length || clearNRefresh){
 	    		// Get data if records not enough
 	    		if(!isAllRecordsExists){
                     var criteriaObj = $scope.criteriaObj;
 
-	    			// pageview need ValidateBuffer(), for inquiry the records with some criteria
+	    			// pageview need ValidateRecord(), for inquiry the records with some criteria
 	    			// if Buffer invalid, cannot send request
 	    			var isBufferValid = true;
-		    		if(typeof $scope.ValidateBuffer == "function"){
-						isBufferValid = $scope.ValidateBuffer($scope, $element, $attrs, $ctrl);
+		    		if(typeof $scope.ValidateRecord == "function"){
+						isBufferValid = $scope.ValidateRecord($scope, $element, $attrs, $ctrl);
 					}else{
-						isBufferValid = ValidateBuffer();
+						isBufferValid = ValidateRecord();
 					}
 
                     var lastRecordIndex = $scope.sortedDataSource.length;
+                    
+                    console.log("TryToCallSetCriteriaBeforeGet() - pageNum: "+pageNum+", lastRecordIndex: "+lastRecordIndex+", ")
 
                     TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
 
@@ -387,6 +390,8 @@ app.directive('pageview', ['$rootScope',
     		var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
 
             var currentPageRecords = [];
+            $scope.currentPageRecords = [];
+            $ctrl.ngModel = [];
 
     		if(typeof($scope.sortedDataSource[recordNumberStart]) == "undefined"){
 
@@ -424,14 +429,6 @@ app.directive('pageview', ['$rootScope',
         	// 		keyObj[keyIndex] = keyObj[keyIndex].toUpperCase();
         	// }
 
-        	// var criteriaJson = {};
-        	// // Convert the criteria to json
-        	// if(typeof(criteriaObj) != "undefined" && criteriaObj != null){
-        	// 	for(var cIndex in criteriaObj){
-
-        	// 	}
-        	// }
-
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
@@ -450,8 +447,11 @@ app.directive('pageview', ['$rootScope',
             $scope.getNextPageTimes+1;
             request.then(function(responseObj) {
                 var data_or_JqXHR = responseObj.data;
-                // console.dir(data_or_JqXHR);
                 $scope.UnLockAllControls();
+                
+                if(data_or_JqXHR.Status != "success")
+                    throw data_or_JqXHR;
+                
                 if(typeof(data_or_JqXHR.ActionResult.data) == "undefined")
                 {
                     if($scope.getNextPageTimes == 1){
@@ -461,13 +461,12 @@ app.directive('pageview', ['$rootScope',
                     }
 
                     $scope.maxRecordsCount = $scope.dataSource.length;
-
                 }
 
                 SetRecordStructure(data_or_JqXHR);
                 AppendToDataSource(pageNum, data_or_JqXHR);
                 SortingTheDataSource();
-                DisplayPageNum(pageNum);
+                
                 // Object.keys Browser compatibility
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
                 var recordCount = Object.keys(data_or_JqXHR.ActionResult.data).length;
@@ -486,6 +485,10 @@ app.directive('pageview', ['$rootScope',
                 }else{
                     // CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
                 }
+                
+                DisplayPageNum(pageNum);
+            }).catch(function(e) {
+              Security.HttpPromiseFail(e);
             });
 
     	}
@@ -620,13 +623,14 @@ app.directive('pageview', ['$rootScope',
  * @param {String} edit-mode - define the mode [create | view | amend | delete |]
  */
 app.directive('entry', ['$rootScope', 
+    '$q',
     '$timeout', 
     'Core', 
     'Security', 
     'LockManager', 
     'LoadingModal',
     'HttpRequeset', 
-    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, ProcessResultMessage) {
+    'ProcessResultMessage', function($rootScope, $q, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, ProcessResultMessage) {
     function EntryConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.entryCtrl;
@@ -637,9 +641,14 @@ app.directive('entry', ['$rootScope',
         
         var DirectiveProperties = (function () {
             var editMode;
+            var programID;
 
             function findEditMode() {
                 var object = $scope.editMode = FindEditModeEnum($attrs.editMode);
+                return object;
+            }
+            function findProgramID(){
+                var object = $attrs.programId;
                 return object;
             }
 
@@ -649,32 +658,33 @@ app.directive('entry', ['$rootScope',
                         editMode = findEditMode();
                     }
                     return editMode;
+                },
+                getProgramID: function(){
+                    var isProgramIdFound = false;
+                    if(!programID){
+                        programID = findProgramID;
+                    }
+                    if(typeof(programID) != undefined){
+                        if(programID != null && programID !=""){
+                            isProgramIdFound = true;
+                        }
+                    }
+                    
+                    if(isProgramIdFound){
+                        $scope.programId = $attrs.programId;
+                    }
+                    else
+                        alert("<entry> Must declare a attribute of program-id");
                 }
             };
         })();
 
         function InitializeEntry() {
         	$scope.tableStructure = {};
-        	//$ctrl.ngModel = {};
-
-            // check attribute EditMode
-//            $scope.editMode = FindEditModeEnum($attrs.editMode);
             DirectiveProperties.getEditMode();
+            DirectiveProperties.getProgramID();
             
             $scope.DisplayMessageList = [];
-
-            // check attribute programId
-            var isProgramIdFound = false;
-            if(typeof($attrs.programId) != undefined){
-            	if($attrs.programId != null && $attrs.programId !=""){
-            		isProgramIdFound = true;
-            	}
-            }
-            if(isProgramIdFound){
-            	$scope.programId = $attrs.programId;
-            }
-            else
-            	alert("<entry> Must declare a attribute of program-id");
         }
 
         $scope.BackupNgModel = function(){ BackupNgModel(); }
@@ -686,15 +696,15 @@ app.directive('entry', ['$rootScope',
         }
 
         function RestoreNgModel(){
-            // 20170108, keithpoon
+            // 20170108, keithpoon, must use option 2, otherwise will break the StatusChange of the watch listener
             // Option 1 will stick the ngModel with the defaulted value object 
             // Option 2 will keep the customized value on the page, such is the prefered language setting
 
             // Option 1: clone the default object as ngModel
-            $ctrl.ngModel = angular.copy(backupNgModelObj);
+//            $ctrl.ngModel = angular.copy(backupNgModelObj);
 
             // Option 2: append and overwrite the default value on ngModel
-            // jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
+             jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
         }
         
         // 20170108, keithpoon, add: clear editbox after record created
@@ -873,15 +883,15 @@ app.directive('entry', ['$rootScope',
 
             var tbStructure = $scope.tableStructure;
             var itemsColumn = tbStructure.DataColumns;
-
+            
             if(typeof(itemsColumn) == "undefined"){
                 return recordObj;
             }
 
             if(typeof(isRemoveNonKeyField) == "undefined" || isRemoveNonKeyField == null)
-                isRemoveNonKeyField = false;
+                var isRemoveNonKeyField = false;
 
-            var keyColumnList = tbStructure.keyColumn;
+            var keyColumnList = tbStructure.KeyColumns;
 
             for(var keyIndex in keyColumnList){
                 var colName = keyColumnList[keyIndex];
@@ -904,7 +914,8 @@ app.directive('entry', ['$rootScope',
                         break;
                     }
                 }
-                colDataType = itemsDataType[keyColIndex];
+                colDataType = itemsColumn[colName].type;
+                colDataType = Core.ConvertMySQLDataType(colDataType)
 
                 // convert to upper case if the key column is a string data type
                 if(colDataType == "string"){
@@ -967,67 +978,49 @@ app.directive('entry', ['$rootScope',
          * Find a record by key value
          * @param {Object} tempKeyObj - provide keyObj to find the specified record
          */
-        $scope.FindData = function(tempKeyObj){
+        $scope.FindData = function(){
             var clientID = Security.GetSessionID();
             var programId = $scope.programId.toLowerCase();
+            
+            var tempKeyObj = $ctrl.ngModel;
 
+            var isAllKeyExists = IsKeyInDataRow(tempKeyObj);
+            if(!isAllKeyExists){
+                return;
+            }
+                
             var isKeyValid = true;
             var keyObj = {};
             keyObj = ConvertKeyFieldToUppercase(tempKeyObj, true);
 
             if(!keyObj)
                 isKeyValid = false;
-
-            // var tbStructure = $scope.tableStructure;
-            // var itemsColumn = tbStructure.itemsColumn;
-            // var itemsDataType = tbStructure.itemsDataType;
-
-            // console.dir(tbStructure)
-
-            // var keyColumnList = tbStructure.keyColumn;
-            // for(var keyIndex in keyColumnList){
-            //     var colName = keyColumnList[keyIndex];
-            //     var keyColIndex = 0;
-            //     var colDataType = "";
-
-            //     // key column in table structure not match with param
-            //     if(!tempKeyObj.hasOwnProperty(colName)){
-            //         isKeyValid = false;
-            //         break;
-            //     }else{
-            //         keyObj[colName] = tempKeyObj[colName];
-            //     }
-
-            //     // find the key column data type
-            //     for(var colNameIndex in itemsColumn){
-            //         if(colName == itemsColumn[colNameIndex])
-            //         {
-            //             keyColIndex = colNameIndex
-            //             break;
-            //         }
-            //     }
-            //     colDataType = itemsDataType[keyColIndex];
-
-            //     // convert to upper case if the key column is a string data type
-            //     if(colDataType == "string"){
-            //         keyObj[colName] = keyObj[colName].toUpperCase();
-            //     }
-            // }
-
+            
             if(!isKeyValid){
                 console.log("Avoid to FindData(), keyObj was incomplete.");
                 return;
             }
+            
+        	var findObj = {
+        		"Header":{}
+        	}
+        	findObj.Header[1] = {};
+            findObj.Header[1] = keyObj;
 
-            var submitData = {
-                "Session": clientID,
-                "Table": programId,
-                "key": keyObj
-            };
+        	var isRowEmpty = jQuery.isEmptyObject(findObj.Header[1])
+        	if(isRowEmpty){
+                return $q.reject("Cannot update a empty Record");
+        	}
+
+			var submitData = {
+				"Session": clientID,
+				"Table": programId,
+				"Data": findObj,
+				//"NextPage" : "true"
+			};
             submitData.Action = "FindData";
 
             var requestOption = {
-                // url: url+'/model/ConnectionManager.php', // Optional, default to /model/ConnectionManager.php
                 method: 'POST',
                 data: JSON.stringify(submitData)
             };
@@ -1035,9 +1028,8 @@ app.directive('entry', ['$rootScope',
             var request = HttpRequeset.send(requestOption);
             request.then(function(responseObj) {
                 var data_or_JqXHR = responseObj.data;
-                $scope.$apply(function () {
-                    SetNgModel(data_or_JqXHR);
-                });
+                // need to handle if record not found.
+                $ctrl.ngModel = data_or_JqXHR.ActionResult.data[0];
             }, function(reason) {
               console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
               Security.HttpPromiseFail(reason);
@@ -1050,38 +1042,6 @@ app.directive('entry', ['$rootScope',
                 // }
             });
             return request;
-
-            // var jqxhr = $.ajax({
-            //   type: 'POST',
-            //   url: url+'/model/ConnectionManager.php',
-            //   data: JSON.stringify(submitData),
-            //   //dataType: "json", // [xml, json, script, or html]
-            //   dataType: "json",
-            // });
-            // jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-            //   console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
-            //   Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-            // });
-            // jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-            //     // textStatus
-            //     //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-            //     if(textStatus == "success"){
-            //         if(data_or_JqXHR.status == "Ok"){
-            //             $scope.$apply(function () {
-            //                 SetNgModel(data_or_JqXHR);
-            //             });
-            //         }else{
-            //             console.warn("Success but unexpected in FindData() - "+tagName + ":"+$scope.programId)
-            //             Security.SuccessButUnexpected(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-            //         }
-            //     }
-
-            //     if(typeof $scope.CustomGetDataResult == "function"){
-            //         $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
-            //     }else{
-            //         CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-            //     }
-            // });
         }
 
         /**
@@ -1143,26 +1103,7 @@ app.directive('entry', ['$rootScope',
                 return;
             }
             
-            var submitPromiseResult = SubmitData();
-            submitPromiseResult.catch(function(e){
-                // handle errors in processing or in error.
-                console.log("Submit data error catch in entry");
-                console.dir(e);
-            }).finally(function() {
-                // Always execute unlock on both error and success
-                $scope.UnLockAllControls();
-
-                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                        textStatus, 
-                        jqXHR_or_errorThrown, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
-                        $ctrl);
-                }
-            });
+            SubmitData();
         }
         function ValidateSubmitData(){
             var isValid = true;
@@ -1188,6 +1129,7 @@ app.directive('entry', ['$rootScope',
             return isValid;
         }
         function SubmitData(){
+            var httpResponseObj = {};
             var submitPromise;
         	var editMode = DirectiveProperties.getEditMode();
 			if(editMode == globalCriteria.editMode.Create){
@@ -1198,6 +1140,7 @@ app.directive('entry', ['$rootScope',
 	            }
                 
                 submitPromise.then(function(responseObj) {
+                    httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
                     var msg = data_or_JqXHR.Message;
                     
@@ -1208,8 +1151,8 @@ app.directive('entry', ['$rootScope',
 
                     $scope.ResetForm();
                 }, function(reason) {
-                  console.error("Fail in CreateData() - "+tagName + ":"+$scope.programId)
-                  Security.HttpPromiseFail(reason);
+                  console.error(tagName + ":"+$scope.programId + " - Fail in CreateData()")
+                  throw reason;
                 });
 			}
 			else if(editMode == globalCriteria.editMode.Amend){
@@ -1220,13 +1163,18 @@ app.directive('entry', ['$rootScope',
 	            }
                 
                 submitPromise.then(function(responseObj) {
+                    httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
                     var msg = data_or_JqXHR.Message;
 
                     ProcessResultMessage.addMsg(msg);
+                    
+                    // the lastUpdateDate was changed after record updated, user cannot click the Amend button again.
+//                    $scope.ResetForm();
+                    $scope.FindData();
                 }, function(reason) {
-                  console.error("Fail in UpdateData() - "+tagName + ":"+$scope.programId)
-                  Security.HttpPromiseFail(reason);
+                  console.error(tagName + ":"+$scope.programId + " - Fail in UpdateData()")
+                  throw reason;
                 })
 			}
 			else if(editMode == globalCriteria.editMode.Delete){
@@ -1236,6 +1184,7 @@ app.directive('entry', ['$rootScope',
 	            	submitPromise = DeleteData($ctrl.ngModel);
 	            }
                 submitPromise.then(function(responseObj) {
+                    httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
                     var msg = data_or_JqXHR.Message;
                     ProcessResultMessage.addMsg(msg);
@@ -1243,10 +1192,34 @@ app.directive('entry', ['$rootScope',
                     $scope.ResetForm();
                     SetTableStructure($scope.tableStructure);
                 }, function(reason) {
-                  console.error("Fail in DeleteData() - "+tagName + ":"+$scope.programId)
-                  Security.HttpPromiseFail(reason);
+                  console.error(tagName + ":"+$scope.programId + " - Fail in DeleteData()")
+                  throw reason;
                 })
 			}
+            
+            submitPromise.catch(function(e){
+                // handle errors in processing or in error.
+                console.log("Submit data error catch in entry");
+                Security.HttpPromiseFail(e);
+            }).finally(function() {
+                // Always execute unlock on both error and success
+                $scope.UnLockAllControls();
+
+                SubmitDataResult(httpResponseObj, httpResponseObj.status);
+                
+                if(typeof $scope.CustomSubmitDataResult == "function"){
+                    $scope.CustomSubmitDataResult(httpResponseObj, 
+                        httpResponseObj.status, 
+                        $scope, 
+                        $element, 
+                        $attrs, 
+                        $ctrl);
+                }
+            }).catch(function(e){
+                // handle errors in processing or in error.
+                console.warn(e)
+            })
+            
             return submitPromise;
         }
         $scope.LockAllControls = function(){
@@ -1436,7 +1409,7 @@ app.directive('entry', ['$rootScope',
             var tbStructure = $scope.tableStructure;
             var itemsColumn = tbStructure.DataColumns;
 
-            var keyColumn = tbStructure.keyColumn;
+            var keyColumn = tbStructure.KeyColumns;
 
             var strictObj = {};
             for (var colIndex in itemsColumn) {
@@ -1447,17 +1420,19 @@ app.directive('entry', ['$rootScope',
                 if(typeof(colValue) == "undefined"){
                     continue;
                 }
-                if(colDataType == "string"){
-                    if(colValue == null || colValue == ""){
-                        continue;
-                    }
-                }
-                if(colDataType == "double"){
-                    var colValueDouble = parseFloat(colValue);
-                    if(colValueDouble == 0){
-                        continue;
-                    }
-                }
+                // 20170111, keithpoon, also allowed to assign empty, if the user want to update the record from text to empty
+//                if(colDataType == "string"){
+//                    if(colValue == null || colValue == ""){
+//                        continue;
+//                    }
+//                }
+//                if(colDataType == "double"){
+//                    var colValueDouble = parseFloat(colValue);
+//                    if(colValueDouble == 0){
+//                        continue;
+//                    }
+//                }
+                
                 strictObj[colIndex] = colValue;
             }
             return strictObj;
@@ -1469,6 +1444,11 @@ app.directive('entry', ['$rootScope',
 
         	var tbStructure = $scope.tableStructure;
         	var itemsColumn = tbStructure.DataColumns;
+
+            var isAllKeyExists = IsKeyInDataRow(recordObj);
+            if(!isAllKeyExists){
+                return $q.reject("Key not complete in record, avoid to create data.");
+            }
 
         	var createObj = {
                 "Header":{},
@@ -1507,11 +1487,9 @@ app.directive('entry', ['$rootScope',
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
             if(!isAllKeyExists){
-                alert("Key not complete in record, avoid to update data.");
-                $scope.UnLockAllControls();
-                return;
+                return $q.reject("Key not complete in record, avoid to update data.");
             }
-
+            
         	var updateObj = {
         		"Header":{},
         		"Items":{}
@@ -1522,9 +1500,7 @@ app.directive('entry', ['$rootScope',
 
         	var isRowEmpty = jQuery.isEmptyObject(updateObj.Header[1])
         	if(isRowEmpty){
-        		alert("Cannot update a empty Record");
-        		$scope.UnLockAllControls();
-        		return;
+                return $q.reject("Cannot update a empty Record");
         	}
 
 			var submitData = {
@@ -1550,13 +1526,11 @@ app.directive('entry', ['$rootScope',
 
         	var tbStructure = $scope.tableStructure;
         	var itemsColumn = tbStructure.DataColumns;
-            var keyColumn = tbStructure.keyColumn;
+            var keyColumn = tbStructure.KeyColumns;
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
             if(!isAllKeyExists){
-                alert("Key not complete in record, avoid to delete data.");
-                $scope.UnLockAllControls();
-                return;
+                return $q.reject("Key not complete in record, avoid to delete data.");
             }
 
         	var deleteObj = {
@@ -1565,14 +1539,13 @@ app.directive('entry', ['$rootScope',
         	}
         	deleteObj.Header[1] = {};
         	//deleteObj.Header[1] = recordObj;
-            deleteObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
+//            deleteObj.Header[1] = ConvertKeyFieldToUppercase(recordObj, true);
+            deleteObj.Header[1] = ConvertKeyFieldToUppercase(recordObj, true);
 
         	var isRowEmpty = jQuery.isEmptyObject(deleteObj.Header[1]);
 
         	if(isRowEmpty){
-        		alert("Cannot Delete a empty Record");
-        		$scope.UnLockAllControls();
-        		return;
+                return $q.reject("Cannot delete a empty Record");
         	}
 
 			var submitData = {
@@ -1638,10 +1611,13 @@ app.directive('entry', ['$rootScope',
                 else if(attrEditMode == "null"){
                     editMode = globalCriteria.editMode.Null;
                 }
-                else{
-                    if(attrEditMode.indexOf("amend") >-1 && 
+                else if(attrEditMode.indexOf("amend") >-1 && 
                         attrEditMode.indexOf("delete") >-1 )
+                {
                         editMode = globalCriteria.editMode.AmendAndDelete;
+                }
+                else{
+                    throw ("Unable to identify the edit mode '"+attrEditMode+"' on entry");
                 }
             }
         }
@@ -1649,7 +1625,7 @@ app.directive('entry', ['$rootScope',
     }
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
-        var editModeNum = FindEditModeEnum(tAttrs.editMode);
+//        var editModeNum = FindEditModeEnum(tAttrs.editMode);
 
         var template = '' +
           // outside of the ng-transclude

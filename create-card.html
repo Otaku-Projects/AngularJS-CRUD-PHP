@@ -219,9 +219,6 @@ app.controller('createCardController', ['$scope', 'Security', function ($scope, 
 			  <input type="text" class="form-control input-sm" id="card_maxLimit" ng-model="cardEditBox.maxLimit" readonly>
 			</div>
 		  </div>
-          <div class="form-group">
-            <button type="button" class="btn btn-default" ng-click="ClearNgModel(cardEditBox)">Clear Editbox</button>
-          </div>
         </editbox>
         <editbox ng-model="cardTypeEditBox" program-id="hw01ct">
 		  <div class="form-inline">
@@ -240,9 +237,6 @@ app.controller('createCardController', ['$scope', 'Security', function ($scope, 
 			  <input type="text" class="form-control input-sm sr-only" id="cardType_description" ng-model="cardTypeEditBox.description" readonly>
 			  <textarea class="form-control" ng-model="cardTypeEditBox.description" readonly></textarea>
 			</div>
-          <div class="form-group">
-            <button type="button" class="btn btn-default" ng-click="ClearNgModel(cardEditBox)">Clear Editbox</button>
-          </div>
         </editbox>
         <editbox ng-model="spellClassEditBox" program-id="hw01sc">
 		  <div class="form-inline">
@@ -261,9 +255,6 @@ app.controller('createCardController', ['$scope', 'Security', function ($scope, 
 			  <input type="text" class="form-control input-sm sr-only" id="spellClass_description" ng-model="spellClassEditBox.description" readonly>
 			  <textarea class="form-control" ng-model="spellClassEditBox.description" readonly></textarea>
 			</div>
-          <div class="form-group">
-            <button type="button" class="btn btn-default" ng-click="ClearNgModel(cardEditBox)">Clear Editbox</button>
-          </div>
         </editbox>
       <form ng-submit="SubmitData()">
         <fieldset>

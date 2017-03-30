@@ -38,13 +38,13 @@ $(function() {
 "use strict";
 app.controller('senseiCtrl', ['$scope', 'Security', function ($scope, Security, $rootScope) {
 	$scope.deptDataList = [];
-	$scope.directiveDict = {};
+	$scope.directiveScopeDict = {};
 	
 	$scope.EventListener = function(scope, iElement, iAttrs, controller){
 		console.log("<"+iElement[0].tagName+">" +" Directive overried EventListener()");
 		var prgmID = scope.programId;
-		if($scope.directiveDict[prgmID] == null || typeof($scope.directiveDict[prgmID]) == "undefined"){
-		  $scope.directiveDict[prgmID] = scope;
+		if($scope.directiveScopeDict[prgmID] == null || typeof($scope.directiveScopeDict[prgmID]) == "undefined"){
+		  $scope.directiveScopeDict[prgmID] = scope;
 		}
 		
 //		console.dir(scope);
@@ -63,23 +63,23 @@ app.controller('senseiCtrl', ['$scope', 'Security', function ($scope, Security, 
 	}
 	
   /*
-	$scope.CustomPointedToRecord = function(pRecord, obj, scope, iElement, controller){
+	$scope.CustomPointedToRecord = function(pRecord, rowScope, scope, iElement, controller){
 		console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
 		$scope.entryForm = pRecord;
 	}
   */
 
-  $scope.CustomSelectedToRecord = function(sRecord, scope, iElement, controller){
-    console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
-    $scope.entryForm = sRecord; 
-  }
-
-  $scope.CustomSubmitDataResult = function(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, scope, element, attrs, ctrl){
-    var prgmID = scope.programId;
-    if(prgmID == "hs01se"){
-      $scope.directiveDict["hw01se"].ClearNRefreshData();
+    $scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
+        console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
+        $scope.entryForm = sRecord;
     }
-  }
+
+    $scope.CustomSubmitDataResult = function(responseObj, httpStatusCode, scope, element, attrs, ctrl){
+        var prgmID = scope.programId;
+        if(prgmID == "hs01se"){
+          $scope.directiveScopeDict["hw01se"].ClearNRefreshData();
+        }
+    }
 }]);
 </script>
 <!-- InstanceEndEditable -->

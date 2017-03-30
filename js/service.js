@@ -110,6 +110,8 @@ app.service('HttpRequeset', function($rootScope, $http){
 		var url = $rootScope.serverHost;
 		if(typeof(requestOptions.url) == "undefined")
 			requestOptions.url = url+'/model/ConnectionManager.php';
+        
+        requestOptions.cache = false;
 
 		return $http(
 			requestOptions

@@ -9,7 +9,7 @@ class SimpleTableManager extends DatabaseManager {
         // 'columnName2' => value,
     );
 	
-	protected $table = "";
+	protected $table = "department";
 	//protected $securityManager;
     
     function __construct() {
@@ -18,20 +18,9 @@ class SimpleTableManager extends DatabaseManager {
     }
 	function Initialize($tableName=""){
 		$this->table = $tableName;
-		$this->debug = true;
-		
-		// set parent dataSchema
-		parent::setDataSchemaForSet();
-		// set construct _ index
-		parent::setArrayIndex();
-	}
-	
-	function get(){
-		return $this->table;
-	}
-	
-	function set($tableName){
-		$this->table = $tableName;
+//		$this->debug = true;
+        
+		parent::Initialize();
 	}
 	function SetDefaultValue(){
 		parent::setDefaultValue();

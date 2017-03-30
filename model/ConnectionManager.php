@@ -8,7 +8,6 @@ require_once 'ManagerLoader.php';
 
 header('Content-Type: application/json', true, 200);
 
-
 // $currentFilename = basename(__FILE__);
 
 // foreach (scandir(dirname(__FILE__)) as $filename) {
