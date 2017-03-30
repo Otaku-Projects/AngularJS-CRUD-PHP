@@ -16,6 +16,7 @@ It is very limiting of my needs(maybe also yours). One day when a project need t
 third-party framework, library
 - angularJS 1.5.0 or above
 - jQuery 2.2.1 or above
+- ng-file-upload-12.2.12 or above
 - Blob.js
 - FileSaver.js 1.3.2
 - bootstrap 3.3.0 or above (optional)
