@@ -252,6 +252,20 @@ app.directive('pageview', ['$rootScope',
 
             $scope.pointedRecord = {};
             
+//            var target = angular.element(event.target);
+            
+            // check parent scope, is editbox
+            var isParentScopeFromEditbox = false;
+            if(typeof ($scope.$parent.SetEditboxNgModel) == "function")
+                isParentScopeFromEditbox = true;
+            
+//            console.log("<pageview> - isParentScopeFromEditbox: "+isParentScopeFromEditbox);
+//            console.dir(sRecord)
+            
+            if(isParentScopeFromEditbox){
+                $scope.$parent.SetEditboxNgModel(sRecord);
+            }
+            
             var sRecord = $scope.selectedRecord;
             if(typeof $scope.CustomSelectedToRecord == "function"){
                 $scope.CustomSelectedToRecord(sRecord, rowScope, $scope, $element, $ctrl);
@@ -613,7 +627,7 @@ app.directive('pageview', ['$rootScope',
 
 /**
  * <entry> a entry form use to provide Create/Read/Update/Delete behavior of a single table
- * <editbox
+ * <entry
     ng-model=""
     program-id=""
     edit-mode=""
@@ -1241,7 +1255,7 @@ app.directive('entry', ['$rootScope',
             LoadingModal.hideModal();
         }
 
-        // StatusChange() event listener
+        // Status changed event listener for StatusChange function
 		$scope.$watch(
 		  // This function returns the value being watched. It is called for each turn of the $digest loop
 		  function() { return $ctrl.ngModel; },
@@ -1684,7 +1698,9 @@ app.directive('entry', ['$rootScope',
                         scope.editMode == globalCriteria.editMode.View ||
                         scope.editMode == globalCriteria.editMode.Delete 
                     ){
-                        console.log("Mode is [View | Delete | None | Null], lock all controls")
+                        // require table structure, lock all control.
+                        // the controls will be unlock after table structre received.
+//                        console.log("Mode is [View | Delete | None | Null], lock all controls")
                         iElement.ready(function() {
                             if(scope.editMode == globalCriteria.editMode.Delete)
                                 scope.LockAllInputBox();
@@ -1795,7 +1811,8 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 
     	function InitializeEditBox() {
             $scope.editboxDataList = [];
-            $ctrl.ngModel = {};
+            if(typeof($ctrl.ngModel) == "undefined" || $ctrl.ngModel == null)
+                $ctrl.ngModel = {};
 
 		    // check attribute programId
             var isProgramIdFound = false;
@@ -1809,7 +1826,58 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
             }
             else
             	alert("<editbox> Must declare a attribute of program-id");
+            
+            var isInRange = IsParentInRange();
+            if(isInRange){
+                var isRangeProperty = false;
+                if(typeof($attrs.range) != undefined){
+                    if($attrs.range != null && $attrs.range !=""){
+                        isRangeProperty = true;
+                    }
+                }
+                if(isRangeProperty){
+                    $scope.range = $attrs.range;
+                }
+                else{
+                    console.warn("<editbox> Should declare a attribute of range, since it is under <range>");
+                }
+                
+                var isRangeValuePropery = false;
+                if(typeof($attrs.rangeValue) != undefined){
+                    if($attrs.rangeValue != null){
+                        isRangeValuePropery = true;
+                    }
+                }
+                if(isRangeValuePropery){
+                    // cannot assign ALL to $attrs.rangeValue, it will break the binding between $attrs.rangeValue <--> expression
+                    // default set start as ALL
+//                    if($attrs.range == "start")
+//                        $attrs.rangeValue = "ALL";
+                    
+                    $attrs.$observe('rangeValue', function(interpolatedValue){                        
+                        $scope.rangeValue = interpolatedValue;
+                        
+                        if(typeof ($scope.$parent.SetRange) == "function"){
+                            $scope.$parent.SetRange($scope.range, interpolatedValue)
+                        }
+                    })
+                }
+                else{
+                    console.warn("<editbox> Should declare a attribute of rangeValue, since it is under <range>");
+                }
+            }
     	}
+        
+        function IsParentInRange(){
+            
+            var isParentScopeFromRange = false;
+            if(typeof ($scope.$parent.IsRange) == "function"){
+                isParentScopeFromRange = true;
+                isParentScopeFromRange = $scope.$parent.IsRange();
+            }
+            
+            return isParentScopeFromRange;
+        }
 
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -1839,7 +1907,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
         $scope.Initialize = function(){
             InitializeEditBox();
         }
-
+        
     	$scope.PopupPageview = function(){
             var modalContainer = angular.element($element).find(".pageview-modal");
             var pageview = angular.element($element).find("pageview");
@@ -1887,10 +1955,12 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
             var pageview = $element.find("pageview");
             pageview.hide();
     	}
-        $scope.SetNgModel = function(selectedRecord){
+        
+        // function call from pageview, set editbox ngModel by selected record from pageview
+        $scope.SetEditboxNgModel = function(selectedRecord){
             $ctrl.ngModel = selectedRecord;
         }
-        $scope.ClearNgModel = function(editboxNgModel){
+        $scope.ClearEditboxNgModel = function(editboxNgModel){
             $ctrl.ngModel = {};
         }
 
@@ -1918,7 +1988,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
     }
 
 	return {
-		require: ['ngModel'],
+		require: ['?range', 'ngModel'],
 		restrict: 'EA', //'EA', //Default in 1.3+
 		transclude: true,
 
@@ -1959,6 +2029,13 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 		        post: function postLink(scope, iElement, iAttrs, controller) {
                     // hiding the <pageview> element
 					angular.element(iElement).find("pageview").hide();
+                    
+//                    iAttrs.$observe('rangeValue', function(interpolatedValue){
+//                        
+//                        if(typeof (scope.$parent.SetRange) == "function"){
+//                            scope.$parent.SetRange(iAttrs.range, iAttrs.rangeValue)
+//                        }
+//                    })
 		        }
 		    }
 		},
@@ -2276,7 +2353,7 @@ app.directive('import', [
 
         var globalCriteria = $rootScope.globalCriteria;
 
-        $scope.DisplayMessageList = MessageService.messageList;
+        $scope.DisplayMessageList = MessageService.getMsg();
 
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -2771,24 +2848,33 @@ app.directive('message', ['$rootScope',
         }
         $scope.Initialize();
         
-            $scope.$watch(
-              // This function returns the value being watched. It is called for each turn of the $digest loop
-              function() { return $ctrl.ngModel.length },
-              // This is the change listener, called when the value returned from the above function changes
-              function(newValue, oldValue) {
-                  console.dir(newValue)
-                  console.dir(oldValue)
-                if ( newValue !== oldValue ) {
-                    if(newValue > oldValue){
-                        
-                        if($scope.autoClose)
-                            $timeout(function(){
-                                MessageService.shiftMsg();
-                            }, 5000); // (milliseconds),  1s = 1000ms
-                    }
-                }
-              }
-            );
+        $scope.$watchCollection(
+
+          // This function returns the value being watched. It is called for each turn of the $digest loop
+          function() { return $ctrl.ngModel },
+//          function() { return MessageService.messageList },
+            
+          // This is the change listener, called when the value returned from the above function changes
+          function(newValue, oldValue) {
+              console.dir(newValue)
+              console.dir(oldValue)
+
+              var newValueLength = newValue.length;
+              var oldValueLength = oldValue.length;
+              
+            if ( newValueLength !== oldValueLength ) {
+//                if(newValueLength > oldValueLength){
+
+
+
+                    if($scope.autoClose)
+                        $timeout(function(){
+                            MessageService.shiftMsg();
+                        }, 5000); // (milliseconds),  1s = 1000ms
+//                }
+            }
+          }
+        );
     }
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
@@ -2828,3 +2914,255 @@ app.directive('message', ['$rootScope',
         },
     };
 }]);
+
+
+app.directive('range', ['$rootScope', 
+    '$timeout',
+    'Security', 
+    'MessageService', function($rootScope, $timeout, Security, MessageService) {
+    function RangeConstructor($scope, $element, $attrs) {
+        var constructor = this;
+        var $ctrl = $scope.rangeCtrl;
+        var tagName = $element[0].tagName.toLowerCase();
+        
+        var DirectiveProperties = (function () {
+            var multi;
+            
+            function findMultiable(){
+                var object = $attrs.multi;
+                if(typeof(object) != "undefined")
+                    return true;
+                else
+                    return false;
+            }
+
+            return {
+                getMultiable: function () {
+                    if (!multi) {
+                        multi = findMultiable();
+                    }
+                    $scope.multi = multi;
+                    return multi;
+                }
+            };
+        })();
+        
+        function TryToCallInitDirective(){
+            if(typeof $scope.InitDirective == "function"){
+                $scope.InitDirective($scope, $element, $attrs, $ctrl);
+            }else{
+                $scope.DefaultInitDirective();
+            }
+        }
+        $scope.DefaultInitDirective = function(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        
+        $scope.IsRange = function()
+        {
+            return true;
+        }
+        
+        $scope.GetInitRange = function(){
+            var range = {start: "ALL", end: ""};
+            
+            return range;
+        }
+        
+        function InitializeRange() {
+            DirectiveProperties.getMultiable();
+            
+            $ctrl.ngModel = $scope.GetInitRange();
+            $ctrl.ngModel.isAll = true;
+        }
+        $scope.Initialize = function(){
+            $scope.InitScope();
+            if(typeof $scope.EventListener == "function"){
+                $scope.EventListener($scope, $element, $attrs, $ctrl);
+            }else{
+                EventListener();
+            }
+            TryToCallInitDirective();
+        }
+        $scope.InitScope = function(){
+            InitializeRange();
+        }
+
+        function InitDirective(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        function EventListener(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
+        }
+        
+        // chagneRagne = [start | end]
+        function RangeStringChange(changeRange, ctrlModel){
+            var isLocaleCompareSupport = localeCompareSupportsLocales();
+            
+//            var rangeObject = $scope.GetRange();
+            var rangeObject = ctrlModel;
+            
+            var strStart = rangeObject.start;
+            var strEnd = rangeObject.end;
+            var stringDifference = 0;
+            
+            if(rangeObject.start == "ALL"){
+                rangeObject.end = "";
+                return;
+            }
+            
+            // string comparison, find the strStart position of strEnd
+            if(isLocaleCompareSupport){
+                 stringDifference = strStart.localeCompare(strEnd);
+            }else{
+                if(strStart < strEnd)
+                    stringDifference = -1;
+                if(strEnd < strStart)
+                    stringDifference = 1;
+                if(strStart == strEnd)
+                    stringDifference = 0;
+            }
+            
+            if(changeRange == "start"){
+                
+                if(stringDifference > 0)
+                {
+                    strEnd = strStart
+                }
+                if(stringDifference < 0)
+                {
+
+                }
+            }else if(changeRange == "end"){
+                if(stringDifference > 0)
+                {
+                    strStart = strEnd
+                }
+                if(stringDifference < 0)
+                {
+                    if(strStart == "")
+                        strStart = strEnd
+                }
+            }
+            
+//            if(strStart != "ALL"){
+//                $ctrl.ngModel.isAll = false;
+//            }
+                        
+            rangeObject.start = strStart;
+            rangeObject.end = strEnd;
+            
+            ctrlModel.start = strStart;
+            ctrlModel.end = strEnd;
+        }
+        
+        function localeCompareSupportsLocales() {
+          try {
+            'foo'.localeCompare('bar', 'i');
+          } catch (e) {
+            return e.name === 'RangeError';
+          }
+          return false;
+        }
+        $scope.Initialize();
+        
+        $scope.SetRange = function(rangeType, value){
+            
+            if(rangeType == "start"){
+                $ctrl.ngModel.start = value;
+            }else if(rangeType == "end"){
+                $ctrl.ngModel.end = value;
+            }
+            
+//            if($ctrl.ngModel.start == null || $ctrl.ngModel.start == null)
+//                $ctrl.ngModel.start = "ALL";
+            
+            RangeStringChange(rangeType, $ctrl.ngModel)
+        }
+        
+        $scope.GetRange = function(){
+            var rangeList = [];
+            var range = rangeList[0] = {start: "", end: ""};
+            
+            range.start = $ctrl.ngModel.start;
+            range.end = $ctrl.ngModel.end;
+            
+            return range;
+        }
+        $scope.IsLockEndControl = function(){
+            var isLock = false;
+            var range = $scope.GetRange();
+            if(range.start == "ALL"){
+                isLock = true;
+            }
+            return isLock;
+        }
+        
+        $scope.CheckAllRange = function(test){
+            console.dir("CheckAllRange() function")
+//            if(!$ctrl.ngModel.isAll){
+//                $ctrl.ngModel.start = "";
+//            }
+        }
+        
+//        $scope.$watchCollection(
+//
+//          // This function returns the value being watched. It is called for each turn of the $digest loop
+//          function() { return $ctrl.ngModel },
+//            
+//          // This is the change listener, called when the value returned from the above function changes
+//          function(newValue, oldValue) {
+//              
+//          }
+//        );
+        
+//        $scope.$watch(
+//            function () {return $ctrl.ngModel.isAll},
+//            function(newValue, oldValue){
+//                if(newValue){
+//                    $ctrl.ngModel.start = "ALL";
+//                }else{
+//                    $ctrl.ngModel.start = "";
+//                }
+//            }
+//        );
+    }
+    function templateFunction(tElement, tAttrs) {
+        var globalCriteria = $rootScope.globalCriteria;
+
+        var template = '' +
+          '<div class="custom-transclude"></div>';
+        return template;
+    }
+
+    return {
+        require: ['ngModel'],
+        restrict: 'E', //'EA', //Default in 1.3+
+        transclude: true,
+        scope: true,
+
+        controller: RangeConstructor,
+        controllerAs: 'rangeCtrl',
+
+        //If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
+        bindToController: {
+            ngModel: '=',
+        },
+        template: templateFunction,
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function preLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry preLink() compile");
+                },
+                post: function postLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry postLink() compile");
+                    
+                    transclude(scope, function (clone, scope) {
+                        iElement.find('.custom-transclude').append(clone);
+                    })
+                }
+            }
+        },
+    };
+}]);
+

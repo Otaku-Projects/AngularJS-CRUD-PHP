@@ -7,3 +7,6 @@ resourse/
 
 # Ignoring temp folder which stores the uploaded files, export templates
 temp/
+
+# Ignoring temp folder which stores the uploaded files, export templates
+test/

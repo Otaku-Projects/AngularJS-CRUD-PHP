@@ -131,10 +131,17 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
 <!-- InstanceBeginEditable name="intro" -->
 <div ng-controller="createDepartmentController as createDeptCtrl" style="max-width: 750px;">
 	<h3>Create <span class="page-header">Sensei</span></h3>
+        <div class="panel panel-default">
+          <div class="panel-heading">Process Message</div>
+          <div class="panel-body">
+            <message ng-model="processMsg">
+              <div class="well well-sm" ng-if="msgCtrl.ngModel.length > 0">
+                <div ng-repeat="dspMsg in msgCtrl.ngModel track by $index" ng-bind="dspMsg"></div>
+              </div>
+            </message>
+          </div>
+        </div>
     <entry ng-model="entryForm" program-id="hs01se" edit-mode="create">
-      <div class="well well-sm">
-        <div ng-repeat="dspMsg in DisplayMessageList track by $index" ng-bind="dspMsg"></div>
-      </div>
       <div>{{entryForm | json}}</div>
       <form ng-submit="SubmitData()">
         <fieldset>
