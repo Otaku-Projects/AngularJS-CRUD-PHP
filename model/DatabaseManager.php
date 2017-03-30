@@ -1473,14 +1473,19 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			case $type === "mediumint": // -8388608 to 8388607, 0 to 16777215
 			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
 			case $type === "bigint": // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
-				$valueOut = ($valueIn != "" && $valueIn != null) ? intval($valueIn) : "NULL";
+                // both are cannot identify the $valueIn is NULL, always convert the NULL to 0 and return
+//                $valueOut = ($valueIn != "" && $valueIn != null) ? intval($valueIn) : "NULL";
+//				$valueOut = (is_null($valueIn) || $valueIn == "" || $valueIn == null) ? echo "NULL" : intval($valueIn);
+                $valueOut = is_int($valueIn) ? intval($valueIn) : "NULL";
+                
 				$typeCaseAs = "integer";
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
 				//http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
 			case $type==="float":
 			case $type==="double":
-				$valueOut = ($valueIn != "") ? doubleval($valueIn) : "NULL";
+//				$valueOut = ($valueIn != "") ? doubleval($valueIn) : NULL;
+                $valueOut = is_float($valueIn) ? doubleval($valueIn) : "NULL";
 				$typeCaseAs = "decimal";
 				break;
 			case $type==="date":
