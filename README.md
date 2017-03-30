@@ -2,14 +2,9 @@
 
 A simple idea for Rapid application development
 
-# Log
-
-Large improvement as at 27 Sep 2016, but some reason I cannot upload here now.
-See you all later.
-
 ## Demo
 
-Sorry, my site was expired. Show to you at someday on somewhere.
+Coming soon...
 
 ## Motivation
 
@@ -17,27 +12,25 @@ There were too many angularJS CRUD open source project in the real, angularJS ha
 
 It is very limiting of my needs(maybe also yours). One day when a project need to provide CRUD on more than one table on one single page. But implement of such sample was copy and edit many lines of HTML. It was so tired and easy to make mistakes. I just want a simple and a lite angularJS controller to help us to develop on the small project.
 
-## Requirement
-
-- PHP 5.4 or above
+## Dependency
+third-party framework, library
 - angularJS 1.5.0 or above
 - jQuery 2.2.1 or above
+- Blob.js
+- FileSaver.js 1.3.2
 - bootstrap 3.3.0 or above (optional)
 - font awesome 4.5.0 or above (optional)
 
-## Dependency
+## Software Requirement
 
-- angularJS 1.5.0 or above
-- jQuery 2.2.1 or above
-- jquery.cookie 1.4.1
-- Blob.js
-- FileSaver.js 1.3.2
+- PHP 5.4 or above
+- requirement of [OfficeToPdf.exe](https://officetopdf.codeplex.com/) (if you this to convert excel to pdf)
 
 ## Architecture
 
 This project is divided into three parts, PHP core, angularJS and HTML template. PHP core handle the mysql query execution and return a json response, the core is develop under MVC model, view is jQuery+HTML+angularJS.
 
-## Ideally Design
+### Ideally Design
 
 AngulasJS provides the \<entry\> \<pageview\> \<screen\> \<editbox\> \<import-export\> directive, entry directive handle the action of [Create | View | Update | Delete] of any entries.
 
@@ -46,7 +39,7 @@ This project design for the function base, a page can be a function, a directive
 \<screen\> directive is a template directive for reuseable \<pageview\>, \<screen\> also work for \<entry\>.
 \<editbox\> to handle foreign key on the \<entry\>, allowed to open a \<pageview\> to find the tuple from the foreign table. select a tuple to assign the FK to the field of the \<entry\>, the further information of the selected FK record may display in the \<editbox\>.
 
-Functional Implementation
+## Functional Implementation
 - [x] \<entry\> provide CRUD action
 - [x] \<pageview\> display the records set in pagination
 - [x] \<screen\> as a template directive for reuseable \<pageview\>, \<entry>\
@@ -55,11 +48,15 @@ Functional Implementation
 - [x] \<upload\> send one or more file to the server
 - [x] \<import\> send the uploaded file location with specify action to do some process
 - [x] \<message\> separate the process result message from CRUD, import, or export directive, centralize to display in here
+- [x] \<range\> a combination of two editbox, for report, inquiry or process criteria
+- [x] \<process>\ to preform reporting, inquiry, processing action
 
 In the future, some existing problems must be solved
 - [ ]  \<pageview\> can be a selection range for the search criteria selection.
 - [ ]  Better handling for one to many relationship between the parent and the child table.
 - [ ]  Using ngRoute so that the user can point to single one record by a unique URL.
+- [ ]  Rewrite the \<pageview>\ coding
+- [ ]  review the data flow of directives
 
 ### System Architecture
 ```
@@ -87,13 +84,12 @@ In the future, some existing problems must be solved
 ![System Architecture Design](./System Architecture.png)
 
 ## Download
-Download ~~[ZIP](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip) from GitHub~~
-I will upload the standable version as soon as I can
+Go to [released version](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip) on GitHub
 
 ## Config
 `model/config.php`
 ```
-    define("_DB_HOST", "172.20.2.60", true);
+    define("_DB_HOST", "192.168.0.190", true);
     define("_DB_NAME", "acgni308_keithbox", true);
     define("_DB_USER", "acgni308_kbuser", true);
     define("_DB_PASS", "Demo-DB3.2", true);
