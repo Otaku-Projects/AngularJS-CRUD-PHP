@@ -58,7 +58,7 @@ function ImportData($httpRequest){
 	
 	$importManager->AddTable("senseiprofile");
 
-	$responseArray = $importManager->CreateResponseArray();
+	$responseArray = Core::CreateResponseArray();
 
 	$requestData = new stdClass();
 	$requestData = $httpRequest; //->Data->Header;

@@ -135,6 +135,10 @@ class Core {
     public static function IsNullOrEmptyString($question){
 		return (!isset($question) || trim($question)==='');
 	}
+    public static function Is_Date($str){ 
+        $str=str_replace('/', '-', $str);  //see explanation below for this replacement
+        return is_numeric(strtotime($str));
+    }
     
     public static function IsSystemField($fields){
 		$isSystemField = false;
