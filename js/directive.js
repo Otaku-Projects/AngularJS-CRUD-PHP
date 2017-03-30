@@ -624,8 +624,9 @@ app.directive('entry', ['$rootScope',
     'Core', 
     'Security', 
     'LockManager', 
+    'LoadingModal',
     'HttpRequeset', 
-    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
+    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, ProcessResultMessage) {
     function EntryConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.entryCtrl;
@@ -676,23 +677,53 @@ app.directive('entry', ['$rootScope',
             	alert("<entry> Must declare a attribute of program-id");
         }
 
-        $scope.BackupNgModel = function(){
-            BackupNgModel();
-        }
-
-        $scope.RestoreNgModel = function(){
-            RestoreNgModel();
-        }
+        $scope.BackupNgModel = function(){ BackupNgModel(); }
+        $scope.RestoreNgModel = function(){ RestoreNgModel(); }
+        $scope.FindNClearChildEditbox = function(){ FindNClearChildEditbox(); }
 
         function BackupNgModel(){
             backupNgModelObj = jQuery.extend([], $ctrl.ngModel);
         }
 
         function RestoreNgModel(){
-            // don't kown why angular.copy doesn't work
-            //$ctrl.ngModel = angular.copy(backupNgModelObj);
-            // $ctrl.ngModel = jQuery.extend([], backupNgModelObj);
-            jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
+            // 20170108, keithpoon
+            // Option 1 will stick the ngModel with the defaulted value object 
+            // Option 2 will keep the customized value on the page, such is the prefered language setting
+
+            // Option 1: clone the default object as ngModel
+            $ctrl.ngModel = angular.copy(backupNgModelObj);
+
+            // Option 2: append and overwrite the default value on ngModel
+            // jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
+        }
+        
+        // 20170108, keithpoon, add: clear editbox after record created
+        function FindNClearChildEditbox(){
+            /*Get the elements with the attribute ng-model, in your case this could just be elm.children()*/
+            var elms = [].slice.call($element[0].querySelectorAll('editbox[ng-model]'), 0);
+
+            /*get the ngModelControllerArray*/
+            // var controllers = elms.map(function(el){
+            //   return angular.element(el).controller('ngModel');
+            // });
+            var scopes = elms.map(function(el){
+              return angular.element(el).scope();
+            });
+
+            // console.log("Print controller")
+            // controllers.forEach(function(editboxCtrl){
+            //     console.dir(editboxCtrl)
+            // });
+
+            // console.log("Print scopes")
+            scopes.forEach(function(editboxScope){
+                editboxScope.ClearNgModel();
+            });
+        }
+        
+        $scope.ResetForm = function(){
+            $scope.RestoreNgModel();
+            $scope.FindNClearChildEditbox();
         }
 
         function SetNgModel(dataJson){
@@ -925,7 +956,7 @@ app.directive('entry', ['$rootScope',
                 if($scope.editMode == globalCriteria.editMode.Create){
                     TryToCallSetDefaultValue();   
                 }
-                BackupNgModel();
+                $scope.BackupNgModel();
                 if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
                     $scope.UnLockAllControls();
             });
@@ -1175,7 +1206,7 @@ app.directive('entry', ['$rootScope',
                     ProcessResultMessage.addMsg(msg);
                     $scope.DisplayMessageList = ProcessResultMessage.messgeList;
 
-                    RestoreNgModel();
+                    $scope.ResetForm();
                 }, function(reason) {
                   console.error("Fail in CreateData() - "+tagName + ":"+$scope.programId)
                   Security.HttpPromiseFail(reason);
@@ -1209,7 +1240,7 @@ app.directive('entry', ['$rootScope',
                     var msg = data_or_JqXHR.Message;
                     ProcessResultMessage.addMsg(msg);
 
-                    ClearCtrlNgModel();
+                    $scope.ResetForm();
                     SetTableStructure($scope.tableStructure);
                 }, function(reason) {
                   console.error("Fail in DeleteData() - "+tagName + ":"+$scope.programId)
@@ -1231,6 +1262,13 @@ app.directive('entry', ['$rootScope',
 			$timeout(function(){
         		UnLockAllControls();
 			  	}, 2000); // (milliseconds),  1s = 1000ms
+        }
+        
+        $scope.ShowLoadModal = function(){
+            LoadingModal.showModal();
+        }
+        $scope.HideLoadModal = function(){
+            LoadingModal.hideModal();
         }
 
         // StatusChange() event listener
@@ -1304,9 +1342,6 @@ app.directive('entry', ['$rootScope',
                 isLimitModelStrictWithSchema = IsLimitModelStrictWithSchema();
             }
             return isLimitModelStrictWithSchema;
-        }
-        function ClearCtrlNgModel(){
-            $ctrl.ngModel = {};
         }
 
         function InitDirective(){
@@ -1788,6 +1823,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 
     	function InitializeEditBox() {
             $scope.editboxDataList = [];
+            $ctrl.ngModel = {};
 
 		    // check attribute programId
             var isProgramIdFound = false;
@@ -1859,6 +1895,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 
             // popup at center of the screen
             pageview.css("top", ( jQuery(window).height() - pageview.height() ) / 2 + "px");
+            // should not specify the width in number, otherwise break the RWD
             //pageview.css("left", ( jQuery(window).width() - pageview.width() ) / 2 + "px");
 
     		pageview.show();
@@ -1878,6 +1915,12 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
             var pageview = $element.find("pageview");
             pageview.hide();
     	}
+        $scope.SetNgModel = function(selectedRecord){
+            $ctrl.ngModel = selectedRecord;
+        }
+        $scope.ClearNgModel = function(editboxNgModel){
+            $ctrl.ngModel = {};
+        }
 
         //process flow
         $scope.Initialize();
@@ -1917,9 +1960,9 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 		controllerAs: 'editboxCtrl',
 
 		//If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
-		// bindToController: {
-		// 	ngModel: '=',
-		// },
+		 bindToController: {
+		 	ngModel: '=',
+		 },
 		template: templateFunction,
 		compile: function compile(tElement, tAttrs, transclude) {
 		    return {
@@ -2299,7 +2342,6 @@ app.directive('import', [
         var tagName = $element[0].tagName.toLowerCase();
 
         var globalCriteria = $rootScope.globalCriteria;
-        var backupNgModelObj = {};
 
         $scope.DisplayMessageList = ProcessResultMessage.messageList;
 
@@ -2312,7 +2354,6 @@ app.directive('import', [
         }
         $scope.DefaultInitDirective = function(){
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
-            BackupNgModel();
         }
         function InitializeImportDirective() {
             $scope.tableStructure = {};
@@ -2335,23 +2376,7 @@ app.directive('import', [
                 alert("<importExport> Must declare a attribute of program-id");
         }
 
-        $scope.BackupNgModel = function(){
-            BackupNgModel();
-        }
-
-        $scope.RestoreNgModel = function(){
-            RestoreNgModel();
-        }
-
-        function BackupNgModel(){
-            backupNgModelObj = jQuery.extend([], $ctrl.ngModel);
-        }
-
-        function RestoreNgModel(){
-            // don't kown why angular.copy doesn't work
-            //$ctrl.ngModel = angular.copy(backupNgModelObj);
-            // $ctrl.ngModel = jQuery.extend([], backupNgModelObj);
-            jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
+        function ClearChildEditBox(){
 
         }
 
@@ -2419,50 +2444,6 @@ app.directive('import', [
                 }
             });
             return request;
-
-            var jqxhr = $.ajax({
-              type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-              data: JSON.stringify(submitData),
-              //dataType: "json", // [xml, json, script, or html]
-              dataType: "json",
-            });
-
-            jqxhr.done(function (data, textStatus, jqXHR) {
-                // var msg = data.Message;
-                var status = data.Status;
-                ProcessResultMessage.setMsg(data.ActionResult.process_result);
-                $scope.DisplayMessageList = ProcessResultMessage.messageList;
-
-                if(status=="success"){
-                    // RestoreNgModel();
-                }
-
-            });
-            jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in ImportData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-            });
-            jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-                // textStatus
-                //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-                $scope.UnLockAllControls();
-                if(textStatus == "success"){
-
-                }
-
-                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                        textStatus, 
-                        jqXHR_or_errorThrown, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
-                        $ctrl);
-                }
-            });
-
         }
 
         $scope.Initialize = function(){

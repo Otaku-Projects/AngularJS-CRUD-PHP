@@ -1,6 +1,41 @@
 // JavaScript Document
 "use strict";
 
+app.factory('LoadingModal', function ($window, $document) {
+	var loadingModal = {};
+	var loadingIcon = {};
+	var loadingIconContainer = {};
+    var root = {};
+    root.showModal = function(msg){
+    	if(typeof(msg) == "undefined" || msg == null || msg == "")
+    		msg = "Loading...";
+
+    	loadingModal = $( "<div/>", {
+		  "class": "modal loading-modal",
+		  // click: function() {
+		  //   $( this ).toggleClass( "test" );
+		  // }
+		}).show().appendTo("body");
+
+		loadingIcon = $("<div/>", {
+			"class": "loading-icon",
+			"html": '<i class="fa fa-circle-o-notch fa-spin fa-5x fa-fw"></i>',
+		});
+
+		loadingIconContainer = $("<div/>", {
+		  "class": "modal",
+		  "html": loadingIcon,
+		}).show();
+
+		loadingIconContainer.appendTo("body");
+		loadingIcon.css("margin-top", ( jQuery(window).height() - loadingIcon.height() ) / 2 + "px");
+    };
+    root.hideModal = function(){
+    	loadingModal.remove();
+    	loadingIconContainer.remove();
+    }
+    return root;
+});
 app.service('ProcessResultMessage', function($timeout){
 	var self = this;
 	self.messageList = [];

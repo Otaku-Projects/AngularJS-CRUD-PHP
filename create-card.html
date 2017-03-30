@@ -43,16 +43,26 @@ app.run(function ($rootScope, $log, Security) {
 	Security.RequiresAuthorization();
 });
 
-app.controller('createDepartmentController', ['$scope', 'Security', function ($scope, Security, $rootScope) {
+app.controller('createCardController', ['$scope', 'Security', function ($scope, Security, $rootScope) {
+	$scope.directiveScopeDict = {};
+	$scope.directiveCtrlDict = {};
 	function Initialize(){
 		var entryForm = {};
 		
 		$scope.entryForm = entryForm;
+	  //$scope.cardEditBox = {};
+	  //$scope.cardTypeEditBox = {};
+	  //$scope.spellClassEditBox = {};
 	}
 	Initialize();
 	
 	$scope.EventListener = function(scope, iElement, iAttrs, controller){
 		console.log("<"+iElement[0].tagName+">" +" Directive overried EventListener()");
+		var prgmID = scope.programId;
+		if($scope.directiveScopeDict[prgmID] == null || typeof($scope.directiveScopeDict[prgmID]) == "undefined"){
+		  $scope.directiveScopeDict[prgmID] = scope;
+		  $scope.directiveCtrlDict[prgmID] = controller;
+		}
 		
 //		console.dir(scope);
 //		console.dir(iElement);
@@ -100,6 +110,38 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
 	$scope.IsLimitModelStrictWithSchema = function(scope, iElement, iAttrs, controller){
 		return false;
 	}
+	
+	
+  $scope.CustomSelectedToRecord = function(sRecord, scope, iElement, controller){
+    console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
+
+    var tagName = iElement[0].tagName.toLowerCase();
+    var prgmID = scope.programId.toLowerCase();
+
+    if(prgmID == "hw01ca"){
+      // asign the selected record to ng-model
+	  //$scope.directiveCtrlDict[prgmID].ngModel = sRecord;
+	  $scope.directiveScopeDict[prgmID].SetNgModel(sRecord)
+      $scope.entryForm.cardID = sRecord.cardID;
+	  $scope.cardEditBox = sRecord;
+    }
+
+    if(prgmID == "hw01ct"){
+      // asign the selected record to ng-model
+	  //$scope.directiveCtrlDict[prgmID].ngModel = sRecord;
+	  $scope.directiveScopeDict[prgmID].SetNgModel(sRecord)
+      $scope.entryForm.cardTypeID = sRecord.cardTypeID;
+	  $scope.cardTypeEditBox = sRecord;
+    }
+
+    if(prgmID == "hw01sc"){
+      // asign the selected record to ng-model
+	  //$scope.directiveCtrlDict[prgmID].ngModel = sRecord;
+	  $scope.directiveScopeDict[prgmID].SetNgModel(sRecord)
+      $scope.entryForm.spellClassID = sRecord.spellClassID;
+	  $scope.spellClassEditBox = sRecord;
+    }
+  }
 }]);
 </script>
 <!-- InstanceEndEditable -->
@@ -143,7 +185,7 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
 <!-- site position end --> 
 <div class="container">
 <!-- InstanceBeginEditable name="intro" -->
-<div ng-controller="createDepartmentController as createDeptCtrl" style="max-width: 750px;">
+<div ng-controller="createCardController as createCardCtrl" style="max-width: 750px;">
 	<h3>Create card</h3>
     <div>
     Greed Island中的100張指定卡片完整版<br>
@@ -156,10 +198,73 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
     咒語卡 <a href="http://comic.sfacg.com/HTML/HunterXHunter/014j/#p=40" target="_blank">http://comic.sfacg.com/HTML/HunterXHunter/014j/#p=40</a><br><br>
     實體書︰<br>
     <a href="http://blogs.yahoo.co.jp/hayatosasaki147/33674166.html" target="_blank">http://blogs.yahoo.co.jp/hayatosasaki147/33674166.html</a>
+    
     <entry ng-model="entryForm" program-id="hs01ca" edit-mode="create">
       <div class="well well-sm">
         <div ng-repeat="dspMsg in DisplayMessageList track by $index" ng-bind="dspMsg"></div>
       </div>
+        <editbox ng-model="cardEditBox" program-id="hw01ca">
+		  <div class="form-inline">
+			<label for="card_cardID">Card ID</label>
+            <div class="input-group">
+              <input class="form-control" type="text" id="card_cardID" ng-model="entryForm.cardID" readonly>
+              <span class="input-group-btn"><button type="button" class="btn btn-default" ng-click="OpenPageView()"><i class="fa fa-bars"></i></button></span>
+            </div>
+			<div class="form-group">
+			  <label for="card_grade">Grade</label>
+			  <input type="text" class="form-control input-sm" id="card_grade" ng-model="cardEditBox.grade" readonly>
+			</div>
+			<div class="form-group">
+			  <label for="card_maxLimit">Limit</label>
+			  <input type="text" class="form-control input-sm" id="card_maxLimit" ng-model="cardEditBox.maxLimit" readonly>
+			</div>
+		  </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-default" ng-click="ClearNgModel(cardEditBox)">Clear Editbox</button>
+          </div>
+        </editbox>
+        <editbox ng-model="cardTypeEditBox" program-id="hw01ct">
+		  <div class="form-inline">
+			<label for="cardType_cardTypeID">Card Type</label>
+            <div class="input-group">
+              <input class="form-control" type="text" id="cardType_cardTypeID" ng-model="entryForm.cardTypeID" readonly>
+              <span class="input-group-btn"><button type="button" class="btn btn-default" ng-click="OpenPageView()"><i class="fa fa-bars"></i></button></span>
+            </div>
+			<div class="form-group">
+			  <label for="cardType_category">Category</label>
+			  <input type="text" class="form-control input-sm" id="cardType_category" ng-model="cardTypeEditBox.category" readonly>
+			</div>
+		  </div>
+			<div class="form-group">
+			  <label for="cardType_description" class="sr-only">Description</label>
+			  <input type="text" class="form-control input-sm sr-only" id="cardType_description" ng-model="cardTypeEditBox.description" readonly>
+			  <textarea class="form-control" ng-model="cardTypeEditBox.description" readonly></textarea>
+			</div>
+          <div class="form-group">
+            <button type="button" class="btn btn-default" ng-click="ClearNgModel(cardEditBox)">Clear Editbox</button>
+          </div>
+        </editbox>
+        <editbox ng-model="spellClassEditBox" program-id="hw01sc">
+		  <div class="form-inline">
+			<label for="spellClass_spellClassID">Spell Class</label>
+            <div class="input-group">
+              <input class="form-control" type="text" id="spellClass_spellClassID" ng-model="entryForm.spellClassID" readonly>
+              <span class="input-group-btn"><button type="button" class="btn btn-default" ng-click="OpenPageView()"><i class="fa fa-bars"></i></button></span>
+            </div>
+			<div class="form-group">
+			  <label for="spellClass_name">Name</label>
+			  <input type="text" class="form-control input-sm" id="spellClass_name" ng-model="spellClassEditBox.name" readonly>
+			</div>
+		  </div>
+			<div class="form-group">
+			  <label for="spellClass_description" class="sr-only">Description</label>
+			  <input type="text" class="form-control input-sm sr-only" id="spellClass_description" ng-model="spellClassEditBox.description" readonly>
+			  <textarea class="form-control" ng-model="spellClassEditBox.description" readonly></textarea>
+			</div>
+          <div class="form-group">
+            <button type="button" class="btn btn-default" ng-click="ClearNgModel(cardEditBox)">Clear Editbox</button>
+          </div>
+        </editbox>
       <form ng-submit="SubmitData()">
         <fieldset>
           <div class="form-group" style="">
@@ -203,6 +308,13 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
           </div>
           <div class="form-group">
             <button type="submit" class="btn btn-default">Create</button>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-default" ng-click="ResetForm()">Clear Form</button>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-default" ng-click="ShowLoadModal()">Show Load Modal</button>
+            <button type="button" class="btn btn-default" ng-click="HideLoadModal()">Hide Load Modal</button>
           </div>
         </fieldset>
       </form>
