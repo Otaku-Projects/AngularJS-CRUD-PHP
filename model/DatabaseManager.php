@@ -758,8 +758,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			}
 			// if value exist are not null and empty
 			else {
-				$array_value = $this->GetSQLValueString($column);//$array[$column];
-				// echo "IsNotNullOrEmpty";
+				$array_value = $this->GetSQLValueString($column);
 			}
 			// if column cannot null
 			if(strtolower($value['Null']) == 'no'){
@@ -1438,14 +1437,14 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			case strpos($type, "mediumint") !== FALSE: // -8388608 to 8388607, 0 to 16777215
 			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
 			case strpos($type, "bigint") !== FALSE: // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
-				$setValue = ($setValue != "") ? intval($setValue) : "NULL";
+				$setValue = ($setValue != "") ? intval($setValue) : NULL;
 				$typeCaseAs = "integer";
 				break;
 			//http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
 			//http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
 			case strpos($type, "float") !== FALSE:
 			case strpos($type, "double") !== FALSE:
-				$setValue = ($setValue != "") ? doubleval($setValue) : "NULL";
+				$setValue = ($setValue != "") ? doubleval($setValue) : NULL;
 				$typeCaseAs = "decimal";
 				break;
 
