@@ -36,21 +36,22 @@ app.factory('LoadingModal', function ($window, $document) {
     }
     return root;
 });
-app.service('ProcessResultMessage', function($timeout){
+app.service('MessageService', function($rootScope, $timeout){
 	var self = this;
 	self.messageList = [];
-	self.getMsgList = function(){
+    $rootScope.$on('$routeChangeStart', function () {
+		self.messageList = [];
+    });
+    
+	self.getMsg = function(){
 		return self.messageList;
 	}
 	self.addMsg = function(msg){
 		self.messageList.push(msg);
-		$timeout(function(){
-	  		self.messageList.shift();
-	  	}, 5000); // (milliseconds),  1s = 1000ms
-	}
-	self.addMsgWithoutTimeout = function(msg){
-		self.messageList.push(msg);
-	}
+    }
+    self.shiftMsg = function(){
+        self.messageList.shift();
+    }
 	self.setMsg = function(msgList){
 		if(typeof(msgList) == "undefined" || msgList == null)
 			return;
@@ -65,6 +66,7 @@ app.service('ProcessResultMessage', function($timeout){
 		self.messageList = [];
 	}
 });
+
 //
 // call HttpRequest simple
 /*

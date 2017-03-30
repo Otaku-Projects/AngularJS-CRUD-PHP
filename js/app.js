@@ -590,6 +590,9 @@ app.directive('importExport', ['Security', '$rootScope', function(Security, $roo
                 $scope.DefaultInitDirective();
             }
         }
+        $scope.DefaultInitDirective = function(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
         function InitializeEntry() {
             $scope.tableStructure = {};
             //$ctrl.ngModel = {};

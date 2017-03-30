@@ -43,12 +43,12 @@ class ExcelManager {
 		$this->tableList = array();
     }
 	function Initialize(){
-		if(Core::IsNullOrEmptyString($this->table)){
-			$response = Core::CreateResponseArray();
-			$response['access_status'] = $this->access_status['Error'];
-			$response['error'] = $this->sys_err_msg['TableNameNotFound'];
-			return $response;
-		}
+//		if(Core::IsNullOrEmptyString($this->table)){
+//			$response = Core::CreateResponseArray();
+//			$response['access_status'] = $this->access_status['Error'];
+//			$response['error'] = $this->sys_err_msg['TableNameNotFound'];
+//			return $response;
+//		}
 
 		//parent::setDataSchemaForSet();
 		//parent::setArrayIndex();
@@ -445,7 +445,7 @@ class ExcelManager {
 	function SetSkipExportColumn($tableName, $skipColumnName){
 		$skipExportColumnScheme = $this->skipExportColumnScheme;
 
-		if($this->IsSystemField($skipColumnName))
+		if(Core::IsSystemField($skipColumnName))
 			return;
 
 		$skipThisColumn = array($skipColumnName);
@@ -684,11 +684,11 @@ class ExcelManager {
 		$fileAsString = $this->GetFileAsString($exportedPath);
 
 		// return $fileAsByteArray;
-		$responseArray = $this->CreateResponseArray();
+		$responseArray = Core::CreateResponseArray();
 		$responseArray["FileAsByteArray"] = $fileAsByteArray;
 		$responseArray["FileAsByteString"] = $fileAsString;
 		$responseArray["FileAsBase64"] = base64_encode(file_get_contents($exportedPath));
-		$responseArray['access_status'] = $this->access_status['OK'];
+		$responseArray['access_status'] = Core::$access_status['OK'];
 		$responseArray["filename"] = $this->filename.".".$this->outputAsFileType;
 
 		return $responseArray;
@@ -886,12 +886,12 @@ class ExcelManager {
 		//return json_encode($dataSet, JSON_PRETTY_PRINT);
 		//return json_encode($this->processMessageList, JSON_PRETTY_PRINT);
 
-		$this->responseArray = $this->CreateResponseArray();
+		$responseArray = Core::CreateResponseArray();
 		// $this->responseArray['importResult'] = $this->processMessageList;
 
-		$responseArray = $this->GetResponseArray();
+//		$responseArray = $this->GetResponseArray();
 		$responseArray['process_result'] = $this->processMessageList;
-		$responseArray['access_status'] = $this->access_status['OK'];
+		$responseArray['access_status'] = Core::$access_status['OK'];
 
 		return $responseArray;
 		// return $this->processMessageList;
@@ -992,7 +992,7 @@ class ExcelManager {
 			}
 			// sql query result is success but no rows updated.
 			// because the imported data total same as the record in database, no records will be changes.
-			else if($responseArray["access_status"] == $this->access_status["OK"]){
+			else if($responseArray["access_status"] == Core::$access_status["OK"]){
 				$tempProcessMessage = "Rows ".$excelRowIndex." sql query sccuess but no record updated.";	
 			}
 			else{

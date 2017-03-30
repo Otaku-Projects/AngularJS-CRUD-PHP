@@ -31,7 +31,7 @@ app.directive('pageview', ['$rootScope',
     'Security', 
     'LockManager', 
     'HttpRequeset',
-    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
+    'MessageService', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, MessageService) {
     function PageViewConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.pageviewCtrl;
@@ -630,7 +630,7 @@ app.directive('entry', ['$rootScope',
     'LockManager', 
     'LoadingModal',
     'HttpRequeset', 
-    'ProcessResultMessage', function($rootScope, $q, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, ProcessResultMessage) {
+    'MessageService', function($rootScope, $q, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, MessageService) {
     function EntryConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.entryCtrl;
@@ -684,7 +684,7 @@ app.directive('entry', ['$rootScope',
             DirectiveProperties.getEditMode();
             DirectiveProperties.getProgramID();
             
-            $scope.DisplayMessageList = [];
+            $scope.DisplayMessageList = MessageService.getMsg();
         }
 
         $scope.BackupNgModel = function(){ BackupNgModel(); }
@@ -1132,6 +1132,8 @@ app.directive('entry', ['$rootScope',
             var httpResponseObj = {};
             var submitPromise;
         	var editMode = DirectiveProperties.getEditMode();
+            var msg = "";
+            
 			if(editMode == globalCriteria.editMode.Create){
 				if(typeof $scope.CreateData == "function"){
 	            	submitPromise = scope.CreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
@@ -1142,12 +1144,7 @@ app.directive('entry', ['$rootScope',
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
-                    var msg = data_or_JqXHR.Message;
-                    
-//                    $scope.DisplayMessageList.push(msg);
-
-                    ProcessResultMessage.addMsg(msg);
-                    $scope.DisplayMessageList = ProcessResultMessage.messgeList;
+                    msg = data_or_JqXHR.Message;
 
                     $scope.ResetForm();
                 }, function(reason) {
@@ -1165,11 +1162,10 @@ app.directive('entry', ['$rootScope',
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
-                    var msg = data_or_JqXHR.Message;
+                    msg = data_or_JqXHR.Message;
 
-                    ProcessResultMessage.addMsg(msg);
-                    
                     // the lastUpdateDate was changed after record updated, user cannot click the Amend button again.
+                    // reget the record or clean the record
 //                    $scope.ResetForm();
                     $scope.FindData();
                 }, function(reason) {
@@ -1186,8 +1182,7 @@ app.directive('entry', ['$rootScope',
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
-                    var msg = data_or_JqXHR.Message;
-                    ProcessResultMessage.addMsg(msg);
+                    msg = data_or_JqXHR.Message;
 
                     $scope.ResetForm();
                     SetTableStructure($scope.tableStructure);
@@ -1205,6 +1200,8 @@ app.directive('entry', ['$rootScope',
                 // Always execute unlock on both error and success
                 $scope.UnLockAllControls();
 
+                    
+                MessageService.addMsg(msg);
                 SubmitDataResult(httpResponseObj, httpResponseObj.status);
                 
                 if(typeof $scope.CustomSubmitDataResult == "function"){
@@ -1625,7 +1622,6 @@ app.directive('entry', ['$rootScope',
     }
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
-//        var editModeNum = FindEditModeEnum(tAttrs.editMode);
 
         var template = '' +
           // outside of the ng-transclude
@@ -1977,7 +1973,7 @@ app.directive('export', [
     'Security', 
     'LockManager', 
     'HttpRequeset', 
-    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
+    'MessageService', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, MessageService) {
 
     function ExportConstructor($scope, $element, $attrs) {
 
@@ -1987,7 +1983,7 @@ app.directive('export', [
 
         var globalCriteria = $rootScope.globalCriteria;
 
-        $scope.DisplayMessageList = ProcessResultMessage.messgeList;
+        $scope.DisplayMessageList = MessageService.messgeList;
 
         $ctrl.ExportFileTypeAs = {
             availableOptions: [
@@ -2063,7 +2059,7 @@ app.directive('export', [
                 var actionResult = data_or_JqXHR.ActionResult;
                 SubmitDataSuccessResult(data_or_JqXHR);
 
-                ProcessResultMessage.addMsg(msg);
+                MessageService.addMsg(msg);
             }, function(reason) {
               console.error("Fail in ExportData() - "+tagName + ":"+$scope.programId)
               Security.HttpPromiseFail(reason);
@@ -2083,45 +2079,6 @@ app.directive('export', [
                 // }
             });
             return request;
-
-            var jqxhr = $.ajax({
-              type: 'POST',
-              url: url+'/model/ConnectionManager.php',
-              data: JSON.stringify(submitData),
-              //dataType: "json", // [xml, json, script, or html]
-              dataType: "json",
-            });
-
-            jqxhr.done(function (data, textStatus, jqXHR) {
-                var msg = data.Message;
-                var status = data.Status;
-                ProcessResultMessage.addMsg(msg);
-
-                if(status=="success"){
-                    //RestoreNgModel();
-                }
-
-            });
-            jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
-              console.error("Fail in ExportData() - "+tagName + ":"+$scope.programId)
-              Security.ServerResponseInFail(jqXHR, textStatus, errorThrown);
-            });
-            jqxhr.always(function (data_or_JqXHR, textStatus, jqXHR_or_errorThrown) {
-                // textStatus
-                //"success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-                $scope.UnLockAllControls();
-
-                SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                        textStatus, 
-                        jqXHR_or_errorThrown, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
-                        $ctrl);
-                }
-            });
         }
 
         function SendPostRequest(path, params, method) {
@@ -2311,7 +2268,7 @@ app.directive('import', [
     'Security', 
     'LockManager', 
     'HttpRequeset', 
-    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, ProcessResultMessage) {
+    'MessageService', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, MessageService) {
     function ImportConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.importCtrl;
@@ -2319,7 +2276,7 @@ app.directive('import', [
 
         var globalCriteria = $rootScope.globalCriteria;
 
-        $scope.DisplayMessageList = ProcessResultMessage.messageList;
+        $scope.DisplayMessageList = MessageService.messageList;
 
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -2380,7 +2337,7 @@ app.directive('import', [
                 }
             }
 
-            // ProcessResultMessage.clear();
+            // MessageService.clear();
 
             var submitData = {
                 "Session": clientID,
@@ -2399,8 +2356,7 @@ app.directive('import', [
             request.then(function(responseObj) {
                 var data_or_JqXHR = responseObj.data;
 
-                ProcessResultMessage.setMsg(data_or_JqXHR.ActionResult.process_result);
-                $scope.DisplayMessageList = ProcessResultMessage.messageList;
+                MessageService.setMsg(data_or_JqXHR.ActionResult.process_result);
             }, function(reason) {
               console.error("Fail in ImportData() - "+tagName + ":"+$scope.programId)
               Security.HttpPromiseFail(reason);
@@ -2493,7 +2449,6 @@ app.directive('import', [
 
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
-        //var editModeNum = FindEditModeEnum(tAttrs.editMode);
 
         var template = '' +
           '<div class="custom-transclude"></div>';
@@ -2547,12 +2502,12 @@ app.directive('upload', [
     'Security', 
     'LockManager', 
     'Upload',
-    'ProcessResultMessage', function($rootScope, $timeout, Core, Security, LockManager, Upload, ProcessResultMessage) {
+    'MessageService', function($rootScope, $timeout, Core, Security, LockManager, Upload, MessageService) {
     function UploadConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.uploadCtrl;
         var tagName = $element[0].tagName.toLowerCase();
-        $scope.DisplayMessageList = ProcessResultMessage.messageList;
+        $scope.DisplayMessageList = MessageService.messageList;
         
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
@@ -2733,6 +2688,138 @@ app.directive('upload', [
                     // "scope" here is the directive's isolate scope 
                     // iElement.find('.custom-transclude').append(
                     // );
+                    transclude(scope, function (clone, scope) {
+                        iElement.find('.custom-transclude').append(clone);
+                    })
+                }
+            }
+        },
+    };
+}]);
+
+app.directive('message', ['$rootScope', 
+    '$timeout',
+    'Security', 
+    'MessageService', function($rootScope, $timeout, Security, MessageService) {
+    function MessageConstructor($scope, $element, $attrs) {
+        var constructor = this;
+        var $ctrl = $scope.msgCtrl;
+        var tagName = $element[0].tagName.toLowerCase();
+        
+        $scope.autoClose = false;
+        var DirectiveProperties = (function () {
+            var autoClose;
+            
+            function findAutoClose(){
+                var object = $attrs.autoClose;
+                console.dir($attrs)
+                console.dir($attrs.autoClose)
+                if(typeof(object) != "undefined")
+                    return true;
+                else
+                    return false;
+            }
+
+            return {
+                getAutoClose: function () {
+                    if (!autoClose) {
+                        autoClose = findAutoClose();
+                    }
+                    $scope.autoClose = autoClose;
+                    return autoClose;
+                }
+            };
+        })();
+        
+        function TryToCallInitDirective(){
+            if(typeof $scope.InitDirective == "function"){
+                $scope.InitDirective($scope, $element, $attrs, $ctrl);
+            }else{
+                $scope.DefaultInitDirective();
+            }
+        }
+        $scope.DefaultInitDirective = function(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        function InitializeMessage() {
+            DirectiveProperties.getAutoClose();
+            
+            if(!$ctrl.ngModel){
+                $ctrl.ngModel = [];
+            }
+            MessageService.setMsg($ctrl.ngModel);
+            $ctrl.ngModel = MessageService.getMsg();
+        }
+        $scope.Initialize = function(){
+            $scope.InitScope();
+            if(typeof $scope.EventListener == "function"){
+                $scope.EventListener($scope, $element, $attrs, $ctrl);
+            }else{
+                EventListener();
+            }
+            TryToCallInitDirective();
+        }
+        $scope.InitScope = function(){
+            InitializeMessage();
+        }
+
+        function InitDirective(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+        }
+        function EventListener(){
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
+        }
+        $scope.Initialize();
+        
+            $scope.$watch(
+              // This function returns the value being watched. It is called for each turn of the $digest loop
+              function() { return $ctrl.ngModel.length },
+              // This is the change listener, called when the value returned from the above function changes
+              function(newValue, oldValue) {
+                  console.dir(newValue)
+                  console.dir(oldValue)
+                if ( newValue !== oldValue ) {
+                    if(newValue > oldValue){
+                        
+                        if($scope.autoClose)
+                            $timeout(function(){
+                                MessageService.shiftMsg();
+                            }, 5000); // (milliseconds),  1s = 1000ms
+                    }
+                }
+              }
+            );
+    }
+    function templateFunction(tElement, tAttrs) {
+        var globalCriteria = $rootScope.globalCriteria;
+
+        var template = '' +
+          '<div class="custom-transclude"></div>';
+        return template;
+    }
+
+    return {
+        require: ['ngModel'],
+        restrict: 'E', //'EA', //Default in 1.3+
+        transclude: true,
+        scope: true,
+
+        controller: MessageConstructor,
+        controllerAs: 'msgCtrl',
+
+        //If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
+        bindToController: {
+            ngModel: '=',
+        },
+        template: templateFunction,
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function preLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry preLink() compile");
+                },
+                post: function postLink(scope, iElement, iAttrs, controller) {
+                    //console.log("entry postLink() compile");
+                    
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
