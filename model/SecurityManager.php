@@ -230,11 +230,6 @@ class SecurityManager extends DatabaseManager {
 			$this->loginID = $this->tempLoginID;
 			$this->password = $this->Hash($this->tempPassword);
 			$tmpResponseArray = $this->select();
-			
-			$webuserManager = new WebuserManager();
-			$webuserManager->loginID = $this->tempLoginID;
-			$webuserManager->password = $this->Hash($this->tempPassword);
-			$tmpResponseArray = $webuserManager->SelectGeneralUserInfo();
 
 			$tmpResponseArray["SESSION_ID"] = 0;
 			if($tmpResponseArray["num_rows"]==1){

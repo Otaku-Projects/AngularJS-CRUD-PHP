@@ -281,7 +281,7 @@ app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cook
 	return locker;
 }]);
 
-app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', 'MessageService', function($rootScope, Core, $jqCookies, $cookies, MessageService) {
+app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', function($rootScope, Core, $jqCookies, $cookies) {
 	var secure = this;
 	var rootScope = $rootScope;
    
@@ -403,7 +403,6 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', 'Me
 	secure.HttpPromiseFail = function(reason){
 		console.warn("HttpRequest promise return as fail");
 		console.dir(reason);
-        MessageService.addMsg(reason);
 	}
 
 	/**
@@ -492,8 +491,8 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', 'Me
 		  dataType: "html",
 		});
 		jqxhr.done(function (data, textStatus, jqXHR) {
-			secure.ClearSessionNUserData();
 			alert("logout success");
+			secure.ClearSessionNUserData();
 			secure.RedirectToLoginPage();
 		});
 		jqxhr.fail(function (jqXHR, textStatus, errorThrown) {
