@@ -98,65 +98,103 @@ $(function() {
 <div class="container">
 <!-- InstanceBeginEditable name="intro" -->
 <div class="panel panel-default">
-  <div class="panel-heading"><h3>Title</h3></div>
+  <div class="panel-heading"><h3>Check</h3></div>
   <div class="panel-body">
-  </div>
-</div>
-<div class="panel panel-default">
-  <div class="panel-heading"><h3>Requirement</h3></div>
-  <div class="panel-body">
-    <ul>
-      <li>PHP 5.4 or above</li>
-      <li>angularJS</li>
-      <li>jQuery</li>
-      <li>bootstrap 3.3.0 or above (optional)</li>
-      <li>font awesome 4.5.0 or above (optional)</li>
-    </ul>
+      Create ./temp/ folder<br>
+      Create ./temp/export folder<br>
+      Create ./temp/upload folder<br>
+      Third-party framework check<br>
   </div>
 </div>
 <div class="panel panel-default">
   <div class="panel-heading"><h3>Dependency</h3></div>
   <div class="panel-body">
     <ul>
-      <li>PHPExcel 1.8.0 (For export excel)</li>
-      <li>dompdf 0.6.2 (For export excel as PDF)</li>
-      <li>TCPDF-5.9.209 (very low performance)</li>
-      <li>PHPWord_0.6.2_Beta</li>
       <li>angularJS 1.5.0 or above</li>
       <li>jQuery 2.2.1 or above</li>
-      <li>jquery.cookie 1.4.1</li>
+      <li>ng-file-upload-12.2.12 or above</li>
       <li>Blob.js</li>
       <li>FileSaver.js 1.3.2</li>
+      <li>bootstrap 3.3.0 or above (optional)</li>
+      <li>font awesome 4.5.0 or above (optional)</li>
     </ul>
   </div>
 </div>
 <div class="panel panel-default">
-  <div class="panel-heading"><h3>Website Configuaration Server Side</h3></div>
+  <div class="panel-heading"><h3>Software Requirement</h3></div>
   <div class="panel-body">
-  model/ExcelManager.php<br>
-  // local the dompdf enginer folder, PHPExcel 1.8.0+ not support dompdf 0.7.0+ <br>
-  $rendererLibrary = 'dompdf/dompdf-0.6.2/';
+    <ul>
+      <li>PHP 5.4 or above</li>
+        <li>requirement of <a href="https://officetopdf.codeplex.com/" target="_blank">OfficeToPdf.exe</a> (if you this to convert excel to pdf)</li>
+    </ul>
   </div>
 </div>
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h3>Website Configuaration Client Side</h3></div>
+    <h3>Client Side Configuaration</h3></div>
     <div class="panel-body">
-        <p>Edit the js/app.js<br>
-        to config the V11 runtime host, website host, redirect path when login success
+        <p>Edit a javascript config file located at ./js/config.js<br>
+        to config the website host, data server host, user main page after login, login page location for those pages required user authentication.
         </p>
         <p>
         <pre class="brush: js">
-        $rootScope.globalCriteria.serverHost = "http://172.20.2.60:6090";
-        
-        $rootScope.webRoot = "http://172.20.2.60:6090/"
-        
-        $rootScope.requireLoginPage = $rootScope.webRoot+"login.html";
-        $rootScope.afterLoginPage = $rootScope.webRoot+"main-menu.html";
-        
-        $rootScope.controller = $rootScope.webRoot+"controller/";
-        $rootScope.templateFolder = $rootScope.webRoot+"Templates/";
-        $rootScope.screenTemplate = $rootScope.templateFolder+"screen/";
+            var serverHost = "http://192.168.0.190/Develop";
+            var webRoot = "http://192.168.0.190/Develop";
+
+            var requireLoginPage = "login.html";
+            var afterLoginPage = "main-menu.html";
+        </pre>
+        </p>
+    </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading"><h3>Server Side Configuaration</h3></div>
+  <div class="panel-body">
+      <p>Edit a php config file located at ./model/config.php<br>
+          to config the database(MySQL/MariaDB) connection information.
+      </p>
+        <p>
+        <pre class="brush: php">
+        /**
+         * Configuration for: Database Connection
+         *
+         * DB_HOST: database host, usually it's "127.0.0.1" or "localhost", some servers also need port info
+         * DB_NAME: name of the database. please note: database and database table are not the same thing
+         * DB_USER: user for your database. the user needs to have rights for SELECT, UPDATE, DELETE and INSERT.
+         * DB_PASS: the password of the above user
+         */
+         
+        define("_DB_HOST", "192.20.2.60", true);
+        define("_DB_NAME", "acgni308_keithbox", true);
+        define("_DB_USER", "acgni308_kbuser", true);
+        define("_DB_PASS", "Demo-DB3.2", true);
+        </pre>
+        </p>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4>PHPExcel 1.8.0+ integrate with PDF engine</h4></div>
+    <div class="panel-body">
+        <p>Edit a php file located at ./model/ExcelManager.php<br>
+        PHPExcel was integrated with three PDF engines that allowed to config which will be use.<br><br>
+        Uncomment to pick a one out of three PDF engines (dompdf 0.6.0+, TCPDF 6.2.0+, mpdf 6.1.0+)
+        </p>
+        <p>
+        <pre class="brush: php">
+		// $rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
+		// $rendererLibrary = 'PDF engine/dompdf/dompdf-0.6.2/';
+		// local the dompdf enginer folder, PHPExcel 1.8.0+ not support dompdf 0.7.0+
+		// $rendererLibrary = 'PDF engine/dompdf/dompdf-0.7.0/';
+
+		// extremely slow performance
+		// $rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+		// $rendererLibrary = 'PDF engine/TCPDF/TCPDF-6.2.13/';
+
+		$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
+		$rendererLibrary = 'PDF engine/MPDF/mpdf-6.1.3/';
+		
+		$rendererLibraryPath = BASE_3RD . $rendererLibrary;
         </pre>
         </p>
     </div>
