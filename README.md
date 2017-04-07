@@ -1,13 +1,10 @@
 # AngularJS-CRUD-PHP
-
 A simple idea for Rapid application development
 
 ## Demo
-
 Coming soon...
 
 ## Motivation
-
 There were too many angularJS CRUD open source project in the real, angularJS has received significant recognition since recent years but we are still uncertainty what angularJS can and how much it can. Over the years, the numerous CRUD sample has been made, focus on routeProvider, angularJS <--> Java, angularJS <--> PHP. A vast amount of related work have been created by thousands of people from all over the world.
 
 It is very limiting of my needs(maybe also yours). One day when a project need to provide CRUD on more than one table on one single page. But implement of such sample was copy and edit many lines of HTML. It was so tired and easy to make mistakes. I just want a simple and a lite angularJS controller to help us to develop on the small project.
@@ -25,7 +22,7 @@ third-party framework, library
 ## Software Requirement
 
 - PHP 5.4 or above
-- requirement of [OfficeToPdf.exe](https://officetopdf.codeplex.com/) (if you this to convert excel to pdf)
+- [Requirement](https://officetopdf.codeplex.com/) of OfficeToPdf.exe (if you this to convert excel to pdf)
 
 ## Architecture
 
@@ -85,7 +82,7 @@ In the future, some existing problems must be solved
 ![System Architecture Design](./System%20Architecture.png)
 
 ## Download
-Go to [released version](https://github.com/keithbox/AngularJS-CRUD-PHP/archive/master.zip) on GitHub
+Go to [released version](https://github.com/keithbox/AngularJS-CRUD-PHP/releases) on GitHub
 
 ## Config
 `model/config.php`
