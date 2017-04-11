@@ -47,7 +47,7 @@ This project design for the function base, a page can be a function, a directive
 - [x] \<import\> send the uploaded file location with specify action to do some process
 - [x] \<message\> separate the process result message from CRUD, import, or export directive, centralize to display in here
 - [x] \<range\> a combination of two editbox, for report, inquiry or process criteria
-- [x] \<process>\ to preform reporting, inquiry, processing action
+- [x] \<process\> to preform reporting, inquiry, processing action
 
 In the future, some existing problems must be solved
 - [ ]  \<pageview\> can be a selection range for the search criteria selection.
