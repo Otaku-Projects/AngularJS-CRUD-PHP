@@ -1,8 +1,15 @@
 # AngularJS-CRUD-PHP
-A simple idea for Rapid application development
+A simple idea for Rapid application development, this sample use php and mysql as server side dependency, the project also implemented for php and MongoDB, if you interested in please go to 
+
 
 ## Demo
-Coming soon...
+online demo coming soon...
+
+[PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System), a practice of an E-Appraisal system.
+
+[NoSQLSystem](https://github.com/keithbox/NoSQLSystem), a practice of a website that using MongoDB database
+
+In my try, this project good for the small website project that within or around 30 pages.
 
 ## Motivation
 There were too many angularJS CRUD open source project in the real, angularJS has received significant recognition since recent years but we are still uncertainty what angularJS can and how much it can. Over the years, the numerous CRUD sample has been made, focus on routeProvider, angularJS <--> Java, angularJS <--> PHP. A vast amount of related work have been created by thousands of people from all over the world.
@@ -10,19 +17,25 @@ There were too many angularJS CRUD open source project in the real, angularJS ha
 It is very limiting of my needs(maybe also yours). One day when a project need to provide CRUD on more than one table on one single page. But implement of such sample was copy and edit many lines of HTML. It was so tired and easy to make mistakes. I just want a simple and a lite angularJS controller to help us to develop on the small project.
 
 ## Dependency
-third-party framework, library
+### Framework, library on web client
 - angularJS 1.5.0 or above
 - jQuery 2.2.1 or above
+
+if you want the import/export features
 - ng-file-upload-12.2.12 or above
 - Blob.js
 - FileSaver.js 1.3.2
+
+ui framework, the default ui components that i used, you may switch to others
 - bootstrap 3.3.0 or above (optional)
 - font awesome 4.5.0 or above (optional)
 
-## Software Requirement
-
+### Framework, library on server side
 - PHP 5.4 or above
-- [Requirement](https://officetopdf.codeplex.com/) of OfficeToPdf.exe (if you this to convert excel to pdf)
+- PHPExcel 1.8.1 (excel engine)
+- mpdf 6.1.3 (pdf engine)
+- [Requirement](https://officetopdf.codeplex.com/) of OfficeToPdf.exe (pdf engine)
+PHPExcel has implemented the integration with dompdf/mpdf/tcpdf, but the excel converted excel has some limitations, I recommended to use OfficeToPdf if your server environment is windows platform
 
 ## Architecture
 
