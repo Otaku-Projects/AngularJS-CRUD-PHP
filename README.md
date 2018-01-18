@@ -1,6 +1,7 @@
 # AngularJS-CRUD-PHP
-A simple idea for Rapid application development, this sample use php and mysql as server side dependency, the project also implemented for php and MongoDB, if you interested in please go to 
+A simple idea for Rapid application development, this sample use php and mysql as server side dependency, you need to play some coding effort if you does not.
 
+In current stage, I am going to perform Code refactoring and add some new features, it may take a long duration.
 
 ## Demo
 online demo coming soon...
