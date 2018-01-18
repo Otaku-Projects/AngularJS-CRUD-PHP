@@ -35,8 +35,9 @@ ui framework, the default ui components that i used, you may switch to others
 - PHP 5.4 or above
 - PHPExcel 1.8.1 (excel engine)
 - mpdf 6.1.3 (pdf engine)
-- [Requirement](https://officetopdf.codeplex.com/) of OfficeToPdf.exe (pdf engine)
-PHPExcel has implemented the integration with dompdf/mpdf/tcpdf, but the excel converted excel has some limitations, I recommended to use OfficeToPdf if your server environment is windows platform
+- OfficeToPdf.exe (pdf engine) [Requirement](https://officetopdf.codeplex.com/)
+
+PHPExcel has integrate with dompdf, mpdf, tcpdf, but the excel convert to pdf features has some limitations, I recommended to use OfficeToPdf if your server environment is windows platform
 
 ## Architecture
 
