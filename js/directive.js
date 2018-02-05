@@ -15,7 +15,7 @@ app.directive('logout', ['Security', '$rootScope', function(Security, $rootScope
 }]);
 
 /**
- * <pageview> a record set view element, store a list of records obtained from the database and display as a page view.
+ * <pageview> a view element for a set of records, display the record in pagination.
  * <pageview
     ng-model=""
     program-id=""
@@ -27,12 +27,19 @@ app.directive('logout', ['Security', '$rootScope', function(Security, $rootScope
  */
 app.directive('pageview', ['$rootScope', 
     '$timeout', 
+    '$compile',
     'Core', 
     'Security', 
     'LockManager', 
     'HttpRequeset',
-    'MessageService', function($rootScope, $timeout, Core, Security, LockManager, HttpRequeset, MessageService) {
+    'MessageService',
+    'ThemeService',
+    'TableManager',
+    'DataAdapter', function($rootScope, $timeout, $compile, Core, Security, LockManager, HttpRequeset, MessageService, ThemeService, TableManager, DataAdapter) {
     function PageViewConstructor($scope, $element, $attrs) {
+		if(Core.GetConfig().debugLog.DirectiveFlow)
+            console.log("1 Pageview - PageViewConstructor()");
+		
     	var constructor = this;
     	var $ctrl = $scope.pageviewCtrl;
         var tagName = $element[0].tagName.toLowerCase();
@@ -57,8 +64,15 @@ app.directive('pageview', ['$rootScope',
             if(isProgramIdFound){
             	$scope.programId = $attrs.programId;
             }
-            else
-            	alert("<pageview> Must declare a attribute of program-id");
+            else{
+                // console.trace();
+                var isParentScopeFromEditbox = false;
+                if(typeof ($scope.$parent.SetEditboxNgModel) == "function")
+                    isParentScopeFromEditbox = true;
+
+                if(!isParentScopeFromEditbox)
+            	   alert("<pageview> Must declare a attribute of program-id");
+            }
     		// check attribute PageRecordsLimit
             var isPageRecordsLimit = false;
             var pageRecordsLimit = $attrs.pageRecordsLimit;
@@ -72,10 +86,13 @@ app.directive('pageview', ['$rootScope',
             	$scope.numOfRecordPerPage = pageRecordsLimit;
             }
             else{
-            	console.log("<"+$element[0].tagName+"> attribute of page-records-limit default as 10");
+//            	console.log("<"+$element[0].tagName+"> attribute of page-records-limit default as 10");
+                if(Core.GetConfig().debugLog.DirectiveFlow)
+                Core.SysLog.Print("PageRecordsLimitDefault", "10", $element[0].tagName, "PageRecordsLimitDefault");
             	$scope.numOfRecordPerPage = 10;
             }
 
+            $scope.tableStructure = {};
             $scope.criteriaObj = {};
 
             // Declare $scope.variable
@@ -98,13 +115,21 @@ app.directive('pageview', ['$rootScope',
             $scope.DisplayMessage = "";
 
             $scope.getNextPageTimes = 0;
+
+            // console.dir($attrs)
+            // console.dir($scope)
+            // console.dir($ctrl)
     	}
 
         function EventListener(){
-            console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
+//            console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+            Core.SysLog.Print("PageviewEventListener", $scope.$id, $element[0].tagName, "PageviewEventListener");
         }
         function ValidateRecord(){
-            console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateRecord() function in webapge"); 
+//            console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateRecord() function in webapge");
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+            Core.SysLog.Print("PageviewValidateRecord", $scope.$id, $element[0].tagName, "PageviewValidateRecord");
             return true;
         }
         function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
@@ -113,12 +138,15 @@ app.directive('pageview', ['$rootScope',
         }
 
     	function SetRecordStructure(dataJson){
+            $scope.tableStructure.table_schema = dataJson.table_schema;
+            $scope.tableStructure.DataColumns = dataJson.DataColumns;
+            $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
+            
             // if structure already defined, escape the function
             if(!jQuery.isEmptyObject(recordStructure)){
                 return;
             }
-            //console.log("Pageview SetRecordStructure() execute.");
-            var tableSchema = dataJson.ActionResult.table_schema;
+            var tableSchema = $scope.tableStructure.table_schema;
 
         	for(var rowIndex in tableSchema){
         		var row = tableSchema[rowIndex];
@@ -143,14 +171,32 @@ app.directive('pageview', ['$rootScope',
         		}
         	}
     	}
-    	function AppendToDataSource(pageNum, dataJson){
+        
+        function GetTableStructure(){
+            var programId = $scope.programId.toLowerCase();
+            var submitData = {
+                "Table": programId
+            };
+            var tbResult = TableManager.GetTableStructure(submitData);
+            tbResult.then(function(responseObj) {
+                SetRecordStructure(responseObj);
+            }, function(reason) {
+
+            }).finally(function() {
+                // Always execute this on both error and success
+            });
+            
+            return tbResult;
+        }
+    	function AppendToDataSource(pageNum, tableSchema, dataJson){
         	var singleItem;
-            var tableSchema = dataJson.ActionResult.table_schema;
+            // var tableSchema = dataJson.ActionResult.table_schema;
             var numOfRecordPerPage = $scope.numOfRecordPerPage;
 
             var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
             var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
 
+            var currentPageArray = [];
         	var dataSourceArray = jQuery.extend([], $scope.dataSource);
             // 20170112, keithpoon, fixed: total records count less than a page, delete one record in database and than refresh in pageview, the record set display incorrect
             if(dataSourceArray.length < $rootScope.serEnv.phpRecordLimit)
@@ -158,8 +204,8 @@ app.directive('pageview', ['$rootScope',
 
             var counter = recordNumberStart;
         	// add each getted row into DataSource
-        	for(var itemRow in dataJson.ActionResult.data){
-        		var singleItem = dataJson.ActionResult.data[itemRow];
+        	for(var itemRow in dataJson){
+        		var singleItem = dataJson[itemRow];
         		var newRecordRow = jQuery.extend({}, recordStructure);
 
                 for(var rowIndex in tableSchema){
@@ -183,12 +229,20 @@ app.directive('pageview', ['$rootScope',
 
         			newRecordRow[columnName] = newColumn;
             	} // columns end
-                dataSourceArray[counter] = newRecordRow;
+                //dataSourceArray[counter] = newRecordRow;
+                currentPageArray.push(newRecordRow);
                 counter++;
 
                 // append the item records
                 newRecordRow.Items = singleItem.Items;
         	}
+            // 20180205, fixed: always trust the get data result, and reasign the to the data source list
+            // fixed bug case:
+            // data source have records that more than a page,
+            // the webpage delete a record and call clear and refresh
+            // the pageview not update the data source becuase the array index was found, 
+            dataSourceArray.splice.apply(dataSourceArray, [recordNumberStart, numOfRecordPerPage].concat(currentPageArray));
+
         	$scope.dataSource = jQuery.extend([], dataSourceArray);
     	}
     	function SortingTheDataSource(){
@@ -215,6 +269,8 @@ app.directive('pageview', ['$rootScope',
         }
 
         $scope.Initialize = function(){
+			if(Core.GetConfig().debugLog.DirectiveFlow)
+				console.log("2 Pageview - Initialize()");
             $scope.InitScope();
             if(typeof $scope.EventListener == "function"){
                 $scope.EventListener($scope, $element, $attrs, $ctrl);
@@ -227,7 +283,11 @@ app.directive('pageview', ['$rootScope',
             InitializePageView();
         }
         $scope.DefaultInitDirective = function(){
-            $scope.GotoFirstPageRecord();
+            var getTbStructurePromiseResult = GetTableStructure();
+            
+            getTbStructurePromiseResult.then(function(){
+                $scope.GotoFirstPageRecord();
+            });
         }
 
 
@@ -243,7 +303,8 @@ app.directive('pageview', ['$rootScope',
             if(typeof $scope.CustomPointedToRecord == "function"){
                 $scope.CustomPointedToRecord(pRecord, rowScope, $scope, $element, $ctrl);
             }else{
-                console.log("<"+$element[0].tagName+">" +" Directive function CustomPointedToRecord() should be override.");
+//                console.log("<"+$element[0].tagName+">" +" Directive function CustomPointedToRecord() should be override.");
+                Core.SysLog.Print("CustomPointedToRecordNotFound", $scope.programId, $element[0].tagName, "CustomPointedToRecordNotFound");
             }
         }
 
@@ -251,28 +312,27 @@ app.directive('pageview', ['$rootScope',
             $scope.selectedRecord = jQuery.extend([], $scope.pointedRecord);
 
             $scope.pointedRecord = {};
-            
-//            var target = angular.element(event.target);
-            
+
             // check parent scope, is editbox
             var isParentScopeFromEditbox = false;
             if(typeof ($scope.$parent.SetEditboxNgModel) == "function")
                 isParentScopeFromEditbox = true;
-            
-//            console.log("<pageview> - isParentScopeFromEditbox: "+isParentScopeFromEditbox);
-//            console.dir(sRecord)
-            
+
+           // console.log("<pageview> - isParentScopeFromEditbox: "+isParentScopeFromEditbox);
+           // console.dir(sRecord)
+
             if(isParentScopeFromEditbox){
                 $scope.$parent.SetEditboxNgModel(sRecord);
             }
-            
+
             var sRecord = $scope.selectedRecord;
             if(typeof $scope.CustomSelectedToRecord == "function"){
                 $scope.CustomSelectedToRecord(sRecord, rowScope, $scope, $element, $ctrl);
             }else{
-                console.log("<"+$element[0].tagName+">" +" Directive function CustomSelectedToRecord() should be override.");
+//                console.log("<"+$element[0].tagName+">" +" Directive function CustomSelectedToRecord() should be override.");
+                Core.SysLog.Print("CustomSelectedToRecordNotFound", $scope.programId, $element[0].tagName, "CustomSelectedToRecordNotFound");
             }
-            
+
             if(typeof $scope.ClosePageView == "function")
                 $scope.ClosePageView();
         }
@@ -287,8 +347,11 @@ app.directive('pageview', ['$rootScope',
             $ctrl.ngModel = {};
             // $scope.maxRecordsCount = -1;
             $scope.getNextPageTimes = 0;
-            
+
             $scope.TryToDisplayPageNum(pageNum, true);
+
+            // if the current page record is not exists (may be just deleted)
+            // it should call GotoPreviousPageRecord() to display the previous page
         }
         $scope.LockAllControls = function(){
             LockAllControls();
@@ -311,7 +374,8 @@ app.directive('pageview', ['$rootScope',
     			$scope.TryToDisplayPageNum(pageNum);
     		}else{
     			// first of the page, cannot Goto Previous
-    			console.log("This is the first page, cannot go previous.")
+//    			console.log("This is the first page, cannot go previous.")
+                Core.SysLog.Print("BeginningOfThePageCannotGotoPrevious", $scope.programId, $element[0].tagName, "BeginningOfThePageCannotGotoPrevious");
     		}
     	}
     	$scope.GotoNextPageRecord = function(){
@@ -354,7 +418,7 @@ app.directive('pageview', ['$rootScope',
     		var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
     		var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
     		var isAllRecordsExists = true;
-            console.log(recordNumberStart, recordNumberEnd)
+            //console.log(recordNumberStart, recordNumberEnd)
             if(typeof(clearNRefresh) == "undefined"){
                 clearNRefresh = false;
             }
@@ -369,7 +433,7 @@ app.directive('pageview', ['$rootScope',
             }else{
                 isAllRecordsExists = false;
             }
-            
+
     		if($scope.maxRecordsCount != $scope.dataSource.length || clearNRefresh){
 	    		// Get data if records not enough
 	    		if(!isAllRecordsExists){
@@ -385,11 +449,11 @@ app.directive('pageview', ['$rootScope',
 					}
 
                     var lastRecordIndex = $scope.sortedDataSource.length;
-                    
+
 //                    console.log("TryToCallSetCriteriaBeforeGet() - pageNum: "+pageNum+", lastRecordIndex: "+lastRecordIndex+", ")
 
                     var newCriteriaObj = TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
-                    
+
                     $scope.GetNextPageRecords(pageNum, lastRecordIndex, newCriteriaObj);
 
 	    			return;
@@ -400,31 +464,34 @@ app.directive('pageview', ['$rootScope',
     	}
 
     	function DisplayPageNum(pageNum){
-    		console.log("Going to display the Page no.("+pageNum + ") records.");
+//    		console.log("Going to display the Page no.("+pageNum + ") records.");
+            Core.SysLog.Print("DisplayPageNum", $scope.programId, pageNum, $element[0].tagName, "DisplayPageNum");
     		var numOfRecordPerPage = $scope.numOfRecordPerPage;
 
-    		var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
-    		var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
-            
+            var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
+            var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
+
             var currentPageRecords = [];
             $scope.currentPageRecords = [];
             $ctrl.ngModel = [];
-    		if(typeof($scope.sortedDataSource[recordNumberStart]) == "undefined"){
+            if(typeof($scope.sortedDataSource[recordNumberStart]) == "undefined"){
 
-    		}else{
-	    		// assign records to current page according to the page number
-	    		for(var recordCounter = recordNumberStart; recordCounter <=recordNumberEnd; recordCounter++){
+            }else{
+                // assign records to current page according to the page number
+                var currentPageRecords = [];
+                for(var recordCounter = recordNumberStart; recordCounter <=recordNumberEnd; recordCounter++){
 
-	    			if(recordCounter >= $scope.maxRecordsCount && $scope.maxRecordsCount > 0)
-	    				break;
-	    			var newRow = jQuery.extend({}, $scope.sortedDataSource[recordCounter]);
+                    if(recordCounter >= $scope.maxRecordsCount && $scope.maxRecordsCount > 0)
+                        break;
+                    var newRow = jQuery.extend({}, $scope.sortedDataSource[recordCounter]);
                     if(!jQuery.isEmptyObject(newRow))
-	    			    currentPageRecords[currentPageRecords.length] = newRow;
-	    		}
-    		}
-            
-            $ctrl.ngModel = $scope.currentPageRecords = currentPageRecords;
-    	}
+                        currentPageRecords[currentPageRecords.length] = newRow;
+                }
+            }
+            $scope.currentPageRecords = jQuery.extend( {}, currentPageRecords );
+            $ctrl.ngModel = jQuery.extend( {}, currentPageRecords );
+            // $ctrl.ngModel = $scope.currentPageRecords = currentPageRecords;
+        }
 
     	$scope.GetNextPageRecords = function(pageNum, lastRecordIndex, criteriaObj){
     		$scope.LockAllControls();
@@ -435,43 +502,25 @@ app.directive('pageview', ['$rootScope',
             var numOfRecordPerPage = $scope.numOfRecordPerPage;
             var recordOffset = (pageNum-1) * $scope.numOfRecordPerPage;
 
-            // $scope.DisplayMessage = "";
-        	// Convert the Key Value to Upper Case
-        	// console.dir(keyObj);
-        	// if(typeof(keyObj) == "undefined"){
-        	// 	keyObj = {};
-        	// }
-        	// for(var keyIndex in keyObj){
-        	// 	if(typeof(keyObj[keyIndex]) == "string")
-        	// 		keyObj[keyIndex] = keyObj[keyIndex].toUpperCase();
-        	// }
-
 			var submitData = {
-				"Session": clientID,
 				"Table": programId,
                 "PageNum": pageNum,
                 "PageRecordsLimit": numOfRecordPerPage,
 				"Offset": recordOffset,
 				criteria: criteriaObj
 			};
-            submitData.Action = "GetData";
 
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
-
-            var request = HttpRequeset.send(requestOption);
+            // var request = HttpRequeset.send(requestOption);
+            var request = DataAdapter.GetData(submitData); 
             var httpResponseObj = {};
             $scope.getNextPageTimes+=1;
             request.then(function(responseObj) {
-                var data_or_JqXHR = responseObj.data;
                 httpResponseObj = responseObj;
                 $scope.UnLockAllControls();
-                
+
 //                if(data_or_JqXHR.Status != "success")
 //                    throw data_or_JqXHR;
-//                
+//
 //                if(typeof(data_or_JqXHR.ActionResult.data) == "undefined")
 //                {
 //                    if($scope.getNextPageTimes == 1){
@@ -479,16 +528,15 @@ app.directive('pageview', ['$rootScope',
 //                    }
 //                }
 
-                SetRecordStructure(data_or_JqXHR);
-                AppendToDataSource(pageNum, data_or_JqXHR);
+                SetRecordStructure(responseObj.table_schema);
+                AppendToDataSource(pageNum, responseObj.table_schema, responseObj.data);
                 SortingTheDataSource();
-                
-                
+
                 // Object.keys Browser compatibility
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
-                var recordCount = Object.keys(data_or_JqXHR.ActionResult.data).length;
+                var recordCount = Object.keys(responseObj.data).length;
                 // 20170312, keithpoon, fixed: end page problem caused when the record counts is the multiple of 10
-                if(!data_or_JqXHR.ActionResult.data || (recordCount < $rootScope.serEnv.phpRecordLimit && $scope.getNextPageTimes > 1) || recordCount == 0){
+                if(!responseObj.data || (recordCount < $rootScope.serEnv.phpRecordLimit && $scope.getNextPageTimes > 1) || recordCount == 0){
                     $scope.maxRecordsCount = $scope.sortedDataSource.length;
                     if($scope.getNextPageTimes == 1){
                         $scope.DisplayMessage = "Record Not Found.";
@@ -504,29 +552,26 @@ app.directive('pageview', ['$rootScope',
                 }else{
                     DisplayPageNum(pageNum);
                 }
-                
-                if(data_or_JqXHR.ActionResult.TotalRecordCount)
-                    $scope.maxRecordsCount = data_or_JqXHR.ActionResult.TotalRecordCount;
+
+                if(responseObj.TotalRecordCount)
+                    $scope.maxRecordsCount = responseObj.TotalRecordCount;
             }, function(reason) {
-              console.error("Fail in GetNextPageRecords() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
+              // console.error("Fail in GetNextPageRecords() - "+tagName + ":"+$scope.programId)
             }).finally(function() {
                 // Always execute this on both error and success
                 if(typeof $scope.CustomGetDataResult == "function"){
-                    $scope.CustomGetDataResult(httpResponseObj.data.ActionResult.data, 
-                        httpResponseObj.status, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
+                    $scope.CustomGetDataResult(httpResponseObj.data,
+                        httpResponseObj.HTTP.statusCode,
+                        $scope,
+                        $element,
+                        $attrs,
                         $ctrl);
                 }else{
-                     CustomGetDataResult(httpResponseObj, 
-                        httpResponseObj.status);
+                     CustomGetDataResult(httpResponseObj,
+                        httpResponseObj.HTTP.statusCode);
                 }
-                
-            }).catch(function(e) {
-              Security.HttpPromiseFail(e);
-            });
+
+            })
 
     	}
 
@@ -544,7 +589,16 @@ app.directive('pageview', ['$rootScope',
 		);
 
         $scope.Initialize();
+    }
 
+    function templateUrlFunction(tElement, tAttrs) {
+		if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("0 Pageview - templateUrlFunction()");
+        var directiveName = tElement[0].tagName;
+
+        directiveName = directiveName.toLowerCase();
+        var templateURL = ThemeService.GetTemplateURL(directiveName);
+        return templateURL;
     }
     function templateFunction(tElement, tAttrs) {
         var template = '' +
@@ -605,7 +659,7 @@ app.directive('pageview', ['$rootScope',
 			'';
         return template;
     }
-
+	
 	return {
 		require: ['ngModel'],
 		restrict: 'EA', //'EA', //Default in 1.3+
@@ -624,23 +678,35 @@ app.directive('pageview', ['$rootScope',
 		bindToController: {
 			ngModel: '=',
 			numOfRecordPerPage: '=pageRecordsLimit',
-			//criteria: '=',
-			// editMode: '=?',
-			// programId: '=',
-			// EventListener: '=',
-			// SubmitData: '=',
-			// DisplayCustomData: '=',
-			// DisplaySubmitDataResultMessage: '=',
 		},
-		template: templateFunction,
+        // bisndToController: true,
+        template: templateFunction,
+        //templateUrl: templateUrlFunction,
 		compile: function compile(tElement, tAttrs, transclude) {
 		    return {
 		        pre: function preLink(scope, iElement, iAttrs, controller) {
+					if(Core.GetConfig().debugLog.DirectiveFlow)
+						console.log("3 Pageview - compile preLink()");
 		        },
 		        post: function postLink(scope, iElement, iAttrs, controller) {
-		        	transclude(scope, function(clone, scope) {
-		        		iElement.find('.custom-transclude').append(clone);
-		        	});
+					if(Core.GetConfig().debugLog.DirectiveFlow)
+						console.log("4 Pageview - compile postLink()");
+
+                    // org
+                    transclude(scope, function(clone, scope) {
+                        iElement.find('.custom-transclude').append(clone);
+                    });
+                    
+
+                    //scope.Initialize();
+
+                    // if parent is a editbox, hide pageview
+                    var isParentScopeFromEditbox = false;
+                    if(typeof (scope.$parent.SetEditboxNgModel) == "function")
+                        isParentScopeFromEditbox = true;
+
+                    if(isParentScopeFromEditbox)
+                        angular.element(iElement).hide();
 		        }
 		    }
 		},
@@ -658,15 +724,19 @@ app.directive('pageview', ['$rootScope',
  * @param {String} program-id - assign the program id to implement the behavior of CRUD
  * @param {String} edit-mode - define the mode [create | view | amend | delete |]
  */
-app.directive('entry', ['$rootScope', 
+app.directive('entry', ['$rootScope',
     '$q',
-    '$timeout', 
-    'Core', 
-    'Security', 
-    'LockManager', 
+    '$timeout',
+    '$compile',
+    'Core',
+    'Security',
+    'LockManager',
     'LoadingModal',
-    'HttpRequeset', 
-    'MessageService', function($rootScope, $q, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, MessageService) {
+    'HttpRequeset',
+    'MessageService',
+    'ThemeService',
+    'TableManager',
+    'DataAdapter', function($rootScope, $q, $timeout, $compile, Core, Security, LockManager, LoadingModal, HttpRequeset, MessageService, ThemeService, TableManager, DataAdapter) {
     function EntryConstructor($scope, $element, $attrs) {
     	var constructor = this;
     	var $ctrl = $scope.entryCtrl;
@@ -674,7 +744,7 @@ app.directive('entry', ['$rootScope',
 
     	var globalCriteria = $rootScope.globalCriteria;
         var backupNgModelObj = {};
-        
+
         var DirectiveProperties = (function () {
             var editMode;
             var programID;
@@ -705,7 +775,7 @@ app.directive('entry', ['$rootScope',
                             isProgramIdFound = true;
                         }
                     }
-                    
+
                     if(isProgramIdFound){
                         $scope.programId = $attrs.programId;
                     }
@@ -719,7 +789,7 @@ app.directive('entry', ['$rootScope',
         	$scope.tableStructure = {};
             DirectiveProperties.getEditMode();
             DirectiveProperties.getProgramID();
-            
+
             $scope.DisplayMessageList = MessageService.getMsg();
         }
 
@@ -728,12 +798,12 @@ app.directive('entry', ['$rootScope',
         $scope.FindNClearChildEditbox = function(){ FindNClearChildEditbox(); }
 
         function BackupNgModel(){
-            backupNgModelObj = jQuery.extend([], $ctrl.ngModel);
+            backupNgModelObj = jQuery.extend({}, $ctrl.ngModel);
         }
 
         function RestoreNgModel(){
             // 20170108, keithpoon, must use option 2, otherwise will break the StatusChange of the watch listener
-            // Option 1 will stick the ngModel with the defaulted value object 
+            // Option 1 will stick the ngModel with the defaulted value object
             // Option 2 will keep the customized value on the page, such is the prefered language setting
 
             // Option 1: clone the default object as ngModel
@@ -742,7 +812,7 @@ app.directive('entry', ['$rootScope',
             // Option 2: append and overwrite the default value on ngModel
              jQuery.extend(true, $ctrl.ngModel, backupNgModelObj);
         }
-        
+
         // 20170108, keithpoon, add: clear editbox after record created
         function FindNClearChildEditbox(){
             /*Get the elements with the attribute ng-model, in your case this could just be elm.children()*/
@@ -760,12 +830,12 @@ app.directive('entry', ['$rootScope',
                 editboxScope.ClearEditboxNgModel();
             });
         }
-        
+
         $scope.ResetForm = function(){
             $scope.RestoreNgModel();
             $scope.FindNClearChildEditbox();
         }
-		
+
 		$scope.SetNgModel = function(dataRecord){
 			var dataJson = {};
 			//dataJson.data = {};
@@ -780,7 +850,7 @@ app.directive('entry', ['$rootScope',
 //        	var items = dataJson.data.Items[1];
 //        	var itemsColumn = dataJson.data.DataColumns;
             var dataRecord = dataJson.ActionResult.data[0];
-            
+
             var tableSchema = dataJson.ActionResult.table_schema;
 
         	for(var rowIndex in tableSchema){
@@ -791,7 +861,7 @@ app.directive('entry', ['$rootScope',
                 var isSystemField = Core.IsSystemField(columnName);
                 if(isSystemField)
                     continue;
-                
+
                 var newColumn = dataRecord[columnName];
                 var dataValue = dataRecord[columnName];
 
@@ -807,10 +877,7 @@ app.directive('entry', ['$rootScope',
         				dataValue = 0.0;
         			}
         		}
-                
-                console.log(typeof dataValue);
-                console.log(dataValue);
-                
+
         		if (colDataType == "date"){
                     if(typeof dataValue == "string"){
                         var dateArray = dataValue.split("-");
@@ -833,88 +900,31 @@ app.directive('entry', ['$rootScope',
                 $ctrl.ngModel[columnName] = newColumn;
         	}
 
-//            if(items == null || typeof(items) == "undefined"){
-//                console.log("Responsed {data:items{}} is null")
-//                return;
-//            }
-//
-//        	for(var colIndex in itemsColumn){
-//        		var columnName = itemsColumn[colIndex];
-//
-//                var isSystemField = Core.IsSystemField(columnName);
-//                if(isSystemField)
-//                    continue;
-//
-//        		var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
-//
-//        		// is column exists in ngModel
-//        		if(typeof($ctrl.ngModel[columnName]) == "undefined"){
-//        			if(colDataType == "string"){
-//        				$ctrl.ngModel[columnName] = "";
-//        			}
-//        			else if (colDataType == "date"){
-//        				$ctrl.ngModel[columnName] = new Date(0, 0, 0);
-//        			}
-//        			else if (colDataType == "double"){
-////        				$ctrl.ngModel[columnName] = 0.0;
-//        			}
-//        		}
-//        		var newColumn = $ctrl.ngModel[columnName];
-//
-//        		if (colDataType == "date"){
-//					console.log(typeof items[colIndex]);
-//					var dateArray = items[colIndex].split("-");
-//					var year = dateArray[0]; var month = dateArray[1]; var day = dateArray[2];
-//					year = parseInt(year);
-//					month = parseInt(month);
-//					day = parseInt(day);
-//    				newColumn = new Date(year, month, day);
-//    			}
-//    			else if (colDataType == "double"){
-//    				newColumn = parseFloat(items[colIndex]);
-//    			}
-//    			else{
-//    				newColumn = items[colIndex];
-//    			}
-//
-//                $ctrl.ngModel[columnName] = newColumn;
-//        	}
-
         }
         function GetTableStructure(){
-            // $scope.LockAllControls();
-        	var url = $rootScope.serverHost;
-        	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
 			var submitData = {
-				"Session": clientID,
 				"Table": programId
 			};
-            submitData.Action = "GetTableStructure";
-            
-            var globalCriteria = $rootScope.globalCriteria;
 
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
-            var request = HttpRequeset.send(requestOption);
-            request.then(function(responseObj) {
-                console.log("ProgramID: "+programId+", Table structure obtained.")
-                var data = responseObj.data;
-                SetTableStructure(data);
+            var tbResult = TableManager.GetTableStructure(submitData);
+            tbResult.then(function(responseObj) {
+                if(Core.GetConfig().debugLog.DirectiveFlow)
+                    console.log("ProgramID: "+programId+", Table structure obtained.")
+                SetTableStructure(responseObj);
             }, function(reason) {
-              console.error("Fail in GetTableStructure() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
+
             }).finally(function() {
                 // Always execute this on both error and success
             });
 
-            return request;
+            return tbResult;
         }
         function SetTableStructure(dataJson){
-        	$scope.tableStructure = dataJson;
-        	var itemsColumn = dataJson.DataColumns;
+            $scope.tableStructure.table_schema = dataJson.table_schema;
+            $scope.tableStructure.DataColumns = dataJson.DataColumns;
+            $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
+        	var itemsColumn = $scope.tableStructure.DataColumns;
 
             if($ctrl.ngModel == null)
                 $ctrl.ngModel = {};
@@ -947,7 +957,7 @@ app.directive('entry', ['$rootScope',
     				colObj = new Date(0, 0, 0);
     			}
     			else if (colDataType == "double"){
-//    				colObj = 0.0;
+    				colObj = 0.0;
     			}
 
     			if(!isScopeColExists){
@@ -980,7 +990,7 @@ app.directive('entry', ['$rootScope',
 
             var tbStructure = $scope.tableStructure;
             var itemsColumn = tbStructure.DataColumns;
-            
+
             if(typeof(itemsColumn) == "undefined"){
                 return recordObj;
             }
@@ -1020,12 +1030,10 @@ app.directive('entry', ['$rootScope',
                 }
             }
 
-            // console.dir(upperRecordObj)
-
-            if(!isKeyValid){
-                console.log("Avoid to FindData(), upperRecordObj was incomplete.");
-                return;
-            }
+            // if(!isKeyValid){
+            //     console.log("Avoid to FindData(), upperRecordObj was incomplete.");
+            //     return;
+            // }
 
             if(!isRemoveNonKeyField){
                 for(var colName in recordObj){
@@ -1062,13 +1070,13 @@ app.directive('entry', ['$rootScope',
             getTableStructurePromiseResult.then(function(){
                 // the controls inside the directive was locked in the post render
                 if($scope.editMode == globalCriteria.editMode.Create){
-                    TryToCallSetDefaultValue();   
+                    TryToCallSetDefaultValue();
                 }
                 $scope.BackupNgModel();
                 if($scope.editMode != globalCriteria.editMode.Delete && $scope.editMode != globalCriteria.editMode.View)
                     $scope.UnLockAllControls();
             });
-            
+
         }
 
         /**
@@ -1078,69 +1086,59 @@ app.directive('entry', ['$rootScope',
         $scope.FindData = function(){
             var clientID = Security.GetSessionID();
             var programId = $scope.programId.toLowerCase();
-            
+
             var tempKeyObj = $ctrl.ngModel;
 
             var isAllKeyExists = IsKeyInDataRow(tempKeyObj);
             if(!isAllKeyExists){
                 return;
             }
-                
+
             var isKeyValid = true;
             var keyObj = {};
             keyObj = ConvertKeyFieldToUppercase(tempKeyObj, true);
 
             if(!keyObj)
                 isKeyValid = false;
-            
+
             if(!isKeyValid){
                 console.log("Avoid to FindData(), keyObj was incomplete.");
                 return;
             }
-            
+
         	var findObj = {
         		"Header":{}
         	}
         	findObj.Header[1] = {};
             findObj.Header[1] = keyObj;
 
-        	var isRowEmpty = jQuery.isEmptyObject(findObj.Header[1])
-        	if(isRowEmpty){
-                return $q.reject("Cannot update a empty Record");
-        	}
+        	// var isRowEmpty = jQuery.isEmptyObject(findObj.Header[1])
+        	// if(isRowEmpty){
+         //        return $q.reject("Cannot update a empty Record");
+        	// }
 
 			var submitData = {
-				"Session": clientID,
 				"Table": programId,
-				"Data": findObj,
-				//"NextPage" : "true"
+				"Data": findObj
 			};
-            submitData.Action = "FindData";
 
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
+            var request = DataAdapter.FindData(submitData); 
 
-            var request = HttpRequeset.send(requestOption);
-            request.then(function(responseObj) {
-                var data_or_JqXHR = responseObj.data;
-                // need to handle if record not found.
-				SetNgModel(data_or_JqXHR);
-            }, function(reason) {
-              console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
-            }).finally(function() {
-                // Always execute this on both error and success
-                // if(typeof $scope.CustomGetDataResult == "function"){
-                //     $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
-                // }else{
-                //     CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                // }
-            });
+    //         var request = HttpRequeset.send(requestOption);
+    //         request.then(function(responseObj) {
+    //             var data_or_JqXHR = responseObj.data;
+    //             // need to handle if record not found.
+				// SetNgModel(data_or_JqXHR);
+    //         }, function(reason) {
+    //           console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
+    //           Security.HttpPromiseFail(reason);
+    //         }).finally(function() {
+    //         });
             return request;
         }
 
+
+        // 20180201, keithpoon, this is obsolete, to be removed
         /**
          * Get the data in the result set as JSON format
          * @param {Object} keyObj - provide keyObj will read next to that key
@@ -1195,15 +1193,15 @@ app.directive('entry', ['$rootScope',
             var globalCriteria = $rootScope.globalCriteria;
 
         	$scope.LockAllControls();
-            
+
             if(!ValidateSubmitData()){
                 return;
             }
-            
+
             $scope.ShowLoadModal();
             SubmitData();
         }
-		
+
         function ValidateSubmitData(){
             var isValid = true;
         	var editMode = DirectiveProperties.getEditMode();
@@ -1217,14 +1215,14 @@ app.directive('entry', ['$rootScope',
 			}
             isValid = isValid && isBufferValid;
 			if(!isBufferValid && editMode != globalCriteria.editMode.Delete){
-                if(editMode == globalCriteria.editMode.Create || 
+                if(editMode == globalCriteria.editMode.Create ||
                     editMode == globalCriteria.editMode.Amend)
                 $scope.UnLockAllControls();
             }
 
             var tbStructure = ValidateTableStructure();
             isValid = isValid && tbStructure;
-            
+
             return isValid;
         }
         function SubmitData(){
@@ -1232,20 +1230,22 @@ app.directive('entry', ['$rootScope',
             var submitPromise;
         	var editMode = DirectiveProperties.getEditMode();
             var msg = "";
-            
+
 			if(editMode == globalCriteria.editMode.Create){
 				if(typeof $scope.CreateData == "function"){
-	            	submitPromise = scope.CreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            	submitPromise = $scope.CreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = CreateData($ctrl.ngModel);
 	            }
-                
+
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
-                    var data_or_JqXHR = responseObj.data;
-                    msg = data_or_JqXHR.Message;
-
-                    $scope.ResetForm();
+                    msg = responseObj.message;
+                    if(responseObj.status){
+                        //
+                        console.dir("CreateData response: "+responseObj.status+", reset form")
+                        $scope.ResetForm();
+                    }
                 }, function(reason) {
                   console.error(tagName + ":"+$scope.programId + " - Fail in CreateData()")
                   throw reason;
@@ -1253,11 +1253,11 @@ app.directive('entry', ['$rootScope',
 			}
 			else if(editMode == globalCriteria.editMode.Amend){
 				if(typeof $scope.UpdateData == "function"){
-	            	submitPromise = scope.UpdateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            	submitPromise = $scope.UpdateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = UpdateData($ctrl.ngModel);
 	            }
-                
+
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
@@ -1274,7 +1274,7 @@ app.directive('entry', ['$rootScope',
 			}
 			else if(editMode == globalCriteria.editMode.Delete){
 				if(typeof $scope.DeleteData == "function"){
-	            	submitPromise = scope.DeleteData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            	submitPromise = $scope.DeleteData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = DeleteData($ctrl.ngModel);
 	            }
@@ -1290,7 +1290,7 @@ app.directive('entry', ['$rootScope',
                   throw reason;
                 })
 			}
-            
+
             submitPromise.catch(function(e){
                 // handle errors in processing or in error.
                 console.log("Submit data error catch in entry");
@@ -1299,24 +1299,24 @@ app.directive('entry', ['$rootScope',
                 // Always execute unlock on both error and success
                 $scope.UnLockAllControls();
                 $scope.HideLoadModal();
-                    
+                
                 MessageService.addMsg(msg);
                 SubmitDataResult(httpResponseObj, httpResponseObj.status);
                 $scope.HideLoadModal();
-                
+
                 if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(httpResponseObj, 
-                        httpResponseObj.status, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
+                    $scope.CustomSubmitDataResult(httpResponseObj,
+                        httpResponseObj.status,
+                        $scope,
+                        $element,
+                        $attrs,
                         $ctrl);
                 }
             }).catch(function(e){
                 // handle errors in processing or in error.
                 console.warn(e)
             })
-            
+
             return submitPromise;
         }
         $scope.LockAllControls = function(){
@@ -1333,7 +1333,7 @@ app.directive('entry', ['$rootScope',
         		UnLockAllControls();
 			  	}, 2000); // (milliseconds),  1s = 1000ms
         }
-        
+
         $scope.ShowLoadModal = function(){
             LoadingModal.showModal();
         }
@@ -1359,24 +1359,33 @@ app.directive('entry', ['$rootScope',
 	    				if ( Object.prototype.hasOwnProperty ) {
 			    			if(oldValue.hasOwnProperty(colIndex))
 			    			{
-                                if(oldValue[colIndex] === newValue[colIndex]){
-                                    continue;
-                                }
-                                if(oldValue[colIndex] == newValue[colIndex]){
-                                    continue;
-                                }
+                              if(oldValue[colIndex] === newValue[colIndex]){
+                                  continue;
+                              }
+                              if(oldValue[colIndex] == newValue[colIndex]){
+                                  continue;
+                              }
+                              // 20170809, if it is a date object, compare with getTime()
+                              if(typeof oldValue[colIndex] == "object"){
+                                  if(oldValue.hasOwnProperty("getMonth"))
+                                  if(typeof (oldValue[colIndex].getMonth) === 'function'){
+                                      if(oldValue[colIndex].getTime() === newValue[colIndex].getTime()){
+                                          continue;
+                                      }
+                                  }
+                              }
 			    			}
 		    			}
 	    			}
 
-                    // Convert to Uppercase, if the chagned field is a Key and data type is string
-                    // newValue = ConvertKeyFieldToUppercase(newValue, false);
+            // Convert to Uppercase, if the chagned field is a Key and data type is string
+            // newValue = ConvertKeyFieldToUppercase(newValue, false);
 
-					if(typeof $scope.StatusChange == "function"){
-						$scope.StatusChange(colIndex, changedValue, newValue, $scope, $element, $attrs, $ctrl);
-					}else{
-						StatusChange();
-					}
+  					if(typeof $scope.StatusChange == "function"){
+  						$scope.StatusChange(colIndex, changedValue, newValue, $scope, $element, $attrs, $ctrl);
+  					}else{
+  						StatusChange();
+  					}
 		    	}
 		    }
 		  },
@@ -1415,19 +1424,24 @@ app.directive('entry', ['$rootScope',
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
 		function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
 			console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
 		}
 		function SetDefaultValue(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
 			console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
 		}
 		function StatusChange(){
-			console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");	
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");
 		}
 		function ValidateBuffer(){
-			console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateBuffer() function in webapge");	
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateBuffer() function in webapge");
 			return true;
 		}
         function ValidateTableStructure(){
@@ -1506,7 +1520,7 @@ app.directive('entry', ['$rootScope',
             var tbStructure = $scope.tableStructure;
             var itemsColumn = tbStructure.DataColumns;
 
-            var keyColumn = tbStructure.KeyColumns;
+            var keyColumns = tbStructure.KeyColumns;
 
             var strictObj = {};
             for (var colIndex in itemsColumn) {
@@ -1530,13 +1544,18 @@ app.directive('entry', ['$rootScope',
 //                    }
 //                }
                 
+                // if the column is auto increase set it null
+                if(itemsColumn[colIndex].extra == "auto_increment"){
+                    continue;
+                    strictObj[colIndex] = null;
+                }
+
                 strictObj[colIndex] = colValue;
             }
             return strictObj;
         }
 
         function CreateData(recordObj){
-        	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
 
         	var tbStructure = $scope.tableStructure;
@@ -1560,18 +1579,10 @@ app.directive('entry', ['$rootScope',
                 createObj.Header[1] = recordObj;
 
 			var submitData = {
-				"Session": clientID,
 				"Table": programId,
 				"Data": createObj,
 			};
-            submitData.Action = "CreateData";
-
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
-
-            var request = HttpRequeset.send(requestOption);
+            var request = DataAdapter.CreateData(submitData);
             return request;
         }
 
@@ -1586,13 +1597,13 @@ app.directive('entry', ['$rootScope',
             if(!isAllKeyExists){
                 return $q.reject("Please provide the value of mandatory column. Avoid to update data.");
             }
-            
+
         	var updateObj = {
         		"Header":{},
         		"Items":{}
         	}
         	updateObj.Header[1] = {};
-        	//updateObj.Header[1] = recordObj;            
+        	//updateObj.Header[1] = recordObj;
             updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
 
         	var isRowEmpty = jQuery.isEmptyObject(updateObj.Header[1])
@@ -1601,19 +1612,11 @@ app.directive('entry', ['$rootScope',
         	}
 
 			var submitData = {
-				"Session": clientID,
 				"Table": programId,
-				"Data": updateObj,
-				//"NextPage" : "true"
+				"Data": updateObj
 			};
-            submitData.Action = "UpdateData";
 
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
-
-            var request = HttpRequeset.send(requestOption);
+            var request = DataAdapter.UpdateData(submitData);
             return request;
         }
 
@@ -1646,19 +1649,11 @@ app.directive('entry', ['$rootScope',
         	}
 
 			var submitData = {
-				"Session": clientID,
 				"Table": programId,
-				"Data": deleteObj,
-				//"NextPage" : "true"
+				"Data": deleteObj
 			};
-            submitData.Action = "DeleteData";
 
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
-
-            var request = HttpRequeset.send(requestOption);
+            var request = DataAdapter.DeleteData(submitData);
             return request;
         }
 
@@ -1708,7 +1703,7 @@ app.directive('entry', ['$rootScope',
                 else if(attrEditMode == "null"){
                     editMode = globalCriteria.editMode.Null;
                 }
-                else if(attrEditMode.indexOf("amend") >-1 && 
+                else if(attrEditMode.indexOf("amend") >-1 &&
                         attrEditMode.indexOf("delete") >-1 )
                 {
                         editMode = globalCriteria.editMode.AmendAndDelete;
@@ -1735,7 +1730,14 @@ app.directive('entry', ['$rootScope',
           '<div class="custom-transclude"></div>';
         return template;
     }
+    function templateUrlFunction(tElement, tAttrs) {
+        var directiveName = tElement[0].tagName;
 
+        directiveName = directiveName.toLowerCase();
+        var tempateURL = ThemeService.GetTemplateURL(directiveName);
+
+        return tempateURL;
+    }
 	return {
 		require: ['ngModel'],
 		restrict: 'EA', //'EA', //Default in 1.3+
@@ -1760,29 +1762,46 @@ app.directive('entry', ['$rootScope',
 			SubmitData: '=',
 			*/
 		},
+		//templateUrl: templateUrlFunction,
 		template: templateFunction,
 		compile: function compile(tElement, tAttrs, transclude) {
 		    return {
 		        pre: function preLink(scope, iElement, iAttrs, controller) {
 		            //console.log("entry preLink() compile");
+					/*
+					var directiveName = iElement[0].tagName;
+					directiveName = directiveName.toLowerCase();
+					
+					var response = ThemeService.GetTemplateHTML(directiveName);
+
+					response.then(function(responseObj) {
+						var html = responseObj.data;
+
+						iElement.html(html);
+						$compile(iElement.contents())(scope);
+
+						transclude(scope, function(clone, scope) {
+							$compile(clone);
+							iElement.find('.custom-transclude').append(clone);
+						});
+					});
+					*/
 		        },
 		        post: function postLink(scope, iElement, iAttrs, controller) {
 		            //console.log("entry postLink() compile");
 
-                    // "scope" here is the directive's isolate scope 
-                    // iElement.find('.custom-transclude').append(
-                    // );
+
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
-
-                    // lock controls should put post here, 
+					
+                    // lock controls should put post here,
                     var globalCriteria = $rootScope.globalCriteria;
-                    if(scope.editMode == globalCriteria.editMode.None || 
+                    if(scope.editMode == globalCriteria.editMode.None ||
                         scope.editMode == globalCriteria.editMode.Null ||
                         scope.editMode == globalCriteria.editMode.Create ||
                         scope.editMode == globalCriteria.editMode.View ||
-                        scope.editMode == globalCriteria.editMode.Delete 
+                        scope.editMode == globalCriteria.editMode.Delete
                     ){
                         // require table structure, lock all control.
                         // the controls will be unlock after table structre received.
@@ -1796,8 +1815,6 @@ app.directive('entry', ['$rootScope',
                     }
 		        }
 		    }
-		    // or
-		    // return function postLink( ... ) { ... }
 		},
 	};
 }]);
@@ -1809,14 +1826,17 @@ app.directive('entry', ['$rootScope',
     >
  * @param {String} program-id - optional to define, default as parent scope.programId
  */
-app.directive('screen', ['Security', '$rootScope', function(Security, $rootScope) {
+app.directive('screen', ['Core', 'Security', '$rootScope', '$timeout', function(Core, Security, $rootScope, $timeout) {
     function ScreenConstructor($scope, $element, $attrs) {
+		if(Core.GetConfig().debugLog.DirectiveFlow)
+            console.log("1 screen - ScreenConstructor()");
+        
     	function Initialize() {
             $scope.screenURL = "";
     	}
-    	Initialize();
+        
     }
-    function templateURLFunction(tElement, tAttrs) {
+    function templateUrlFunction(tElement, tAttrs) {
     	var templateURL = "";
     	var programId = "";
     	if(typeof(tAttrs.programId) != "undefined"){
@@ -1830,7 +1850,7 @@ app.directive('screen', ['Security', '$rootScope', function(Security, $rootScope
     	return templateURL;
     }
     function templateFunction(tElement, tAttrs){
-        var template = "" + 
+        var template = "" +
             "<div ng-include='screenURL'></div>";
 
         return template;
@@ -1848,11 +1868,14 @@ app.directive('screen', ['Security', '$rootScope', function(Security, $rootScope
 		// bindToController: {
 		// 	ngModel: '=',
 		// },
-		//templateUrl : templateURLFunction,
+//		templateUrl : templateUrlFunction,
         template: templateFunction,
 		compile: function compile(tElement, tAttrs, transclude) {
 		    return {
 		        pre: function preLink(scope, iElement, iAttrs, controller) {
+                    if(Core.GetConfig().debugLog.DirectiveFlow)
+                        console.log("2 screen - ScreenConstructor()");
+                    
                     transclude(scope, function(clone, scope) {
                         var element = angular.element(iElement);
                         var programId = "";
@@ -1875,6 +1898,8 @@ app.directive('screen', ['Security', '$rootScope', function(Security, $rootScope
                     });
 		        },
 		        post: function postLink(scope, iElement, iAttrs, controller) {
+                    if(Core.GetConfig().debugLog.DirectiveFlow)
+                        console.log("3 screen - ScreenConstructor()");
 		        }
 		    }
 		},
@@ -1882,7 +1907,7 @@ app.directive('screen', ['Security', '$rootScope', function(Security, $rootScope
 }]);
 
 /**
- * <editbox> auto generate a invisible <pageview> element, Popup a modal and the pageview when the user click the edit button 
+ * <editbox> auto generate a invisible <pageview> element, Popup a modal and the pageview when the user click the edit button
  * <editbox
     ng-model=""
     program-id=""
@@ -1890,8 +1915,9 @@ app.directive('screen', ['Security', '$rootScope', function(Security, $rootScope
  * @param {Object} ng-model - store the user selected record from the pageview, to display the record details on the UI.
  * @param {String} program-id - the pageview will display the records regarding to this program id
  */
-app.directive('editbox', ['Security', '$rootScope', '$compile', function(Security, $rootScope, $compile) {
+app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeService', 'config', function(Core, Security, $rootScope, $compile, ThemeService, config) {
     function EditboxConstructor($scope, $element, $attrs) {
+        console.log("1 Edotbox - EditboxConstructor()");
         var constructor = this;
         var $ctrl = $scope.editboxCtrl;
 
@@ -1927,7 +1953,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
                 if(typeof($scope.programId) != "undefined")
                     $scope.screenId = $scope.programId;
             }
-            
+
             var isInRange = IsParentInRange();
             if(isInRange){
                 var isRangeProperty = false;
@@ -1942,7 +1968,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
                 else{
                     console.warn("<editbox> Should declare a attribute of range, since it is under <range>");
                 }
-                
+
                 var isRangeValuePropery = false;
                 if(typeof($attrs.rangeValue) != undefined){
                     if($attrs.rangeValue != null){
@@ -1954,10 +1980,10 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
                     // default set start as ALL
 //                    if($attrs.range == "start")
 //                        $attrs.rangeValue = "ALL";
-                    
-                    $attrs.$observe('rangeValue', function(interpolatedValue){                        
+
+                    $attrs.$observe('rangeValue', function(interpolatedValue){
                         $scope.rangeValue = interpolatedValue;
-                        
+
                         if(typeof ($scope.$parent.SetRange) == "function"){
                             $scope.$parent.SetRange($scope.range, interpolatedValue)
                         }
@@ -1968,19 +1994,22 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
                 }
             }
     	}
-        
+
         function IsParentInRange(){
-            
+
             var isParentScopeFromRange = false;
             if(typeof ($scope.$parent.IsRange) == "function"){
                 isParentScopeFromRange = true;
                 isParentScopeFromRange = $scope.$parent.IsRange();
             }
-            
+
             return isParentScopeFromRange;
         }
 
         function TryToCallInitDirective(){
+            $ctrl.programId = $scope.programId;
+            // $ctrl.screenId = $scope.screenId;
+
             if(typeof $scope.InitDirective == "function"){
                 $scope.InitDirective($scope, $element, $attrs, $ctrl);
             }else{
@@ -1989,14 +2018,45 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
         }
 
         $scope.DefaultInitDirective = function(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("$scope.$id:"+$scope.$id+", must implement $scope.EventListener() function in webapge");
         }
     	function PopupModal(){
             var modal = $element.find(".pageview-modal");
-            modal.addClass("fade in");
+            var themeCode = config.uiTheme.toUpperCase();
+            var themeName;
+            switch(themeCode){
+                case "D":
+                    themeName = "default";
+                    break;
+                case "B":
+                    themeName = "bootstrap";
+                    modal.addClass("fade in");
+                    break;
+                case "U":
+                    themeName = "uikit";
+                    modal.addClass("uk-modal uk-open");
+                    break;
+                case "W":
+                    themeName = "w3css";
+                    break;
+                case "M":
+                    themeName = "material_ng";
+                    break;
+                case "J":
+                    themeName = "jqueryui";
+                    break;
+                case "S":
+                    themeName = "semantic";
+                    break;
+                default:
+                    themeName = "default";
+                    break;
+            }
             modal.show();
 
     		modal.click(function( event ) {
@@ -2006,9 +2066,10 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
     	}
 
         $scope.Initialize = function(){
+            console.log("2 Edotbox - Initialize()");
             InitializeEditBox();
         }
-        
+
 
     	$scope.PopupPageview = function(){
             var modalContainer = angular.element($element).find(".pageview-modal");
@@ -2057,7 +2118,7 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
             var pageview = $element.find("pageview");
             pageview.hide();
     	}
-        
+
         // function call from pageview, set editbox ngModel by selected record from pageview
         $scope.SetEditboxNgModel = function(selectedRecord){
             $ctrl.ngModel = selectedRecord;
@@ -2075,24 +2136,34 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
         }
         TryToCallInitDirective();
     }
+    function templateFunctionOLD(tElement, tAttrs, ThemeService) {
+        var directiveName = tElement[0].tagName;
+        directiveName = directiveName.toLowerCase();
+
+        var templateUrl = ThemeService.GetTemplateURL(directiveName);
+        return templateUrl;
+    }
+    function templateUrlFunction(tElement, tAttrs) {
+        console.log("0 Edotbox - templateUrlFunction()");
+        var directiveName = tElement[0].tagName;
+
+        directiveName = directiveName.toLowerCase();
+        var templateURL = ThemeService.GetTemplateURL(directiveName);
+        return templateURL;
+    }
     function templateFunction(tElement, tAttrs) {
-    	var programId = "";
-    	if(typeof(tAttrs.programId) != "undefined"){
-    		if(tAttrs.programId != ""){
-    			programId = tAttrs.programId;
-    		}
-    	}
+        var directiveName = tElement[0].tagName;
 
-    	var template = ''+
-    		'<div class="custom-transclude"></div>';
+        directiveName = directiveName.toLowerCase();
+        var tempate = "<div class='custom-transclude'></div>";
 
-    	return template;
+        return tempate;
     }
 
 	return {
 		require: ['?range', 'ngModel'],
 		restrict: 'EA', //'EA', //Default in 1.3+
-		transclude: true,
+        transclude: true,
 
 		// scope: [false | true | {...}]
 		// false = use parent scope
@@ -2106,11 +2177,16 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 		//If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
 		 bindToController: {
 		 	ngModel: '=',
+			programId: '=',
+			screenId: '=',
 		 },
+       //templateUrl: templateUrlFunction,
 		template: templateFunction,
 		compile: function compile(tElement, tAttrs, transclude) {
 		    return {
 		        pre: function preLink(scope, iElement, iAttrs, controller) {
+                    console.log("3 Edotbox - compile preLink()");
+
                     transclude(scope, function(clone, scope) {
                         var programId = scope.programId;
                         var screenId = scope.screenId;
@@ -2126,19 +2202,12 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 
                         iElement.find('.custom-transclude').append(clone);
                         iElement.find('.custom-transclude').append(pageviewElement);                        
+
                     });
-                    scope.ClosePageView();
 		        },
 		        post: function postLink(scope, iElement, iAttrs, controller) {
-                    // hiding the <pageview> element
-					angular.element(iElement).find("pageview").hide();
-                    
-//                    iAttrs.$observe('rangeValue', function(interpolatedValue){
-//                        
-//                        if(typeof (scope.$parent.SetRange) == "function"){
-//                            scope.$parent.SetRange(iAttrs.range, iAttrs.rangeValue)
-//                        }
-//                    })
+                    console.log("4 Edotbox - compile postLink()");
+                    scope.ClosePageView();
 		        }
 		    }
 		},
@@ -2147,12 +2216,12 @@ app.directive('editbox', ['Security', '$rootScope', '$compile', function(Securit
 
 app.directive('export', [
     '$rootScope',
-    '$timeout', 
-    'Core', 
-    'Security', 
-    'LockManager', 
+    '$timeout',
+    'Core',
+    'Security',
+    'LockManager',
     'LoadingModal',
-    'HttpRequeset', 
+    'HttpRequeset',
     'MessageService', function($rootScope, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, MessageService) {
 
     function ExportConstructor($scope, $element, $attrs) {
@@ -2162,7 +2231,7 @@ app.directive('export', [
         var tagName = $element[0].tagName.toLowerCase();
 
         var globalCriteria = $rootScope.globalCriteria;
-        
+
         $scope.DisplayMessageList = MessageService.messgeList;
 
         $ctrl.ExportFileTypeAs = {
@@ -2182,6 +2251,7 @@ app.directive('export', [
             }
         }
         $scope.DefaultInitDirective = function(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function InitializeExportDirective() {
@@ -2209,14 +2279,14 @@ app.directive('export', [
 
             var tbStructure = $scope.tableStructure;
             var itemsColumn = tbStructure.DataColumns;
-            
+
             var exportFileTypeAs = $ctrl.ExportFileTypeAs.selectedOption.value;
 
             var exportObj = {
                 "Header":{},
                 "Items":{}
             }
-            
+
             var submitData = {
                 "Session": clientID,
                 "Table": programId,
@@ -2250,12 +2320,12 @@ app.directive('export', [
 
                 // SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
                 // if(typeof $scope.CustomSubmitDataResult == "function"){
-                //     $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                //         textStatus, 
-                //         jqXHR_or_errorThrown, 
-                //         $scope, 
-                //         $element, 
-                //         $attrs, 
+                //     $scope.CustomSubmitDataResult(data_or_JqXHR,
+                //         textStatus,
+                //         jqXHR_or_errorThrown,
+                //         $scope,
+                //         $element,
+                //         $attrs,
                 //         $ctrl);
                 // }
             });
@@ -2305,7 +2375,7 @@ app.directive('export', [
 
             $scope.LockAllControls();
             $scope.ShowLoadModal();
-            
+
             if(typeof $scope.ExportData == "function"){
                 $scope.ExportData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
             }else{
@@ -2326,7 +2396,7 @@ app.directive('export', [
                 UnLockAllControls();
                 }, 2000); // (milliseconds),  1s = 1000ms
         }
-        
+
         $scope.ShowLoadModal = function(){
             LoadingModal.showModal();
         }
@@ -2348,16 +2418,20 @@ app.directive('export', [
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
         }
         function SetDefaultValue(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
         }
         function StatusChange(){
-            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");
         }
 
         function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
@@ -2400,7 +2474,7 @@ app.directive('export', [
           }
           return buf;
         }
-        $scope.Initialize();
+//        $scope.Initialize();
     }
 
     function templateFunction(tElement, tAttrs) {
@@ -2438,12 +2512,13 @@ app.directive('export', [
                 post: function postLink(scope, iElement, iAttrs, controller) {
                     //console.log("entry postLink() compile");
 
-                    // "scope" here is the directive's isolate scope 
+                    // "scope" here is the directive's isolate scope
                     // iElement.find('.custom-transclude').append(
                     // );
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
+                    scope.Initialize();
                 }
             }
         },
@@ -2452,12 +2527,12 @@ app.directive('export', [
 
 app.directive('import', [
     '$rootScope',
-    '$timeout', 
-    'Core', 
-    'Security', 
-    'LockManager', 
+    '$timeout',
+    'Core',
+    'Security',
+    'LockManager',
     'LoadingModal',
-    'HttpRequeset', 
+    'HttpRequeset',
     'MessageService', function($rootScope, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, MessageService) {
     function ImportConstructor($scope, $element, $attrs) {
         var constructor = this;
@@ -2465,7 +2540,7 @@ app.directive('import', [
         var tagName = $element[0].tagName.toLowerCase();
 
         var globalCriteria = $rootScope.globalCriteria;
-        
+
         $scope.DisplayMessageList = MessageService.getMsg();
 
         function TryToCallInitDirective(){
@@ -2476,6 +2551,7 @@ app.directive('import', [
             }
         }
         $scope.DefaultInitDirective = function(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function InitializeImportDirective() {
@@ -2507,12 +2583,12 @@ app.directive('import', [
             var url = $rootScope.serverHost;
             var clientID = Security.GetSessionID();
             var programId = $scope.programId.toLowerCase();
-            
+
             var importExportObj = {
                 "Header":{},
                 "Items":{}
             }
-            
+
             // console.dir(uploadFileInfo);
             // check File Object
             if(uploadFileInfo == null || uploadFileInfo.length <1){
@@ -2547,7 +2623,7 @@ app.directive('import', [
                 var data_or_JqXHR = responseObj.data;
 
                 MessageService.setMsg(data_or_JqXHR.ActionResult.processed_message);
-                
+
             }, function(reason) {
               console.error("Fail in ImportData() - "+tagName + ":"+$scope.programId)
               Security.HttpPromiseFail(reason);
@@ -2558,12 +2634,12 @@ app.directive('import', [
 
                 SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
                 if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(data_or_JqXHR, 
-                        textStatus, 
-                        jqXHR_or_errorThrown, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
+                    $scope.CustomSubmitDataResult(data_or_JqXHR,
+                        textStatus,
+                        jqXHR_or_errorThrown,
+                        $scope,
+                        $element,
+                        $attrs,
                         $ctrl);
                 }
             });
@@ -2590,7 +2666,7 @@ app.directive('import', [
 
             $scope.LockAllControls();
             $scope.ShowLoadModal();
-            
+
             ImportData(uploadFileInfo);
 
         }
@@ -2608,7 +2684,7 @@ app.directive('import', [
                 UnLockAllControls();
                 }, 2000); // (milliseconds),  1s = 1000ms
         }
-        
+
         $scope.ShowLoadModal = function(){
             LoadingModal.showModal();
         }
@@ -2630,21 +2706,25 @@ app.directive('import', [
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
         }
         function SetDefaultValue(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
         }
         function StatusChange(){
-            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");
         }
 
         function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
         }
-        $scope.Initialize();
+//        $scope.Initialize();
     }
 
     function templateFunction(tElement, tAttrs) {
@@ -2682,12 +2762,13 @@ app.directive('import', [
                 post: function postLink(scope, iElement, iAttrs, controller) {
                     //console.log("entry postLink() compile");
 
-                    // "scope" here is the directive's isolate scope 
+                    // "scope" here is the directive's isolate scope
                     // iElement.find('.custom-transclude').append(
                     // );
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
+                    scope.Initialize();
                 }
             }
         },
@@ -2696,10 +2777,10 @@ app.directive('import', [
 
 app.directive('upload', [
     '$rootScope',
-    '$timeout', 
-    'Core', 
-    'Security', 
-    'LockManager', 
+    '$timeout',
+    'Core',
+    'Security',
+    'LockManager',
     'Upload',
     'MessageService', function($rootScope, $timeout, Core, Security, LockManager, Upload, MessageService) {
     function UploadConstructor($scope, $element, $attrs) {
@@ -2707,7 +2788,7 @@ app.directive('upload', [
         var $ctrl = $scope.uploadCtrl;
         var tagName = $element[0].tagName.toLowerCase();
         $scope.DisplayMessageList = MessageService.messageList;
-        
+
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
                 $scope.InitDirective($scope, $element, $attrs, $ctrl);
@@ -2716,6 +2797,7 @@ app.directive('upload', [
             }
         }
         $scope.DefaultInitDirective = function(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function InitializeUpload() {
@@ -2835,19 +2917,22 @@ app.directive('upload', [
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
         }
         // function SetDefaultValue(){
         //     console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
         // }
         function StatusChange(){
-            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");   
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+            console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");
         }
 
-        $scope.Initialize();
+//        $scope.Initialize();
     }
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
@@ -2884,31 +2969,35 @@ app.directive('upload', [
                 post: function postLink(scope, iElement, iAttrs, controller) {
                     //console.log("entry postLink() compile");
 
-                    // "scope" here is the directive's isolate scope 
+                    // "scope" here is the directive's isolate scope
                     // iElement.find('.custom-transclude').append(
                     // );
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
+                    scope.Initialize();
                 }
             }
         },
     };
 }]);
 
-app.directive('message', ['$rootScope', 
+app.directive('message', ['$rootScope',
     '$timeout',
-    'Security', 
-    'MessageService', function($rootScope, $timeout, Security, MessageService) {
+    'Security',
+    'MessageService',
+    'ThemeService',
+    'Core', function($rootScope, $timeout, Security, MessageService, ThemeService, Core) {
     function MessageConstructor($scope, $element, $attrs) {
+//        console.log("Message - MessageConstructor()");
         var constructor = this;
         var $ctrl = $scope.msgCtrl;
         var tagName = $element[0].tagName.toLowerCase();
-        
+
         $scope.autoClose = false;
         var DirectiveProperties = (function () {
             var autoClose;
-            
+
             function findAutoClose(){
                 var object = $attrs.autoClose;
                 if(typeof(object) != "undefined")
@@ -2927,7 +3016,7 @@ app.directive('message', ['$rootScope',
                 }
             };
         })();
-        
+
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
                 $scope.InitDirective($scope, $element, $attrs, $ctrl);
@@ -2936,16 +3025,21 @@ app.directive('message', ['$rootScope',
             }
         }
         $scope.DefaultInitDirective = function(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function InitializeMessage() {
             DirectiveProperties.getAutoClose();
+
+            $ctrl.ngModel = [];
             
-            if(!$ctrl.ngModel){
-                $ctrl.ngModel = [];
-            }
-            MessageService.setMsg($ctrl.ngModel);
+//            MessageService.setMsg($ctrl.ngModel);
             $ctrl.ngModel = MessageService.getMsg();
+            $scope.ngModel = $ctrl.ngModel;
+        }
+        $scope.Test = function(){
+            console.dir($ctrl)
+            console.dir($ctrl.ngModel)
         }
         $scope.Initialize = function(){
             $scope.InitScope();
@@ -2961,22 +3055,24 @@ app.directive('message', ['$rootScope',
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
         }
-        $scope.Initialize();
-        
+//        $scope.Initialize();
+
         $scope.$watchCollection(
           // This function returns the value being watched. It is called for each turn of the $digest loop
           function() { return $ctrl.ngModel },
 //          function() { return MessageService.messageList },
-            
+
           // This is the change listener, called when the value returned from the above function changes
           function(newValue, oldValue) {
-//              console.dir(newValue)
-//              console.dir(oldValue)
+             if(typeof(newValue) == "undefined" && typeof(oldValue) == "undefined")
+                return;
 
               var newValueLength = newValue.length;
               var oldValueLength = oldValue.length;
@@ -2993,11 +3089,20 @@ app.directive('message', ['$rootScope',
         );
     }
     function templateFunction(tElement, tAttrs) {
+        console.log("Message - templateFunction()");
         var globalCriteria = $rootScope.globalCriteria;
 
         var template = '' +
           '<div class="custom-transclude"></div>';
+        template = '<div class="" ng-if="msgCtrl.ngModel.length > 0"><div ng-repeat="dspMsg in msgCtrl.ngModel track by $index" ng-bind="dspMsg"></div></div>';
         return template;
+    }
+    function templateUrlFunction(tElement, tAttrs) {
+        var directiveName = tElement[0].tagName;
+
+        directiveName = directiveName.toLowerCase();
+        var templateURL = ThemeService.GetTemplateURL(directiveName);
+        return templateURL;
     }
 
     return {
@@ -3013,36 +3118,39 @@ app.directive('message', ['$rootScope',
         bindToController: {
             ngModel: '=',
         },
-        template: templateFunction,
+//        template: templateFunction,
+        templateUrl: templateUrlFunction,
         compile: function compile(tElement, tAttrs, transclude) {
             return {
                 pre: function preLink(scope, iElement, iAttrs, controller) {
-                    //console.log("entry preLink() compile");
+//                    console.log("Message - compile preLink()");
                 },
                 post: function postLink(scope, iElement, iAttrs, controller) {
-                    //console.log("entry postLink() compile");
-                    
+//                    console.log("Message - compile postLink()");
+
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
+
+                    scope.Initialize();
                 }
             }
         },
     };
 }]);
 
-app.directive('range', ['$rootScope', 
+app.directive('range', ['$rootScope',
     '$timeout',
-    'Security', 
+    'Security',
     'MessageService', function($rootScope, $timeout, Security, MessageService) {
     function RangeConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.rangeCtrl;
         var tagName = $element[0].tagName.toLowerCase();
-        
+
         var DirectiveProperties = (function () {
             var multi;
-            
+
             function findMultiable(){
                 var object = $attrs.multi;
                 if(typeof(object) != "undefined")
@@ -3061,7 +3169,7 @@ app.directive('range', ['$rootScope',
                 }
             };
         })();
-        
+
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
                 $scope.InitDirective($scope, $element, $attrs, $ctrl);
@@ -3070,23 +3178,24 @@ app.directive('range', ['$rootScope',
             }
         }
         $scope.DefaultInitDirective = function(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
-        
+
         $scope.IsRange = function()
         {
             return true;
         }
-        
+
         $scope.GetInitRange = function(){
             var range = {start: "ALL", end: ""};
-            
+
             return range;
         }
-        
+
         function InitializeRange() {
             DirectiveProperties.getMultiable();
-            
+
             $ctrl.ngModel = $scope.GetInitRange();
             $ctrl.ngModel.isAll = true;
         }
@@ -3104,23 +3213,25 @@ app.directive('range', ['$rootScope',
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
         function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
         }
-        
+
         // chagneRagne = [start | end]
         function RangeStringChange(changeRange, ctrlModel){
             var isLocaleCompareSupport = localeCompareSupportsLocales();
-            
+
             var rangeObject = $scope.GetRange();
             var rangeObject = ctrlModel;
-            
+
             var strStart = rangeObject.start;
             var strEnd = rangeObject.end;
             var stringDifference = 0;
-            
+
             if(rangeObject.start == "ALL"){
                 $ctrl.ngModel.isAll = true;
                 rangeObject.end = "";
@@ -3128,7 +3239,7 @@ app.directive('range', ['$rootScope',
             }else{
                 $ctrl.ngModel.isAll = false;
             }
-            
+
             // string comparison, find the strStart position of strEnd
             if(isLocaleCompareSupport){
                  stringDifference = strStart.localeCompare(strEnd);
@@ -3140,9 +3251,9 @@ app.directive('range', ['$rootScope',
                 if(strStart == strEnd)
                     stringDifference = 0;
             }
-            
+
             if(changeRange == "start"){
-                
+
                 if(stringDifference > 0)
                 {
                     strEnd = strStart
@@ -3162,18 +3273,18 @@ app.directive('range', ['$rootScope',
                         strStart = strEnd
                 }
             }
-            
+
 //            if(strStart != "ALL"){
 //                $ctrl.ngModel.isAll = false;
 //            }
-                        
+
             rangeObject.start = strStart;
             rangeObject.end = strEnd;
-            
+
             ctrlModel.start = strStart;
             ctrlModel.end = strEnd;
         }
-        
+
         function localeCompareSupportsLocales() {
           try {
             'foo'.localeCompare('bar', 'i');
@@ -3182,29 +3293,28 @@ app.directive('range', ['$rootScope',
           }
           return false;
         }
-        $scope.Initialize();
-        
+
         $scope.SetRange = function(rangeType, value){
-            
+
             if(rangeType == "start"){
                 $ctrl.ngModel.start = value;
             }else if(rangeType == "end"){
                 $ctrl.ngModel.end = value;
             }
-            
+
 //            if($ctrl.ngModel.start == null || $ctrl.ngModel.start == null)
 //                $ctrl.ngModel.start = "ALL";
-            
+
             RangeStringChange(rangeType, $ctrl.ngModel)
         }
-        
+
         $scope.GetRange = function(){
             var rangeList = [];
             var range = rangeList[0] = {start: "", end: ""};
-            
+
             range.start = $ctrl.ngModel.start;
             range.end = $ctrl.ngModel.end;
-            
+
             return range;
         }
         $scope.IsLockEndControl = function(){
@@ -3215,25 +3325,25 @@ app.directive('range', ['$rootScope',
             }
             return isLock;
         }
-        
+
         $scope.CheckAllRange = function(test){
             console.dir("CheckAllRange() function")
 //            if(!$ctrl.ngModel.isAll){
 //                $ctrl.ngModel.start = "";
 //            }
         }
-        
+
 //        $scope.$watchCollection(
 //
 //          // This function returns the value being watched. It is called for each turn of the $digest loop
 //          function() { return $ctrl.ngModel },
-//            
+//
 //          // This is the change listener, called when the value returned from the above function changes
 //          function(newValue, oldValue) {
-//              
+//
 //          }
 //        );
-        
+
 //        $scope.$watch(
 //            function () {return $ctrl.ngModel.isAll},
 //            function(newValue, oldValue){
@@ -3274,10 +3384,12 @@ app.directive('range', ['$rootScope',
                 },
                 post: function postLink(scope, iElement, iAttrs, controller) {
                     //console.log("range postLink() compile");
-                    
+
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
+                    
+                    scope.Initialize();
                 }
             }
         },
@@ -3295,14 +3407,14 @@ app.directive('range', ['$rootScope',
  * @param {Object} ng-model - store the process criteria
  * @param {String} program-id - assign the program id to implement the behavior of CRUD
  */
-app.directive('process', ['$rootScope', 
+app.directive('process', ['$rootScope',
     '$q',
-    '$timeout', 
-    'Core', 
-    'Security', 
-    'LockManager', 
+    '$timeout',
+    'Core',
+    'Security',
+    'LockManager',
     'LoadingModal',
-    'HttpRequeset', 
+    'HttpRequeset',
     'MessageService', function($rootScope, $q, $timeout, Core, Security, LockManager, LoadingModal, HttpRequeset, MessageService) {
     function ProcessConstructor($scope, $element, $attrs) {
     	var constructor = this;
@@ -3311,7 +3423,7 @@ app.directive('process', ['$rootScope',
 
     	var globalCriteria = $rootScope.globalCriteria;
         var backupNgModelObj = {};
-        
+
         var DirectiveProperties = (function () {
             var editMode;
             var programID;
@@ -3342,7 +3454,7 @@ app.directive('process', ['$rootScope',
                             isProgramIdFound = true;
                         }
                     }
-                    
+
                     if(isProgramIdFound){
                         $scope.programId = $attrs.programId;
                     }
@@ -3356,11 +3468,11 @@ app.directive('process', ['$rootScope',
         	$scope.tableStructure = {};
 //            DirectiveProperties.getEditMode();
             DirectiveProperties.getProgramID();
-            
+
             $scope.DisplayMessageList = MessageService.getMsg();
             $ctrl.ngModel = {};
         }
-		
+
         function TryToCallInitDirective(){
             if(typeof $scope.InitDirective == "function"){
                 $scope.InitDirective($scope, $element, $attrs, $ctrl);
@@ -3381,16 +3493,16 @@ app.directive('process', ['$rootScope',
             InitializeProcess();
         }
         $scope.DefaultInitDirective = function(){
-            
+
         }
-		
+
         $scope.SubmitData = function(){
         	console.log("<"+$element[0].tagName+"> submitting data")
             var globalCriteria = $rootScope.globalCriteria;
             MessageService.clear();
 
         	$scope.LockAllControls();
-            
+
             if(!ValidateSubmitData()){
                 return;
             }
@@ -3410,33 +3522,33 @@ app.directive('process', ['$rootScope',
 			if(!isBufferValid){
                 $scope.UnLockAllControls();
             }
-            
+
             return isValid;
         }
         function SubmitData(){
             var httpResponseObj = {};
             var submitPromise;
             var msg = "";
-            
+
 				if(typeof $scope.ProcessData == "function"){
 	            	submitPromise = scope.ProcessData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = ProcessData($ctrl.ngModel);
 	            }
-                
+
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
                     msg = data_or_JqXHR.Message;
 
 					MessageService.setMsg(data_or_JqXHR.ActionResult.processed_message);
-                    
+
                 }, function(reason) {
                   console.error(tagName + ":"+$scope.programId + " - Fail in ProcessData()")
                   throw reason;
                 });
-				
-            
+
+
             submitPromise.catch(function(e){
                 // handle errors in processing or in error.
                 console.log("Submit data error catch in process");
@@ -3449,27 +3561,27 @@ app.directive('process', ['$rootScope',
                 if(msg.length > 0)
                     MessageService.addMsg(msg);
                 SubmitDataResult(httpResponseObj, httpResponseObj.status);
-                
+
                 if(typeof $scope.CustomSubmitDataResult == "function"){
-                    $scope.CustomSubmitDataResult(httpResponseObj, 
-                        httpResponseObj.status, 
-                        $scope, 
-                        $element, 
-                        $attrs, 
+                    $scope.CustomSubmitDataResult(httpResponseObj,
+                        httpResponseObj.status,
+                        $scope,
+                        $element,
+                        $attrs,
                         $ctrl);
                 }
             }).catch(function(e){
                 // handle errors in processing or in error.
                 console.warn(e)
             })
-            
+
             return submitPromise;
         }
-        
+
         function ProcessData(recordObj){
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
-            
+
 			var submitData = {
 				"Session": clientID,
 				"Table": programId,
@@ -3485,7 +3597,7 @@ app.directive('process', ['$rootScope',
             var request = HttpRequeset.send(requestOption);
             return request;
         }
-        
+
         $scope.LockAllControls = function(){
             LockAllControls();
         }
@@ -3500,7 +3612,7 @@ app.directive('process', ['$rootScope',
         		UnLockAllControls();
 			  	}, 2000); // (milliseconds),  1s = 1000ms
         }
-        
+
         $scope.ShowLoadModal = function(){
             LoadingModal.showModal();
         }
@@ -3572,22 +3684,27 @@ app.directive('process', ['$rootScope',
         }
 
         function InitDirective(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
 		function EventListener(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
 			console.log("scope.$id:"+$scope.$id+", may implement $scope.EventListener() function in webapge");
 		}
 		function SetDefaultValue(){
+            if(Core.GetConfig().debugLog.DirectiveFlow)
 			console.log("scope.$id:"+$scope.$id+", may implement $scope.SetDefaultValue() function in webapge");
 		}
 		function StatusChange(){
-			console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");	
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("scope.$id:"+$scope.$id+", may implement $scope.StatusChange() function in webapge");
 		}
 		function ValidateBuffer(){
-			console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateBuffer() function in webapge");	
+            if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("scope.$id:"+$scope.$id+", may implement $scope.ValidateBuffer() function in webapge");
 			return true;
 		}
-        
+
         function CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
             var progID = $scope.programId;
             //console.log("scope.$id:"+$scope.$id+", programId:"+progID+", must implement $scope.CustomGetDataResult() function in webapge");
@@ -3595,8 +3712,8 @@ app.directive('process', ['$rootScope',
         function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
 
         }
-        
-        $scope.Initialize();
+
+//        $scope.Initialize();
     }
 
     function templateFunction(tElement, tAttrs) {
@@ -3642,16 +3759,98 @@ app.directive('process', ['$rootScope',
 		        post: function postLink(scope, iElement, iAttrs, controller) {
 		            //console.log("process postLink() compile");
 
-                    // "scope" here is the directive's isolate scope 
+                    // "scope" here is the directive's isolate scope
                     // iElement.find('.custom-transclude').append(
                     // );
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
+                    scope.Initialize();
 		        }
 		    }
-		    // or
-		    // return function postLink( ... ) { ... }
 		},
 	};
+}]);
+
+
+app.directive('editboxModal', ['Security', '$rootScope', 'ThemeService', function(Security, $rootScope, ThemeService) {
+    function EditboxModalConstructor($scope, $element, $attrs) {
+        function Initialize() {
+            $scope.screenURL = "";
+        }
+        Initialize();
+    }
+
+    function templateUrlFunction(tElement, tAttrs) {
+        var directiveName = tElement[0].tagName;
+
+        directiveName = directiveName.toLowerCase();
+        directiveName = "editbox-modal"
+        var templateURL = ThemeService.GetTemplateURL(directiveName);
+
+        return templateURL;
+    }
+
+    return {
+        // require: ['^editbox'],
+        restrict: 'E',
+        // transclude: true,
+        scope: true,
+
+        controller: EditboxModalConstructor,
+        controllerAs: 'editboxModalCtrl',
+
+        // bindToController: true,
+        templateUrl : templateUrlFunction,
+        // template: templateFunction,
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function preLink(scope, iElement, iAttrs, controller) {
+                },
+                post: function postLink(scope, iElement, iAttrs, controller) {
+                }
+            }
+        },
+    };
+}]);
+
+app.directive('editboxPageview', ['Security', '$compile', '$rootScope', 'ThemeService', function(Security, $compile, $rootScope, ThemeService) {
+    function EditboxPageviewConstructor($scope, $element, $attrs) {
+        function Initialize() {
+            $scope.screenURL = "";
+        }
+        Initialize();
+    }
+
+    function templateUrlFunction(tElement, tAttrs) {
+        var directiveName = tElement[0].tagName;
+
+        directiveName = directiveName.toLowerCase();
+        directiveName = "editbox-pageview"
+        var templateURL = ThemeService.GetTemplateURL(directiveName);
+        // console.log(templateURL)
+        return templateURL;
+    }
+
+    return {
+        // require: ['^editbox'],
+        restrict: 'E',
+        // transclude: true,
+        scope: true,
+
+        controller: EditboxPageviewConstructor,
+        controllerAs: 'editboxViewCtrl',
+
+        // bindToController: true,
+        templateUrl : templateUrlFunction,
+        // template: templateFunction,
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function preLink(scope, iElement, iAttrs, controller) {
+                },
+                post: function postLink(scope, iElement, iAttrs, controller) {
+                }
+            }
+        },
+    };
 }]);

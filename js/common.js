@@ -1,5 +1,6 @@
 // JavaScript Document
 "use strict";
+
 // jQuery conflict with native prototype.
 /*
 String.prototype.IsNullOrEmpty = function(){

@@ -3,17 +3,32 @@
 
 //angular.element() === jQuery() === $();
 // using the angular ui of Bootstrap
-var app = angular.module('myApp', ['ngCookies', 'ui.bootstrap', 'ngFileUpload']);
+var app = angular.module('myApp', ['ngCookies', 'ngFileUpload']);
+
 
 app.constant('config', {
 	serverHost: serverHost,
 	webRoot: webRoot,
 	requireLoginPage: requireLoginPage,
 	afterLoginPage: afterLoginPage,
+	dataServer: dataServer,
+	
+	uiTheme: theme,
+	backend: backend,
 	
 	editMode: directiveEditMode,
 	reservedPath: reservedPath,
 	CookiesEffectivePath: CookiesEffectivePath,
+    
+    debugLog: {
+        AllLogging: false,
+        PageRecordsLimitDefault: true,
+        LockControl: false,
+        UnlockControl: false,
+        TableStructureObtained: true,
+		DirectiveFlow: false,
+        ShowCallStack: false
+    }
 });
 
 app.config(['config', '$httpProvider', function(config, $httpProvider) {
@@ -29,9 +44,10 @@ app.config(['config', '$httpProvider', function(config, $httpProvider) {
     $httpProvider.defaults.useXDomain = true;
 }]);
 
-app.service('Core', ['$rootScope', 'config', function($rootScope, config){
+app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($rootScope, config, SysMessageManager){
 	var core = this;
-	
+	core.SysLog = SysMessageManager;
+	core.SysMsg = SysMessageManager;
 	core.RegistryConfig = function(){
 		$rootScope.globalCriteria = {};
 		
@@ -44,15 +60,21 @@ app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 		$rootScope.requireLoginPage = $rootScope.webRoot+config.requireLoginPage;
 		$rootScope.afterLoginPage = $rootScope.webRoot+config.afterLoginPage;
 		
+		$rootScope.uiTheme = config.uiTheme.toUpperCase();
+		
 		$rootScope.controller = $rootScope.webRoot+config.reservedPath.controller;
 		$rootScope.templateFolder = $rootScope.webRoot+config.reservedPath.templateFolder;
 		$rootScope.screenTemplate = $rootScope.templateFolder+config.reservedPath.screenTemplate;
+		$rootScope.uiThemeFolder = $rootScope.templateFolder+config.reservedPath.uiThemeTemplate;
 		
 		$rootScope.CookiesEffectivePath = config.CookiesEffectivePath;
 
 		// Server Environment
 		$rootScope.serEnv = {};
 		$rootScope.serEnv.phpRecordLimit = 10; // assume PHP select reocrd limit as 10, must match with server side
+	}
+	core.GetConfig = function(){
+		return config;
 	}
 	
 	core.ConvertMySQLDataType = function(mySqlDataType){
@@ -108,7 +130,68 @@ app.service('Core', ['$rootScope', 'config', function($rootScope, config){
 	return core;
 }]);
 
-app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cookies){
+
+app.service('ThemeService', ['$rootScope', 'config', 'TemplateService', function($rootScope, config, TemplateService){
+	var theme = this;
+	
+	theme.GetThemeName = function(){
+		var themeCode = config.uiTheme.toUpperCase();
+		return GetThemeName(themeCode);
+	}
+	
+	theme.GetTemplateHTML = function(directiveName){
+		var templatePath = theme.GetTemplateURL(directiveName);
+		
+		var request = TemplateService.GetTemplate(templatePath);
+		// request.then(function(responseObj) {
+  //           var data = responseObj.data;
+		// });
+		
+		return request;
+	}
+	
+	theme.GetTemplateURL = function(directiveName){
+		var themeCode = config.uiTheme.toUpperCase();
+		var themeName = theme.GetThemeName(themeCode);
+		var templateName = directiveName+"-"+themeName+".html";
+		var templatePath = $rootScope.uiThemeFolder + themeName + "/" + templateName;
+		
+		return templatePath;
+	}
+	
+	function GetThemeName(themeCode){
+		var themeName = "";
+		switch(themeCode){
+			case "D":
+				themeName = "default";
+				break;
+			case "B":
+				themeName = "bootstrap";
+				break;
+			case "U":
+				themeName = "uikit";
+				break;
+			case "W":
+				themeName = "w3css";
+				break;
+			case "M":
+				themeName = "material_ng";
+				break;
+			case "J":
+				themeName = "jqueryui";
+				break;
+			case "S":
+				themeName = "semantic";
+				break;
+			default:
+				themeName = "default";
+				break;
+		}
+		return themeName;
+	}
+}]);
+
+app.service('LockManager', ['$rootScope', '$timeout', 'config', function($rootScope, $cookies, config) {
 	var locker = this;
 	locker.lockArea = {};
 	locker.tagName = "";
@@ -122,8 +205,8 @@ app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cook
 		var isLockArea = CheckLockArea(lockArea);
 		if(!isLockArea)
 			return;
-
-		console.log("LockAllControls(): "+tagName);
+		if(config.debugLog.LockControl)
+			console.log("LockAllControls(): "+tagName);
 
 		if(tagName == "entry")
 		{
@@ -153,7 +236,8 @@ app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cook
 		if(!isLockArea)
 			return;
 
-		console.log("UnLockAllControls(): "+tagName);
+		if(config.debugLog.UnlockControl)
+			console.log("UnLockAllControls(): "+tagName);
 
 		if(tagName == "entry")
 		{
@@ -230,7 +314,7 @@ app.service('LockManager', ['$rootScope', '$timeout', function($rootScope, $cook
 	return locker;
 }]);
 
-app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', 'MessageService', function($rootScope, Core, $jqCookies, $cookies, MessageService) {
+app.service('Security', ['$rootScope', 'Core', 'CookiesManager', 'MessageService', function($rootScope, Core, $jqCookies,  MessageService) {
 	var secure = this;
 	var rootScope = $rootScope;
    
@@ -351,6 +435,16 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', '$cookies', 'Me
 
 	secure.HttpPromiseFail = function(reason){
 		console.warn("HttpRequest promise return as fail");
+		console.dir(reason);
+        MessageService.addMsg(reason);
+	}
+	secure.HttpPromiseReject = function(reason){
+		console.warn("HttpRequest promise reject");
+		console.dir(reason);
+        MessageService.addMsg(reason);
+	}
+	secure.HttpPromiseErrorCatch = function(reason){
+		console.warn("HttpRequest promise error catch");
 		console.dir(reason);
         MessageService.addMsg(reason);
 	}
@@ -525,6 +619,262 @@ app.service('CookiesManager', function($rootScope, $cookies) {
 	}
 });
 
+app.service('SysMessageManager', ["$rootScope", "$log", "config", function($rootScope, $log, config) {
+	var message = this;
+	var rootScope = $rootScope;
+    
+    // GetMessageText(msgID, parma1, parma2...)
+    // msgID: message unique ID
+    // parma: parma will be merge in the message
+    // reference: https://stackoverflow.com/questions/18405736/is-there-a-c-sharp-string-format-equivalent-in-javascript
+    message.GetMessageText = function(){
+        var msgID = arguments[0];
+        var msg = message.GetMessage(msgID);
+        var args = arguments;
+        var text = msg.replace(/{(\d+)}/g, function(match, number) {
+          return typeof args[number++] != 'undefined'
+            ? args[number++]
+            : match
+          ;
+        });
+        return text;
+    }
+    
+    message.GetMessage = function(msgID){
+        var messageList = {
+            PageRecordsLimitDefault: "<PAGEVIEW> attribute of page-records-limit default as {0}",
+            PageviewValidateRecord: "scope.$id:{0}, may implement $scope.ValidateRecord() function in webapge",
+            PageviewEventListener: "scope.$id:{0}, may implement $scope.EventListener() function in webapge",
+            CustomPointedToRecordNotFound: "<PAGEVIEW> program ID: {0} may implement CustomPointedToRecord() function in webpage",
+            CustomSelectedToRecordNotFound: "<PAGEVIEW> program ID: {0} may implement CustomSelectedToRecord() function in webpage",
+            BeginningOfThePageCannotGotoPrevious: "<PAGEVIEW> program ID: {0} already at the first page, cannot go previous.",
+            DisplayPageNum: "<PAGEVIEW> program ID: {0} going to display the records of the Page no.({1})",
+        }
+        
+        var msg = "";
+        if(typeof(messageList[msgID]) != "undefined")
+            msg = messageList[msgID];
+        return msg;
+    }
+    message.Print = function(msgID, caller, issueType, logType){
+        var text = message.GetMessageText(msgID);
+        message.WriteLog(text, caller, issueType, logType);
+    }
+   
+	message.WriteLog = function(msg, caller, issueType, logType){
+        if(typeof(logType) == "undefined") logType = "log";
+        if(typeof(caller) == "undefined") caller = "MessageManager";
+        if(typeof(issueType) == "undefined") issueType = "Default";
+
+        logType = logType.toLowerCase();
+        switch(logType){
+            case "log":
+                message.L(msg);
+                break;
+            case "warn":
+                message.W(msg);
+                break;
+            case "info":
+                message.I(msg);
+                break;
+            case "error":
+                message.E(msg);
+                break;
+        }
+		if(config.debugLog.ShowCallStack)
+			console.trace();
+	}
+    message.L = function(msg, caller, issueType, issueCategory){
+        if(typeof(caller) == "undefined") caller = "MessageManager";
+        if(typeof(issueType) == "undefined") issueType = "Default";
+        if(typeof(issueCategory) == "undefined") issueCategory = "None";
+        if(!CheckLoggingAvailable(caller, issueType, issueCategory)) return;
+        $log.log(msg);
+        if(!CheckLoggingTraceCallStack(caller, issueType)) return;
+        console.trace()
+    }
+	message.W = function(msg, caller, issueType, issueCategory){
+        if(typeof(caller) == "undefined") caller = "MessageManager";
+        if(typeof(issueType) == "undefined") issueType = "Default";
+        if(typeof(issueCategory) == "undefined") issueCategory = "None";
+        if(!CheckLoggingAvailable(caller, issueType, issueCategory)) return;
+        $log.warn(msg);
+        if(!CheckLoggingTraceCallStack(caller, issueType)) return;
+        console.trace()
+	}
+	message.I = function(msg, caller, issueType, issueCategory){
+        if(typeof(caller) == "undefined") caller = "MessageManager";
+        if(typeof(issueType) == "undefined") issueType = "Default";
+        if(typeof(issueCategory) == "undefined") issueCategory = "None";
+        if(!CheckLoggingAvailable(caller, issueType, issueCategory)) return;
+        $log.info(msg);
+        if(!CheckLoggingTraceCallStack(caller, issueType)) return;
+        console.trace()
+	}
+	message.E = function(msg, caller, issueType, issueCategory){
+        if(typeof(caller) == "undefined") caller = "MessageManager";
+        if(typeof(issueType) == "undefined") issueType = "Default";
+        if(typeof(issueCategory) == "undefined") issueCategory = "None";
+        if(!CheckLoggingAvailable(caller, issueType, issueCategory)) return;
+        $log.error(msg);
+        if(!CheckLoggingTraceCallStack(caller, issueType)) return;
+        console.trace()
+	}
+	message.D = function(msg, caller, issueType, issueCategory){
+        if(typeof(caller) == "undefined") caller = "MessageManager";
+        if(typeof(issueType) == "undefined") issueType = "Default";
+        if(typeof(issueCategory) == "undefined") issueCategory = "None";
+        if(!CheckLoggingAvailable(caller, issueType, issueCategory)) return;
+        $log.debug(msg);
+        if(!CheckLoggingTraceCallStack(caller, issueType)) return;
+        console.trace()
+	}
+    
+    function CheckLoggingAvailable(caller, issueType){
+        var isValid = true;
+        var debugLogConfig = config.debugLog;
+        
+        if(typeof(debugLogConfig[issueType]) != "undefined")
+            isValid = debugLogConfig[issueType];
+        
+        else if(typeof(debugLogConfig[caller]) != "undefined")
+            isValid = debugLogConfig[caller];
+        
+        return isValid;
+    }
+    function CheckLoggingTraceCallStack(){
+        var isValid = false;
+        var debugLogConfig = config.debugLog;
+        if(typeof(debugLogConfig["ShowCallStack"]) != "undefined")
+            isValid = debugLogConfig["ShowCallStack"];
+        return isValid;
+    }
+}]);
+
+
+app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "HttpRequeset", "DataAdapter", "Core", function($rootScope, $log, config, $q, Security, HttpRequeset, DataAdapter, Core) {
+	var table = this;
+	var rootScope = $rootScope;
+    
+    if(typeof $rootScope.Table == "undefined")
+        $rootScope.Table = {};
+    
+    var tableCollection = $rootScope.Table;
+    
+    table.RequestTableStructure = function(progID){
+        var url = $rootScope.serverHost;
+        var clientID = Security.GetSessionID();
+        var programId = progID
+        var submitData = {
+            "Session": clientID,
+            "Table": programId
+        };
+        submitData.Action = "GetTableStructure";
+
+        var requestOption = {
+            method: 'POST',
+            data: JSON.stringify(submitData)
+        };
+        var request = HttpRequeset.send(requestOption);
+//        request.then(function(responseObj) {
+//            if(Core.GetConfig().debugLog.DirectiveFlow)
+//            console.log("ProgramID: "+programId+", Table structure obtained.")
+//            var structure = responseObj.data.ActionResult.table_schema;
+//            table.SetTableStructure(progID, structure);
+//        }, function(reason) {
+//          console.error("Fail in GetTableStructure() - "+tagName + ":"+$scope.programId)
+//          Security.HttpPromiseFail(reason);
+//                    reject(reason);
+//        }).finally(function() {
+//            // Always execute this on both error and success
+//        });
+
+        return request;
+    }
+    table.SetTableStructure = function(progID, structure){
+        if(typeof $rootScope.Table[progID] == "undefined"){
+            $rootScope.Table[progID] = {name:"", structure:{}, record:{}, lastUpdated:new Date()};
+        }
+        var tbInfo = $rootScope.Table[progID];
+        if(typeof tbInfo.structure == "undefined" || tbInfo.structure == null || tbInfo.structure == {}){
+            $rootScope.Table[progID].structure = {};
+        }
+        $rootScope.Table[progID].structure = structure;
+    }
+    table.GetTableStructure = function(submitData){
+    	var progID = submitData.Table;
+        var isExists = table.IsTableStructeExists(progID);
+        var ngPromise;
+        
+        if(!isExists){
+            
+            ngPromise = $q(function(resolve, reject) {
+                // var tbRequest = table.RequestTableStructure(progID);
+                var tbPromise = DataAdapter.GetTableStructure(submitData);
+                tbPromise.then(function(responseObj) {
+                    if(Core.GetConfig().debugLog.DirectiveFlow)
+                    	console.log("ProgramID: "+programId+", Table structure obtained.")
+                    var structure = responseObj.table_schema;
+                    table.SetTableStructure(progID, structure);
+
+                    resolve(responseObj);
+                }, function(reason) {
+
+                    reject(reason);
+                }).finally(function() {
+                    // Always execute this on both error and success
+                });
+            
+            });
+        }else{
+            console.log("TableStructure already exists, avoid to send GetTableStructure again");
+            ngPromise = $q(function(resolve, reject) {
+                    structure = tableCollection[progID].structure;
+                    resolve(structure);
+            });
+        }
+        
+        return ngPromise;
+    }
+    table.ClearTableStrucute = function(progID){
+        
+    }
+    table.IsTableStructeExists = function(progID){
+        var isExists = false;
+        
+        if(typeof $rootScope.Table[progID] != "undefined"){
+            var tbInfo = $rootScope.Table[progID];
+            if(typeof tbInfo.structure != "undefined" && tbInfo != null && tbInfo.structure != {}){
+                isExists = true;
+            }
+        }
+        
+        return isExists;
+    }
+    
+    table.RequestTableRecords = function(){
+        
+    }
+    table.SetTableRecords = function(){
+        
+    }
+    table.GetTableRecords = function(){
+        
+    }
+    table.ClearTableRecords = function(){
+    }
+    
+    table.ClearCache = function(){
+        table.ClearTableStrucute();
+        table.ClearTableRecords();
+    }
+    table.RefreshCache = function(){
+        table.ClearCache();
+        table.GetTableStructure();
+        table.GetTableRecords();
+    }
+}]);
+
 /*
 // Directive Template
 app.directive('importExport', ['Security', '$rootScope', function(Security, $rootScope, $cookies) {
@@ -658,6 +1008,8 @@ app.directive('importExport', ['Security', '$rootScope', function(Security, $roo
                     // }
                 }
             }
+		    // or
+		    // return function postLink( ... ) { ... }
         },
     };
 }]);
