@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Upload</title>
+<script src="jquery-2.1.1.min.js"></script>
+<!--<script src="angular.min.1.3.0.js"></script>-->
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular.min.js"></script> -->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script>
+
+<!-- shim is needed to support non-HTML5 FormData browsers (IE8-9)-->
+<!-- <script src="ng-file-upload-3.3.4/demo/war/js/angular-file-upload-shim.js"></script> -->
+<script src="ng-file-upload-3.3.4/demo/war/js/angular-file-upload.js"></script> 
+<style>
+.button {
+    -moz-appearance: button;
+    /* Firefox */
+    -webkit-appearance: button;
+    /* Safari and Chrome */
+    padding: 10px;
+    margin: 10px;
+    width: 70px;
+}
+.drop-box {
+    background: #F8F8F8;
+    border: 5px dashed #DDD;
+    width: 200px;
+    height: 65px;
+    text-align: center;
+    padding-top: 25px;
+    margin: 10px;
+}
+.dragover {
+    border: 5px dashed blue;
+}
+</style>
+<script type="text/javascript">
+//inject angular file upload directives and services.
+var app = angular.module('fileUpload', ['angularFileUpload']);
+
+app.controller('MyCtrl', ['$scope', '$upload', function ($scope, $upload) {
+	$scope.progressPercentage = {};
+    $scope.excelJson = {};
+
+    $scope.$watch('files', function () {
+        $scope.upload($scope.files);
+    });
+
+
+    $scope.upload = function (files) {
+        if (files && files.length) {
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                $upload.upload({
+                    url: '../controller/importExcel.php',
+                    fields: {
+                        'username': $scope.username
+                    },
+                    file: file
+                }).progress(function (evt) {
+                    var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                    console.log('progress: ' + progressPercentage + '% ' +
+                                evt.config.file.name);
+                    $scope.progressPercentage[file.name] = progressPercentage;
+                }).success(function (data, status, headers, config) {
+                	var filename = config.file.name;
+                    $scope.excelJson = data;
+                    console.dir(data)
+                    //console.dir(status) //200
+                    // console.dir(headers)
+                    //console.dir(config)
+                    //config.file.name
+                    //config.file.size
+                    //config.file.type
+                    //config.file.method "POST" || "GET"
+                    //config.file.url
+
+                    
+                        /*
+                        file = {};
+                        >File
+                            $$hashKey: "object:3"
+                            lastModified: 1429771732519
+                            lastModifiedDate: Thu Apr 23 2015 14:48:52 GMT+0800 (China Standard Time)
+                            name: "profile_Export_Excel_2015-04-23_144845.xlsx"
+                            size: 8214
+                            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            webkitRelativePath: ""
+                            __proto__: File
+                        */
+                });
+            }
+        }
+    };
+}]);
+
+app.controller('ImageUploader', ['$scope', '$upload', function ($scope, $upload) {
+	$scope.progressPercentage = {};
+    $scope.uploadedResource = {};
+
+    $scope.$watch('files', function () {
+        $scope.upload($scope.files);
+    });
+
+
+    $scope.upload = function (files) {
+        if (files && files.length) {
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var fileName = file.name;
+				$scope.uploadedResource[fileName] = {};
+                $scope.progressPercentage[fileName] = 0;
+                $upload.upload({
+                    url: '../controller/documentUploader.php',
+                    fields: {
+                        'username': $scope.username
+                    },
+                    file: file
+                }).progress(function (evt) {
+                    var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                    console.log('progress: ' + progressPercentage + '% ' +
+                                evt.config.file.name);
+                    //console.log(fileName);
+                    $scope.progressPercentage[fileName] = progressPercentage;
+                    //console.log($scope.progressPercentage[fileName]);
+                }).success(function (data, status, headers, config) {
+                	//var filename = config.file.name;
+                    $scope.uploadedResource[fileName] = data;
+                    $scope.progressPercentage[fileName] = 100;
+                    console.dir(data);
+                });
+            }
+        }
+    };
+}]);
+</script>
+
+</head>
+<body ng-app="fileUpload">
+<div ng-controller="MyCtrl">Username
+    <input type="text" ng-model="username"></br></br>
+    <input type="checkbox" ng-model="multiple">upload multiple file</br></br>
+    watching model:
+    <div class="button" ng-file-select ng-model="files" ng-multiple="multiple" accept=".xls,.xlsx">Select File</div>
+    on file change:
+    <div class="button" ng-file-select ng-file-change="upload($files)" ng-multiple="multiple" accept=".xls,.xlsx">Select File</div>
+    Drop File:
+    <div ng-file-drop ng-file-select ng-model="files" class="drop-box" 
+        drag-over-class="dragover" ng-multiple="true" allow-dir="true"
+        accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Drop pdfs or images here or click to upload</div>
+        <div>.xls, xlsx</div>
+        <div>application/vnd.oasis.opendocument.spreadsheet,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</div>
+    <div ng-no-file-drop>File Drag/Drop is not supported for this browser</div>
+    <ul>
+        <li ng-repeat="f in files" style="font:smaller">{{progressPercentage[f.name]}}% {{f.name}}</li>
+    </ul>
+    <hr>
+	<!-- is means 4 space to be a tab -->
+    <pre ng-bind="excelJson | json:4"></pre>
+</div>
+
+<a href="http://www.sitepoint.com/web-foundations/mime-types-complete-list/">MIME Types – Complete List</a>
+
+<div ng-controller="ImageUploader">Username
+    <input type="text" ng-model="username"></br></br>
+    <input type="checkbox" ng-model="multiple">upload multiple file</br></br>
+    watching model:
+    <div class="button" ng-file-select ng-model="files" ng-multiple="multiple" accept=".png,.jpg,.jpeg,.gif">Select File</div>
+    on file change:
+    <div class="button" ng-file-select ng-file-change="upload($files)" ng-multiple="multiple" accept=".png,.jpg,.jpeg,.gif">Select File</div>
+    Drop File:
+    <div ng-file-drop ng-file-select ng-model="files" class="drop-box" 
+        drag-over-class="dragover" ng-multiple="true" allow-dir="true"
+        accept="image/gif,image/jpeg,image/png">Drop pdfs or images here or click to upload</div>
+        <div>.png, .jpg, .jpeg, .gif</div>
+    <div ng-no-file-drop>File Drag/Drop is not supported for this browser</div>
+    <ul>
+        <li ng-repeat="f in files" style="font:smaller">{{progressPercentage[f.name]}}% {{f.name}}</li>
+    </ul>
+    <pre ng-bind="progressPercentage | json:4"></pre>
+    <hr>
+	<!-- is means 4 space to be a tab -->
+    <pre ng-bind="uploadedResource | json:4"></pre>
+</div>
+</body>
+</html>
