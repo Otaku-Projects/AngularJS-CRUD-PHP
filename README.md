@@ -4,7 +4,8 @@ A simple idea for Rapid application development, this sample use php and mysql a
 In current stage, I am going to perform Code refactoring and add some new features, it may take a long duration.
 
 ## Demo
-online demo coming soon...
+[Documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html), this document include the API reference.  
+For the executable sample that can access the MySQL DB, please follow the install and setup guide in it
 
 [PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System), a practice of an E-Appraisal system.
 
