@@ -271,7 +271,8 @@ app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMyS
 		return promise;
 	}
 })
-app.service('DataAdapterMySQL', function($rootScope, HttpRequeset, Security){
+
+app.service('DataAdapterMySQL', function($rootScope, HttpRequeset, Security, Core){
 	var dataMySQL = this;
 	dataMySQL.GetTableStructureRequest = function(opts){
 		var url = $rootScope.serverHost;
@@ -297,11 +298,12 @@ app.service('DataAdapterMySQL', function($rootScope, HttpRequeset, Security){
 	}
 	dataMySQL.GetTableStructureResponse = function(responseObj){
 		var data_or_JqXHR = responseObj.data;
+		var converted_Data = ConvertGetTableStructure(data_or_JqXHR);
 		var massagedObj = {
 			table_schema: data_or_JqXHR.table_schema,
-			// table_columnList: data_or_JqXHR.DataColumns,
-			// key_columnList: data_or_JqXHR.KeyColumns,
-			DataColumns: data_or_JqXHR.DataColumns,
+
+
+			DataColumns: converted_Data.DataColumns,
 			KeyColumns: data_or_JqXHR.KeyColumns,
 			message: data_or_JqXHR.Message,
 			status: data_or_JqXHR.Status,
@@ -338,6 +340,7 @@ app.service('DataAdapterMySQL', function($rootScope, HttpRequeset, Security){
 		var massagedObj = {
 			table_schema: data_or_JqXHR.ActionResult.table_schema,
 			data: data_or_JqXHR.ActionResult.data,
+			TotalRecordCount: (data_or_JqXHR.TotalRecordCount) ? data_or_JqXHR.TotalRecordCount : -1,
 			message: data_or_JqXHR.Message,
 			status: data_or_JqXHR.Status,
 			HTTP: {
@@ -475,5 +478,42 @@ app.service('DataAdapterMySQL', function($rootScope, HttpRequeset, Security){
 		}
 
 		return massagedObj;
+	}
+	function ConvertGetTableStructure(data_or_JqXHR){
+		var obj = {
+			DataColumns: {}
+		};
+		var dataColumns = data_or_JqXHR.DataColumns;
+		var newDataColumns = {};
+		for(var columnName in dataColumns){
+			var dataColumn = dataColumns[columnName];
+			var newDataCol = {};
+			jQuery.extend(true, newDataCol, dataColumn);
+
+			newDataCol.type = Core.ConvertMySQLDataType(dataColumn.type);
+
+
+			if(newDataCol.default === null){
+				var defaultValue = null;
+				switch(newDataCol.type){
+					case "string":
+						defaultValue = null;
+						break;
+					case "date":
+						defaultValue = new Date(1970, 0, 1);
+						break;
+					case "double":
+						defaultValue = 0.0;
+						break;
+				}
+				newDataCol.default = defaultValue;
+			}
+
+			newDataColumns[columnName] = newDataCol;
+		}
+		
+		obj.DataColumns = newDataColumns;
+		
+		return obj;
 	}
 })

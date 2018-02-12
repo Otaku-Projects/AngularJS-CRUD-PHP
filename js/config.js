@@ -38,4 +38,5 @@ var reservedPath = {
 	controller: 'controller/',
 	templateFolder: 'Templates/',
 	screenTemplate: 'screen/',
+	uiThemeTemplate: 'theme/',
 }

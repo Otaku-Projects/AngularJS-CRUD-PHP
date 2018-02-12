@@ -1,8 +1,6 @@
 // JavaScript Document
 "use strict";
 
-var my_arguments;
-
 app.directive('logout', ['Security', '$rootScope', function(Security, $rootScope) {
     return {
         restrict: 'A',
@@ -28,6 +26,7 @@ app.directive('logout', ['Security', '$rootScope', function(Security, $rootScope
 app.directive('pageview', ['$rootScope', 
     '$timeout', 
     '$compile',
+    '$q',
     'Core', 
     'Security', 
     'LockManager', 
@@ -35,7 +34,7 @@ app.directive('pageview', ['$rootScope',
     'MessageService',
     'ThemeService',
     'TableManager',
-    'DataAdapter', function($rootScope, $timeout, $compile, Core, Security, LockManager, HttpRequeset, MessageService, ThemeService, TableManager, DataAdapter) {
+    'DataAdapter', function($rootScope, $timeout, $compile, $q, Core, Security, LockManager, HttpRequeset, MessageService, ThemeService, TableManager, DataAdapter) {
     function PageViewConstructor($scope, $element, $attrs) {
 		if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("1 Pageview - PageViewConstructor()");
@@ -107,7 +106,7 @@ app.directive('pageview', ['$rootScope',
 
             $scope.lastPageNum = -1;
 
-            $scope.pageNum = 1;
+            $scope.pageNum = 0;
 
             $ctrl.ngModel = {};
             // $ctrl.ngModel = $scope.currentPageRecords;
@@ -115,10 +114,6 @@ app.directive('pageview', ['$rootScope',
             $scope.DisplayMessage = "";
 
             $scope.getNextPageTimes = 0;
-
-            // console.dir($attrs)
-            // console.dir($scope)
-            // console.dir($ctrl)
     	}
 
         function EventListener(){
@@ -147,11 +142,10 @@ app.directive('pageview', ['$rootScope',
                 return;
             }
             var tableSchema = $scope.tableStructure.table_schema;
+            var dataColumns = $scope.tableStructure.DataColumns;
 
-        	for(var rowIndex in tableSchema){
-        		var row = tableSchema[rowIndex];
-                var columnName = row.Field;
-        		var colDataType = Core.ConvertMySQLDataType(row.Type);
+        	for(var columnName in dataColumns){
+        		var column = dataColumns[columnName];
 
                 var isSystemField = Core.IsSystemField(columnName);
                 if(isSystemField)
@@ -159,15 +153,7 @@ app.directive('pageview', ['$rootScope',
 
         		// is column exists in ngModel
         		if(typeof(recordStructure[columnName]) == "undefined"){
-        			if(colDataType == "string"){
-        				recordStructure[columnName] = "";
-        			}
-        			else if (colDataType == "date"){
-        				recordStructure[columnName] = new Date(0, 0, 0);
-        			}
-        			else if (colDataType == "double"){
-        				recordStructure[columnName] = 0.0;
-        			}
+                    recordStructure[columnName] = column.default;
         		}
         	}
     	}
@@ -271,6 +257,7 @@ app.directive('pageview', ['$rootScope',
         $scope.Initialize = function(){
 			if(Core.GetConfig().debugLog.DirectiveFlow)
 				console.log("2 Pageview - Initialize()");
+
             $scope.InitScope();
             if(typeof $scope.EventListener == "function"){
                 $scope.EventListener($scope, $element, $attrs, $ctrl);
@@ -284,12 +271,11 @@ app.directive('pageview', ['$rootScope',
         }
         $scope.DefaultInitDirective = function(){
             var getTbStructurePromiseResult = GetTableStructure();
-            
+
             getTbStructurePromiseResult.then(function(){
                 $scope.GotoFirstPageRecord();
             });
         }
-
 
         $scope.PointedToRecord = function(pRecord, event, rowScope){
             $scope.pointedRecord = pRecord;
@@ -337,6 +323,11 @@ app.directive('pageview', ['$rootScope',
                 $scope.ClosePageView();
         }
 
+        $scope.ClearSelectedRecord = function(){
+            $scope.selectedRecord = {};
+            $scope.$parent.SetEditboxNgModel({});
+        }
+
         $scope.ClearNRefreshData = function(){
             var pageNum = $scope.pageNum;
 
@@ -363,14 +354,13 @@ app.directive('pageview', ['$rootScope',
         }
 
     	$scope.GotoFirstPageRecord = function(){
-    		$scope.pageNum = 1;
-    		var pageNum = $scope.pageNum;
+    		var pageNum = 1;
     		$scope.TryToDisplayPageNum(pageNum);
     	}
     	$scope.GotoPreviousPageRecord = function(){
     		if($scope.pageNum > 1){
-    		 	$scope.pageNum--;
     			var pageNum = $scope.pageNum;
+                pageNum-=1;
     			$scope.TryToDisplayPageNum(pageNum);
     		}else{
     			// first of the page, cannot Goto Previous
@@ -379,15 +369,21 @@ app.directive('pageview', ['$rootScope',
     		}
     	}
     	$scope.GotoNextPageRecord = function(){
-    		if($scope.pageNum >= $scope.lastPageNum && $scope.lastPageNum!=-1){
-    			$scope.DisplayMessage = "End of records.";
-    			return;
-    		}
-
-    		$scope.pageNum++;
     		var pageNum = $scope.pageNum;
+            pageNum+=1;
+            if(pageNum > $scope.lastPageNum && $scope.lastPageNum!=-1){
+                $scope.ReachLastPage();
+                return;
+            }
+
     		$scope.TryToDisplayPageNum(pageNum);
     	}
+        $scope.ZeroRecordCount = function(){
+            $scope.DisplayMessage = "Record Not Found.";
+        }
+        $scope.ReachLastPage = function(){
+            $scope.DisplayMessage = "End of records.";
+        }
     	$scope.GotoLastPageRecord = function(){
     		if($scope.pageNum == $scope.lastPageNum)
     			return;
@@ -410,61 +406,79 @@ app.directive('pageview', ['$rootScope',
     		$scope.TryToDisplayPageNum(pageNum);
     	}
 
+        // Check is sortedDataSource contains enough records
+        // showPageNumX = 2, numOfRecordPerPage = 10, record start from 11 to 20
+        function IsEnoughSortedRecord(showPageNumX){
+            var isAllRecordsExists = true;
+
+            var numOfRecordPerPage = $scope.numOfRecordPerPage;
+            var recordNumberStart = (showPageNumX - 1) * numOfRecordPerPage;
+            var recordNumberEnd = showPageNumX * numOfRecordPerPage - 1;
+
+            for(var recordCounter = recordNumberStart; recordCounter < recordNumberEnd; recordCounter++){
+                if(typeof($scope.sortedDataSource[recordCounter]) == "undefined"){
+                    isAllRecordsExists = false;
+                    break;
+                }
+            }
+
+            return isAllRecordsExists;
+        }
+
     	$scope.TryToDisplayPageNum = function(pageNum, clearNRefresh){
     		$scope.DisplayMessage = "";
-    		var numOfRecordPerPage = $scope.numOfRecordPerPage;
-    		// Check is sortedDataSource contains enough records
-    		// pageNum = 2, numOfRecordPerPage = 10, record start from 11 to 20
-    		var recordNumberStart = (pageNum - 1) * numOfRecordPerPage;
-    		var recordNumberEnd = pageNum * numOfRecordPerPage - 1;
-    		var isAllRecordsExists = true;
-            //console.log(recordNumberStart, recordNumberEnd)
             if(typeof(clearNRefresh) == "undefined"){
                 clearNRefresh = false;
             }
-
-            if(!clearNRefresh){
-        		for(var recordCounter = recordNumberStart; recordCounter < recordNumberEnd; recordCounter++){
-        			if(typeof($scope.sortedDataSource[recordCounter]) == "undefined"){
-        				isAllRecordsExists = false;
-        				break;
-        			}
-        		}
-            }else{
+            var isAllRecordsExists = IsEnoughSortedRecord(pageNum);
+            if(clearNRefresh){
                 isAllRecordsExists = false;
             }
 
-    		if($scope.maxRecordsCount != $scope.dataSource.length || clearNRefresh){
-	    		// Get data if records not enough
-	    		if(!isAllRecordsExists){
-                    var criteriaObj = $scope.criteriaObj;
+            var displayPromise = $q(function(resolve, reject){
 
-	    			// pageview need ValidateRecord(), for inquiry the records with some criteria
-	    			// if Buffer invalid, cannot send request
-	    			var isBufferValid = true;
-		    		if(typeof $scope.ValidateRecord == "function"){
-						isBufferValid = $scope.ValidateRecord($scope, $element, $attrs, $ctrl);
-					}else{
-						isBufferValid = ValidateRecord();
-					}
+        		if($scope.maxRecordsCount != $scope.dataSource.length || clearNRefresh){
+    	    		// Get data if records not enough
+    	    		if(!isAllRecordsExists){
+                        var criteriaObj = $scope.criteriaObj;
 
-                    var lastRecordIndex = $scope.sortedDataSource.length;
+    	    			// pageview need ValidateRecord(), for inquiry the records with some criteria
+    	    			// if Buffer invalid, cannot send request
+    	    			var isBufferValid = true;
+    		    		if(typeof $scope.ValidateRecord == "function"){
+    						isBufferValid = $scope.ValidateRecord($scope, $element, $attrs, $ctrl);
+    					}else{
+    						isBufferValid = ValidateRecord();
+    					} 
 
-//                    console.log("TryToCallSetCriteriaBeforeGet() - pageNum: "+pageNum+", lastRecordIndex: "+lastRecordIndex+", ")
+                        var lastRecordIndex = $scope.sortedDataSource.length;
 
-                    var newCriteriaObj = TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
+    //                    console.log("TryToCallSetCriteriaBeforeGet() - pageNum: "+pageNum+", lastRecordIndex: "+lastRecordIndex+", ")
 
-                    $scope.GetNextPageRecords(pageNum, lastRecordIndex, newCriteriaObj);
+                        var newCriteriaObj = TryToCallSetCriteriaBeforeGet(pageNum, lastRecordIndex, criteriaObj);
 
-	    			return;
-	    		}
-    		}
+                        console.log("GetNextPageRecords page number: "+pageNum)
+                        var getNextPromise = $scope.GetNextPageRecords(pageNum, lastRecordIndex, newCriteriaObj);
+                        resolve(getNextPromise);
+    	    			// return;
+    	    		}
+        		}
+                reject("Record exists in data source, display without GetData");
+            });
 
-    		DisplayPageNum(pageNum);
+            displayPromise.then(function(solvedPromise){
+                // resolved get data
+                DisplayPageNum(pageNum);
+            }, function(rejectedPromise){
+                // rejected get data, since records already exists
+                DisplayPageNum(pageNum);
+            }).then(function(){
+                $scope.pageNum = pageNum
+            })
+
     	}
 
     	function DisplayPageNum(pageNum){
-//    		console.log("Going to display the Page no.("+pageNum + ") records.");
             Core.SysLog.Print("DisplayPageNum", $scope.programId, pageNum, $element[0].tagName, "DisplayPageNum");
     		var numOfRecordPerPage = $scope.numOfRecordPerPage;
 
@@ -498,7 +512,6 @@ app.directive('pageview', ['$rootScope',
 
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
-            var pageNum = $scope.pageNum;
             var numOfRecordPerPage = $scope.numOfRecordPerPage;
             var recordOffset = (pageNum-1) * $scope.numOfRecordPerPage;
 
@@ -518,43 +531,34 @@ app.directive('pageview', ['$rootScope',
                 httpResponseObj = responseObj;
                 $scope.UnLockAllControls();
 
-//                if(data_or_JqXHR.Status != "success")
-//                    throw data_or_JqXHR;
-//
-//                if(typeof(data_or_JqXHR.ActionResult.data) == "undefined")
-//                {
-//                    if($scope.getNextPageTimes == 1){
-//                        $scope.DisplayMessage = "Record Not Found.";
-//                    }
-//                }
-
-                SetRecordStructure(responseObj.table_schema);
-                AppendToDataSource(pageNum, responseObj.table_schema, responseObj.data);
-                SortingTheDataSource();
-
                 // Object.keys Browser compatibility
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
                 var recordCount = Object.keys(responseObj.data).length;
+
+                if(recordCount > 0){
+                    AppendToDataSource(pageNum, responseObj.table_schema, responseObj.data);
+                    SortingTheDataSource();
+                }
+
                 // 20170312, keithpoon, fixed: end page problem caused when the record counts is the multiple of 10
                 if(!responseObj.data || (recordCount < $rootScope.serEnv.phpRecordLimit && $scope.getNextPageTimes > 1) || recordCount == 0){
                     $scope.maxRecordsCount = $scope.sortedDataSource.length;
                     if($scope.getNextPageTimes == 1){
-                        $scope.DisplayMessage = "Record Not Found.";
+                        $scope.ZeroRecordCount();
                     }else{
-                        if(recordCount > 0){
-                            DisplayPageNum(pageNum);
-                        }
-                        $scope.DisplayMessage = "End of records.";
+                        $scope.ReachLastPage();
                     }
-                    // 20170312, keithpoon, fixed: page number goes 1 after the ended page number because the page number always +1 in the GotoNextPageRecord()
-                    if(recordCount == 0)
-                        $scope.pageNum-=1;
-                }else{
-                    DisplayPageNum(pageNum);
                 }
 
-                if(responseObj.TotalRecordCount)
-                    $scope.maxRecordsCount = responseObj.TotalRecordCount;
+                if(recordCount < $rootScope.serEnv.phpRecordLimit){
+                    $scope.maxRecordsCount = $scope.sortedDataSource.length;
+                }
+
+                if(responseObj.TotalRecordCount){
+                    if(responseObj.TotalRecordCount > -1){
+                        $scope.maxRecordsCount = responseObj.TotalRecordCount;
+                    }
+                }
             }, function(reason) {
               // console.error("Fail in GetNextPageRecords() - "+tagName + ":"+$scope.programId)
             }).finally(function() {
@@ -573,20 +577,31 @@ app.directive('pageview', ['$rootScope',
 
             })
 
+            return request;
     	}
 
-		$scope.$watch(
-		  // This function returns the value being watched. It is called for each turn of the $digest loop
-		  function() { return $scope.maxRecordsCount; },
-		  // This is the change listener, called when the value returned from the above function changes
-		  function(newValue, oldValue) {
-		    if ( newValue !== oldValue ) {
+        // 20180209, keithpoon, sometime unable to tigger the watch listener
+        // $watch not firing on data change
+        $scope.$watch(
+          function() { return $scope.maxRecordsCount; },
+          function(newValue, oldValue) {
+            if ( newValue !== oldValue ) {
+                TriggerMaxRecordCountChanged(newValue, oldValue)
+            }
+          },
+          true
+        );
+
+        function TriggerMaxRecordCountChanged(newValue){
+            if(newValue > 0)
+            {
                 $scope.lastPageNum = parseInt($scope.maxRecordsCount/$scope.numOfRecordPerPage)
                 if( $scope.maxRecordsCount % $scope.numOfRecordPerPage > 0)
-		    		$scope.lastPageNum++;
-		    }
-		  }
-		);
+                    $scope.lastPageNum++;
+            }else{
+                $scope.lastPageNum = -1
+            }
+        }
 
         $scope.Initialize();
     }
@@ -646,14 +661,23 @@ app.directive('pageview', ['$rootScope',
 						  '<span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>' +
 						'</button>' +
 					'</div>' +
-					// tick / select button
-					'<div class="btn-group" role="group" aria-label="...">' +
-						'<button type="button" class="btn btn-default" ng-click="SelectedToRecord()" aria-label="Select the pointed record">' +
-						  '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span> <span class="hidden-xs">Select</span>' +
-						'</button>' +
-					'</div>' +
+                    // tick / select button
+                    '<div class="btn-group" role="group" aria-label="...">' +
+                        '<button type="button" class="btn btn-primary" ng-click="SelectedToRecord()" aria-label="Select the pointed record">' +
+                          '<span class="fa fa-check" aria-hidden="true"></span> <span class="hidden-xs">Select</span>' +
+                        '</button>' +
+                        '<button type="button" class="btn btn-default" ng-click="ClosePageView()" aria-label="Exit the record selection">' +
+                          '<span class="fa fa-undo" aria-hidden="true"></span> <span class="hidden-xs">Back</span>' +
+                        '</button>'+
+                    '</div>' +
+                    // clear button
+                    // '<div class="btn-group" role="group" aria-label="...">' +
+                    //     '<button type="button" class="btn btn-default" ng-click="ClearSelectedRecord()" aria-label="Reset the form">' +
+                    //       '<span class="fa fa-eraser" aria-hidden="true"></span> <span class="hidden-xs">Clear</span>' +
+                    //     '</button>' +
+                    // '</div>' +
 				'</div>' +
-				'<div ng-bind="DisplayMessage"></div>'
+				'<div ng-bind="DisplayMessage"></div>' +
 			'</div>' +
 			'</div>' +
 			'';
@@ -847,16 +871,14 @@ app.directive('entry', ['$rootScope',
 		}
 
         function SetNgModel(dataJson){
-//        	var items = dataJson.data.Items[1];
-//        	var itemsColumn = dataJson.data.DataColumns;
+            var dataColumns = $scope.tableStructure.DataColumns;
+            var keyColumns = $scope.tableStructure.KeyColumns;
+
             var dataRecord = dataJson.ActionResult.data[0];
 
-            var tableSchema = dataJson.ActionResult.table_schema;
-
-        	for(var rowIndex in tableSchema){
-        		var row = tableSchema[rowIndex];
-                var columnName = row.Field;
-        		var colDataType = Core.ConvertMySQLDataType(row.Type);
+        	for(var columnName in dataColumns){
+        		var column = dataColumns[columnName];
+        		var colDataType = column.type;
 
                 var isSystemField = Core.IsSystemField(columnName);
                 if(isSystemField)
@@ -921,7 +943,6 @@ app.directive('entry', ['$rootScope',
             return tbResult;
         }
         function SetTableStructure(dataJson){
-            $scope.tableStructure.table_schema = dataJson.table_schema;
             $scope.tableStructure.DataColumns = dataJson.DataColumns;
             $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
         	var itemsColumn = $scope.tableStructure.DataColumns;
@@ -931,7 +952,7 @@ app.directive('entry', ['$rootScope',
 
         	for(var colIndex in itemsColumn){
         		var columnName = colIndex;
-        		var colDataType = Core.ConvertMySQLDataType(itemsColumn[colIndex].type);
+                var colDataType = itemsColumn[columnName].type;
 
         		var isSystemField = Core.IsSystemField(columnName);
 
@@ -1137,57 +1158,6 @@ app.directive('entry', ['$rootScope',
             return request;
         }
 
-
-        // 20180201, keithpoon, this is obsolete, to be removed
-        /**
-         * Get the data in the result set as JSON format
-         * @param {Object} keyObj - provide keyObj will read next to that key
-         * @param {String} criteriaObj - the criteria will pass to the backend program, you need to extract and handle the criteria in it.
-         */
-        $scope.GetData = function(keyObj, criteriaObj){
-            var clientID = Security.GetSessionID();
-            var programId = $scope.programId.toLowerCase();
-            for(var keyIndex in keyObj){
-                if(typeof(keyObj[keyIndex]) == "string")
-                    keyObj[keyIndex] = keyObj[keyIndex].toUpperCase();
-            }
-            //var criteriaObj = $scope.criteriaObj;
-
-            var submitData = {
-                "Session": clientID,
-                "Table": programId,
-                "key": keyObj,
-                criteria: criteriaObj,
-                "NextPage" : "true"
-            };
-            submitData.Action = "GetData";
-
-            var requestOption = {
-                method: 'POST',
-                data: JSON.stringify(submitData)
-            };
-
-            var request = HttpRequeset.send(requestOption);
-            request.then(function(responseObj) {
-                var data_or_JqXHR = responseObj.data;
-                $scope.$apply(function () {
-                    SetNgModel(data_or_JqXHR);
-                });
-            }, function(reason) {
-              console.error("Fail in GetData() - "+tagName + ":"+$scope.programId)
-              Security.HttpPromiseFail(reason);
-            }).finally(function() {
-                // Always execute this on both error and success
-
-                // if(typeof $scope.CustomGetDataResult == "function"){
-                //     $scope.CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown, $scope, $element, $attrs, $ctrl);
-                // }else{
-                //     CustomGetDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown);
-                // }
-            });
-            return request;
-        }
-
         $scope.SubmitData = function(){
         	console.log("<"+$element[0].tagName+"> submitting data")
             var globalCriteria = $rootScope.globalCriteria;
@@ -1260,13 +1230,13 @@ app.directive('entry', ['$rootScope',
 
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
-                    var data_or_JqXHR = responseObj.data;
-                    msg = data_or_JqXHR.Message;
+                    msg = responseObj.message;
 
                     // the lastUpdateDate was changed after record updated, user cannot click the Amend button again.
                     // reget the record or clean the record
 //                    $scope.ResetForm();
                     $scope.FindData();
+
                 }, function(reason) {
                   console.error(tagName + ":"+$scope.programId + " - Fail in UpdateData()")
                   throw reason;
@@ -1280,8 +1250,7 @@ app.directive('entry', ['$rootScope',
 	            }
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
-                    var data_or_JqXHR = responseObj.data;
-                    msg = data_or_JqXHR.Message;
+                    msg = responseObj.message;
 
                     $scope.ResetForm();
                     SetTableStructure($scope.tableStructure);
@@ -3141,8 +3110,9 @@ app.directive('message', ['$rootScope',
 
 app.directive('range', ['$rootScope',
     '$timeout',
+    'Core',
     'Security',
-    'MessageService', function($rootScope, $timeout, Security, MessageService) {
+    'MessageService', function($rootScope, $timeout, Core, Security, MessageService) {
     function RangeConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.rangeCtrl;

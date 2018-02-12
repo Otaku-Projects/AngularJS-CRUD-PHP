@@ -14,7 +14,6 @@ app.constant('config', {
 	dataServer: dataServer,
 	
 	uiTheme: theme,
-	backend: backend,
 	
 	editMode: directiveEditMode,
 	reservedPath: reservedPath,
