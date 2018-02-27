@@ -4,12 +4,14 @@ A simple idea for Rapid application development, this sample use php and mysql a
 In current stage, I am going to perform Code refactoring and add some new features, it may take a long duration.
 
 ## Demo
-[Documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html), this document include the API reference.  
-For the executable sample that can access the MySQL DB, please follow the install and setup guide in it
+Sorry about that I cannot provide a sample that can access the database.  
+For quick view how to use/reuse the source, please check the [online documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)
 
-[PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System), a practice of an E-Appraisal system.
+For further study, please follow the installation guide to setup on your local environment.
 
-[NoSQLSystem](https://github.com/keithbox/NoSQLSystem), a practice of a website that using MongoDB database
+[PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System), a branch of this one and practice for an E-Appraisal system.
+
+[NoSQLSystem](https://github.com/keithbox/NoSQLSystem), a branch of this one and practice for a website that using MongoDB database
 
 In my try, this project good for the small website project that within or around 30 pages.
 
@@ -100,22 +102,13 @@ In the future, some existing problems must be solved
 ## Download
 Go to [released version](https://github.com/keithbox/AngularJS-CRUD-PHP/releases) on GitHub
 
-## Config
-`model/config.php`
-```
-    define("_DB_HOST", "192.168.0.190", true);
-    define("_DB_NAME", "acgni308_keithbox", true);
-    define("_DB_USER", "acgni308_kbuser", true);
-    define("_DB_PASS", "Demo-DB3.2", true);
-```
-`js/config.js`
-```
-    var serverHost = "http://192.168.0.190/Develop";
-    var webRoot = "http://192.168.0.190/Develop";
-
-    var requireLoginPage = "login.html";
-    var afterLoginPage = "main-menu.html";
-```
+## Documentation
+[Go here](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)  
+The document includes the:  
+- Installation Guide
+- Configuration
+- API Reference
+- Demo Cases
 
 ## Contributing
 Please do not hesitate to perform your professional on PULL requests when you found out some current insufficient. I am  apologise in advance for my working places not convenient to use GitHub frequently, my work may sticking around a month or waiting a great enhancement and then will batch update at here. For any good ideas who would nice reduce the user configuration, reduce the implementation coding, minimize the back end coding with a better algorithm, improve this little project are much welcome. I will follow the action on pull requests and issues at once.
