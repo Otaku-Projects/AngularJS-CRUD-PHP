@@ -2,6 +2,7 @@
 app.controller('rangeController', ['$scope', 'Security', function ($scope, Security, $rootScope) {
     $scope.deptDataList = [];
     $scope.directiveScopeDict = {};
+    $scope.deptRange = {};
     function Initialize(){
         var entryForm = {};
 
@@ -22,7 +23,6 @@ app.controller('rangeController', ['$scope', 'Security', function ($scope, Secur
         // click, dblclick, mousedown, mouseup, mousemove, mouseover, mouseout, mouseenter, mouseleave,
         // change, select, submit, keydown, keypress, and keyup.
         iElement.ready(function() {
-
         })
     }
 

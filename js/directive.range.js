@@ -216,9 +216,9 @@ app.directive('range', ['$rootScope',
         controllerAs: 'rangeCtrl',
 
         //If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
-        // bindToController: {
-        //     ngModel: '=',
-        // },
+        bindToController: {
+            ngModel: '=',
+        },
         template: templateFunction,
         compile: function compile(tElement, tAttrs, transclude) {
             return {
