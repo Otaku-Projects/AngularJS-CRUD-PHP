@@ -1,0 +1,239 @@
+<!doctype html>
+<html><!-- InstanceBegin template="/Templates/basic-uikit.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Develop |</title>
+<!-- InstanceEndEditable -->
+<link rel="icon" type="image/png" href="../images/logo48.png" />
+<link rel="stylesheet" type="text/css" href="../css/body.css">
+<link rel="stylesheet" type="text/css" href="../css/chrome.css">
+<link rel="stylesheet" type="text/css" href="../third-party/uikit/uikit-2.27.4/css/uikit.almost-flat.min.css">
+<link rel="stylesheet" type="text/css" href="../third-party/font-awesome/font-awesome-4.5.0/css/font-awesome.min.css">
+<script type="text/javascript" src="../third-party/jQuery/jquery-2.2.1.min.js"></script>
+<script type="text/javascript" src="../third-party/jQuery/jquery.cookie-1.4.1.min.js"></script>
+<script type="text/javascript" src="../third-party/angularjs/angular-1.6.5/angular.min.js"></script>
+<script type="text/javascript" src="../third-party/angularjs/angular-1.6.5/angular-animate.min.js"></script>
+<script type="text/javascript" src="../third-party/angularjs/angular-1.6.5/angular-route.min.js"></script>
+<script type="text/javascript" src="../third-party/angularjs/angular-1.6.5/angular-touch.min.js"></script>
+<script type="text/javascript" src="../third-party/angularjs/angular-1.6.5/angular-cookies.min.js"></script>
+<script type="text/javascript" src="../js/app.js"></script>
+<script type="text/javascript" src="../js/config.js"></script>
+<script type="text/javascript" src="../js/directive.js"></script>
+<script type="text/javascript" src="../js/service.js"></script>
+<script type="text/javascript" src="../third-party/uikit/uikit-2.27.4/js/uikit.min.js"></script>
+<script type="text/javascript" src="../third-party/Blob.js-master/Blob.js"></script>
+<script type="text/javascript" src="../third-party/FileSaver.js/FileSaver.js-1.3.2/FileSaver.min.js"></script>
+<script src="../third-party/angularjs-modules-plugins/ng-file-upload-12.2.12/demo/src/main/webapp/js/ng-file-upload-shim.js"></script>
+<script src="../third-party/angularjs-modules-plugins/ng-file-upload-12.2.12/demo/src/main/webapp/js/ng-file-upload.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../third-party/uikit/uikit-2.27.4/css/components/datepicker.min.css">
+<link rel="stylesheet" type="text/css" href="../third-party/uikit/uikit-2.27.4/css/components/notify.almost-flat.min.css">
+<script type="text/javascript" src="../third-party/uikit/uikit-2.27.4/js/components/datepicker.min.js"></script>
+<script type="text/javascript" src="../third-party/uikit/uikit-2.27.4/js/components/notify.min.js"></script>
+<!-- InstanceBeginEditable name="head" -->
+<script>
+// jQuery
+$(function() {
+	
+});
+</script>
+<script>
+"use strict";
+app.run(function ($rootScope, $log, Security, config) {
+	console.log("app.run at local page");
+	//Security.GoToMenuIfSessionExists();
+	//Security.RequiresAuthorization();
+	config.uiTheme = "U";
+	console.dir();
+});
+app.controller('createDepartmentController', ['$scope', 'Security', function ($scope, Security, $rootScope) {
+	$scope.deptDataList = [];
+	function Initialize(){
+		var entryForm = {};
+		var entryForm2 = {};
+		
+		$scope.entryForm = entryForm;
+		$scope.entryForm2 = entryForm;
+	}
+	Initialize();
+	
+	$scope.EventListener = function(scope, iElement, iAttrs, controller){
+//		console.log("<"+iElement[0].tagName+">" +" Directive overried EventListener()");
+		
+		//http://api.jquery.com/Types/#Event
+		//The standard events in the Document Object Model are:
+		// blur, focus, load, resize, scroll, unload, beforeunload,
+		// click, dblclick, mousedown, mouseup, mousemove, mouseover, mouseout, mouseenter, mouseleave,
+		// change, select, submit, keydown, keypress, and keyup.
+		iElement.ready(function() {
+			
+		})
+	}
+	
+	$scope.SetDefaultValue = function(scope, iElement, iAttrs, controller){
+//		console.log("<"+iElement[0].tagName+">" +" Directive overried SetDefaultValue()");
+		
+//		controller.ngModel.gender = "M";
+	}
+	
+	$scope.StatusChange = function(fieldName, newValue, newObj, scope, iElement, iAttrs, controller){
+//		console.log("<"+iElement[0].tagName+">" +" Directive overried StatusChange()");
+		
+		if(fieldName == "departmentCode")
+			newObj.DepartmentCode = newObj.DepartmentCode.toUpperCase(); 
+	}
+	
+	$scope.ValidateBuffer = function(scope, iElement, iAttrs, controller){
+//		console.log("<"+iElement[0].tagName+">" +" Directive overried ValidateBuffer()");
+        return true;
+	}
+
+    $scope.CustomPointedToRecord = function(pRecord, rowScope, scope, iElement, controller){
+//        console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
+        $scope.entryForm = pRecord;
+    }
+
+    $scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
+//        console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
+        $scope.entryForm2 = sRecord;
+    }
+}]);
+</script>
+<!-- InstanceEndEditable -->
+</head>
+
+<body ng-app="myApp">
+<div id="top">
+  <div id="topBar"> <!-- InstanceBeginEditable name="topbar" --> <!-- InstanceEndEditable --> </div>
+</div>
+<!-- header start -->
+<nav class="uk-navbar uk-margin-large-bottom">
+  <div class="">
+  <!-- InstanceBeginEditable name="header" -->
+    <a href="#" class="uk-navbar-brand uk-hidden-small"><img alt="Brand" width="20" src="../images/download.png"> Development</a>
+	  <div class="uk-navbar-flip uk-hidden-small">
+		  <ul class="uk-navbar-nav">
+  			  <li><a href="../main-menu.html">Home <span class="fa fa-home fa-lg"></span></a></li>
+			  <li><a href="../personal-profile.html">Personal profile <span class="fa fa-user fa-lg"></span></a></li>
+			  <li><a href="#" logout>Logout <span class="fa fa-sign-out fa-lg"></span></a></li>
+	    </ul>
+    </div>
+  <!-- InstanceEndEditable -->
+    <a href="#offcanvas" class="uk-navbar-toggle uk-visible-small" data-uk-offcanvas="{mode:'slide'}"></a>
+    <div class="uk-navbar-brand uk-navbar-center uk-visible-small">Develop</div>
+  </div>
+</nav>
+<!-- header end -->
+	<div id="offcanvas" class="uk-offcanvas">
+		<div class="uk-offcanvas-bar">
+			<!-- InstanceBeginEditable name="offCanvasNav" -->
+			<ul class="uk-nav uk-nav-offcanvas">
+				<li class="uk-active">
+					<a href="layouts_portfolio.html">Home</a>
+				</li>
+				<li>
+					<a href="layouts_blog.html">Personal profile</a>
+				</li>
+				<li>
+					<a href="layouts_documentation.html">Logout</a>
+				</li>
+			</ul>
+			<!-- InstanceEndEditable -->
+		</div>
+	</div>
+<div class="uk-container uk-container-center uk-margin-top uk-margin-large-bottom">
+<!-- InstanceBeginEditable name="page-header" -->
+<div class="uk-grid" data-uk-grid-margin="">
+	<div class="uk-width-1-1 uk-row-first">
+		<h1 class="uk-heading-large">Developer Guide</h1>
+		<p class="uk-text-large">Client side</p>
+	</div>
+</div>
+<!-- InstanceEndEditable -->
+<!-- site location start --> 
+<!-- InstanceBeginEditable name="breadcrumb" -->
+<ul class="uk-breadcrumb">
+    <li><a href="index.html">Demo Home</a></li>
+    <li class="uk-active"><span>Theme</span></li>
+    <li><a href="53theme-view-uikit-v2.html">View in UIkit v2</a></li>
+</ul>
+<!-- InstanceEndEditable --> 
+</div>
+<!-- site location end --> 
+<div class="uk-container uk-container-center uk-margin-top uk-margin-large-bottom">
+<!-- InstanceBeginEditable name="intro" -->
+<div ng-controller="createDepartmentController as createDeptCtrl" style="max-width: 750px;">
+	<h3>View Department</h3>
+	<pageview ng-model="deptDataList" program-id="dw01dp">
+	  <div class="uk-overflow-container">
+		<table class="uk-table uk-table-hover uk-table-condensed">
+		  <thead>
+			<tr>
+			  <th>Department Code</th>
+			  <th>Description</th>
+			</tr>
+		  </thead>
+		  <tbody>
+			<tr ng-repeat="deptRow in pageviewCtrl.ngModel" 
+			ng-click="PointedToRecord(deptRow, $event, this)"
+			ng-dblclick="SelectedToRecord(deptRow, $event, this)">
+			  <td>{{deptRow.DepartmentCode}}</td>
+			  <td>{{deptRow.Description}}</td>
+			</tr>
+		  </tbody>
+		</table>
+	  </div>
+	</pageview>
+	<h3>Pointed Department on Pageview</h3>
+	<entry ng-model="entryForm" program-id="ds01dp" edit-mode="view">
+	  <form class="uk-form uk-form-horizontal" ng-submit="SubmitData()">
+		<fieldset>
+		  <div class="uk-form-row">
+			<label for="inputDeptCode" class="uk-form-label">Department Code</label>
+			<input type="text" id="inputDeptCode" ng-model="entryCtrl.ngModel.DepartmentCode" readonly>
+		  </div>
+		  <div class="uk-form-row">
+			<label for="inputDescription" class="uk-form-label">Description</label>
+			<input type="text" id="inputDescription" ng-model="entryCtrl.ngModel.Description" readonly>
+		  </div>
+		</fieldset>
+	  </form>
+	</entry>
+	<h3>Selected Department on Pageview</h3>
+	<entry ng-model="entryForm2" program-id="ds01dp" edit-mode="view">
+	  <form class="uk-form" ng-submit="SubmitData()">
+		<fieldset>
+		  <div class="uk-form-row">
+			<label for="inputDeptCode2" class="uk-form-label">Department Code</label>
+			<input type="text" id="inputDeptCode2" ng-model="entryCtrl.ngModel.DepartmentCode" readonly>
+		  </div>
+		  <div class="uk-form-row">
+			<label for="inputDescription2" class="uk-form-label">Description</label>
+			<input type="text" id="inputDescription2" ng-model="entryCtrl.ngModel.Description" readonly>
+		  </div>
+		</fieldset>
+	  </form>
+	</entry>
+</div>
+<!-- InstanceEndEditable -->
+</div>
+<div class="uk-container uk-container-center uk-margin-top uk-margin-large-bottom" id="content"> <!-- InstanceBeginEditable name="content" -->
+  <div>supplement content or reference</div>
+  <!-- InstanceEndEditable -->
+  <div id="lasted_update"></div>
+</div>
+<div id="footer">
+  <footer class="text-center">
+      <div class="uk-container uk-container-center uk-margin-top uk-margin-large-bottom">
+        <div class="uk-grid">
+          <div class="uk-width-1-1">
+            <p>Copyright © MyCompany. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+  </footer>
+</div>
+</body>
+<!-- InstanceEnd --></html>

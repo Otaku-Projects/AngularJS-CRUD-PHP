@@ -3,7 +3,7 @@
 
 //angular.element() === jQuery() === $();
 // using the angular ui of Bootstrap
-var app = angular.module('myApp', ['ngCookies', 'ngFileUpload']);
+var app = angular.module('myApp', ['ngCookies', 'ngFileUpload', 'ui.router', "oc.lazyLoad"]);
 
 
 app.constant('config', {
@@ -29,19 +29,6 @@ app.constant('config', {
         ShowCallStack: false
     }
 });
-
-app.config(['config', '$httpProvider', function(config, $httpProvider) {
-	config.test = "Keith";
-	
-    delete $httpProvider.defaults.headers.common['X-Requested-With'];
-    $httpProvider.defaults.headers.post['Accept'] = 'application/json, text/javascript';
-    $httpProvider.defaults.headers.post['Content-Type'] = 'application/json; charset=utf-8';
-    // $httpProvider.defaults.headers.post['Access-Control-Max-Age'] = '1728000';
-    // $httpProvider.defaults.headers.common['Access-Control-Max-Age'] = '1728000';
-    $httpProvider.defaults.headers.common['Accept'] = 'application/json, text/javascript';
-    $httpProvider.defaults.headers.common['Content-Type'] = 'application/json; charset=utf-8';
-    $httpProvider.defaults.useXDomain = true;
-}]);
 
 app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($rootScope, config, SysMessageManager){
 	var core = this;
@@ -124,11 +111,16 @@ app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($root
 
         return isSystemField;
 	}
+	core.IsMySQLServer = function(){
+		var isMySQLServer = false;
+		if(config.dataServer == "php")
+			isMySQLServer = true;
+		return isMySQLServer;
+	}
 	
 	core.RegistryConfig();
 	return core;
 }]);
-
 
 app.service('ThemeService', ['$rootScope', 'config', 'TemplateService', function($rootScope, config, TemplateService){
 	var theme = this;
@@ -445,6 +437,7 @@ app.service('Security', ['$rootScope', 'Core', 'CookiesManager', 'MessageService
 	secure.HttpPromiseErrorCatch = function(reason){
 		console.warn("HttpRequest promise error catch");
 		console.dir(reason);
+		console.trace();
         MessageService.addMsg(reason);
 	}
 
@@ -750,7 +743,6 @@ app.service('SysMessageManager', ["$rootScope", "$log", "config", function($root
     }
 }]);
 
-
 app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "HttpRequeset", "DataAdapter", "Core", function($rootScope, $log, config, $q, Security, HttpRequeset, DataAdapter, Core) {
 	var table = this;
 	var rootScope = $rootScope;
@@ -790,15 +782,15 @@ app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "
 
         return request;
     }
-    table.SetTableStructure = function(progID, structure){
+    table.SetTableStructure = function(progID, _tableSchema){
         if(typeof $rootScope.Table[progID] == "undefined"){
-            $rootScope.Table[progID] = {name:"", structure:{}, record:{}, lastUpdated:new Date()};
+            $rootScope.Table[progID] = {name:"", _tableSchema:{}, record:{}, lastUpdated:new Date()};
         }
         var tbInfo = $rootScope.Table[progID];
-        if(typeof tbInfo.structure == "undefined" || tbInfo.structure == null || tbInfo.structure == {}){
-            $rootScope.Table[progID].structure = {};
+        if(typeof tbInfo._tableSchema == "undefined" || tbInfo._tableSchema == null || tbInfo._tableSchema == {}){
+            $rootScope.Table[progID]._tableSchema = {};
         }
-        $rootScope.Table[progID].structure = structure;
+        $rootScope.Table[progID]._tableSchema = _tableSchema;
     }
     table.GetTableStructure = function(submitData){
     	var progID = submitData.Table;
@@ -814,7 +806,7 @@ app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "
                     if(Core.GetConfig().debugLog.DirectiveFlow)
                     	console.log("ProgramID: "+programId+", Table structure obtained.")
                     var structure = responseObj.table_schema;
-                    table.SetTableStructure(progID, structure);
+                    table.SetTableStructure(progID, responseObj.TableSchema);
 
                     resolve(responseObj);
                 }, function(reason) {
@@ -828,7 +820,7 @@ app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "
         }else{
             console.log("TableStructure already exists, avoid to send GetTableStructure again");
             ngPromise = $q(function(resolve, reject) {
-                    structure = tableCollection[progID].structure;
+                    var structure = tableCollection[progID].structure;
                     resolve(structure);
             });
         }
