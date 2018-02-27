@@ -71,7 +71,7 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 		url: "/demoHome", // root route
 		views: {
 			"navmenu":{
-				templateUrl: '../demo_uirouter/navigation-menu.html',
+				templateUrl: '../demo_uiRouter/navigation-menu.html',
 			},
 			"content": {
 				templateUrl: '../demo/home.html',
