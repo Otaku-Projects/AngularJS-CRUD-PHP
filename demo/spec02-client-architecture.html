@@ -20,9 +20,9 @@
         <div class="col-lg-12">
             <ul class="list-unstyled">
               <li ng-repeat="image in images">
-                <a ng-click="openLightboxModal($index)">
-                  <img ng-src="{{image.thumbUrl}}" class="img-thumbnail">
-                </a>
+                <button class="btn btn-link" ng-click="openLightboxModal($index)">
+                  <img ng-src="{{image.thumbUrl}}" class="img-responsive img-thumbnail">
+                </button>
               </li>
             </ul>
         </div>
