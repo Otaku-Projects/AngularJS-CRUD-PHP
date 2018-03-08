@@ -1,0 +1,126 @@
+<div id="page-wrapper">
+    <div class="row">
+<!--
+        <div class="col-lg-12">
+            <h1 class="page-header">Login, Logout, Redirect</h1>
+        </div>
+-->
+        <!-- /.col-lg-12 -->
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <h2 class="page-header">Client Side Architecture</h2>
+            <h4>AngularJS Components</h4>
+        </div>
+        <div class="col-lg-12">
+            <p>In this demo materials, ui-router and ocLazyLoad are used to saving the effort on manipulate, <br>
+            maintenance around 20 similar pages and keeping under a better structure. With this design, the page and related AngularJs page controller loaded on route.</p>
+            <p>You may choose your own embedded style to use the following AngularJS Components. </p>
+        </div>
+        <div class="col-lg-12">
+            <ul class="list-unstyled">
+              <li ng-repeat="image in images">
+                <a ng-click="openLightboxModal($index)">
+                  <img ng-src="{{image.thumbUrl}}" class="img-thumbnail">
+                </a>
+              </li>
+            </ul>
+        </div>
+        <div class="col-lg-12">
+            <h4>Directive Description</h4>
+            <p>About the details of the above figure, explicate each directive symbol as below:<br></p>
+            <p>The arrow is the data flow between the symbol.</p>
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <tr>
+                  <td><p>Symbol</p></td>
+                  <td><p>Explanation</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;entry&gt;</p></td>
+                  <td><p>A wrapper of the HTML form element, as a instance of a entity, you may create a data record on the entry, or you may fetch the data record from pageview to entry by access the ng-model.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;pageview&gt;</p></td>
+                  <td><p>A windows to display a record set retrieved from database, the result set displayed in pagination.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;screen&gt;</p></td>
+                  <td><p>Download and render HTML template for reusable layout of &lt;pageview&gt;, &lt;entry&gt;</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;editbox&gt;</p></td>
+                  <td><p>A control set to handle foreign key conceptly, auto render the &lt;pageview&gt; directive and auto hide in the editbox, popup the &lt;pageview&gt; on click to find the tuple from the foreign table.</p>
+                  <p>Select a tuple to assign the FK to the field of the &lt;entry&gt;, you may display the further information of the selected  record in the area of &lt;editbox&gt;.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;message&gt;</p></td>
+                  <td><p>Separate the process result message from &lt;entry&gt;, &lt;import&gt;, or &lt;export&gt; directive, centralize to display in here</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;range&gt;</p></td>
+                  <td><p>A wapper for two &lt;editbox&gt; elements, provide the basic range handling. More suitable for criteria selection on report or inquiry functions.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;upload&gt;</p></td>
+                  <td><p>Upload a file to server.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;import&gt;</p></td>
+                  <td><p>Sending import action to the server for process the uploaded excel.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;export&gt;</p></td>
+                  <td><p>Sending export action to the server for export the multi-table, multi-records as excel / pdf format.</p></td>
+                </tr>
+                <tr>
+                  <td><p>&lt;process&gt;</p></td>
+                  <td><p>Sending process action to the server, most likely to handle more complex requirement out of above, you may customize the data in/out format for your specifiy handling.</p></td>
+                </tr>
+              </table>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <h4>Service Description</h4>
+            <p>About the details of the above figure, explicate each service symbol as below:<br></p>
+            <p>The arrow is the data flow between the symbol.</p>
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <tr>
+                  <td><p>Symbol</p></td>
+                  <td><p>Explanation</p></td>
+                </tr>
+                <tr>
+                  <td><p>Security</p></td>
+                  <td><p>User authenticate checking, redirect the page handling.</p></td>
+                </tr>
+                <tr>
+                  <td><p>CookiesManager</p></td>
+                  <td><p>Security will involed this to access the session stored in cookies</p></td>
+                </tr>
+                <tr>
+                  <td><p>LockManager</p></td>
+                  <td><p>entry directive will involed this lock the form after submit button clicked to avoid duplicated submission and unlock after responsd returned.</p></td>
+                </tr>
+                <tr>
+                  <td><p>TableManager</p></td>
+                  <td><p>keep the table structure to reduce the duplicated HTTP request</p></td>
+                </tr>
+                <tr>
+                  <td><p>DataAdapter</p></td>
+                  <td><p>Massage the data for HTTP request and response, convert the data between client side and server side if you use client/server partially</p></td>
+                </tr>
+                <tr>
+                  <td><p>ThemeService</p></td>
+                  <td><p>According to the ui framework setting in config, generate the template URL for different directive.</p></td>
+                </tr>
+                <tr>
+                  <td><p>TemplateService</p></td>
+                  <td><p>Load the directive template via URL given by ThemeService</p></td>
+                </tr>
+              </table>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+</div>

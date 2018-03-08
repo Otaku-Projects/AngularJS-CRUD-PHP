@@ -13,7 +13,9 @@ app.config(['config',
 '$urlRouterProvider',
 '$stateProvider',
 
-function(config, $httpProvider, $locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide, $ocLazyLoadProvider, $urlRouterProvider, $stateProvider) {
+'LightboxProvider',
+
+function(config, $httpProvider, $locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide, $ocLazyLoadProvider, $urlRouterProvider, $stateProvider, LightboxProvider) {
 	config.test = "Keith";
 	
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
@@ -23,7 +25,9 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
     // $httpProvider.defaults.headers.common['Access-Control-Max-Age'] = '1728000';
     $httpProvider.defaults.headers.common['Accept'] = 'application/json, text/javascript';
     $httpProvider.defaults.headers.common['Content-Type'] = 'application/json; charset=utf-8';
-    $httpProvider.defaults.useXDomain = true;
+	$httpProvider.defaults.useXDomain = true;
+	
+	LightboxProvider.fullScreenMode = true;
 
 	// this is important
 	app.controller = $controllerProvider.register;
@@ -83,6 +87,38 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 		// 	}]
 		// }
 	}
+	var spec_01 = {
+		name: "demoHome.spec01-sys-block-diagram",
+		url: "/spec01-sys-block-diagram",
+		views: {
+			"content@": {
+				templateUrl: '../demo/spec01-sys-block-diagram.html',
+				caption: 'Optional caption',
+                controller: 'specServerArchitectureController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/spec01-sys-block-diagram.js');
+			}]
+		}
+	}
+	var spec_02 = {
+		name: "demoHome.spec02-client-architecture",
+		url: "/spec02-client-architecture",
+		views: {
+			"content@": {
+				templateUrl: '../demo/spec02-client-architecture.html',
+                controller: 'specClientArchitectureController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/spec02-client-architecture.js');
+			}]
+		}
+	}
+
 	var demo_00 = {
 		name: "demoHome.00login-logout",
 		url: "/00login-logout",
@@ -318,6 +354,8 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 		}
 	}
 	$stateProvider.state(homeState);
+	$stateProvider.state(spec_01);
+	$stateProvider.state(spec_02);
 	$stateProvider.state(demo_00);
 	$stateProvider.state(demo_01);
 	$stateProvider.state(demo_02);
