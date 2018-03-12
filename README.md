@@ -7,7 +7,7 @@ In current stage, I am going to perform Code refactoring and add some new featur
 Sorry about that I cannot provide a sample that can access the database.  
 For quick view how to use/reuse the source, please check the [online documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)
 
-For further study, please follow the installation guide to setup on your local environment.
+For further study, please follow the documentation to setup the demo case on your local environment.
 
 [PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System), a branch of this one and practice for an E-Appraisal system.
 
