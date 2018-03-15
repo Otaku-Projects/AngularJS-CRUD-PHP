@@ -26,6 +26,4 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
     $scope.ValidateBuffer = function(scope, iElement, iAttrs, controller){
         return true;
     }
-    Prism.highlightAll();
-    Prism.fileHighlight();
 }]);

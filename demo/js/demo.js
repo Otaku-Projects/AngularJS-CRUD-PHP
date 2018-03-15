@@ -13,6 +13,17 @@ app.run(function($rootScope, $transitions, $timeout, $q, $trace){
         'tabs-to-spaces': 4,
         'spaces-to-tabs': 4*/
     });
+
+    // multi-language setting
+    // $rootScope.langInstance = new Lang();
+    // $rootScope.langInstance.init({
+    //     defaultLang: 'en',
+    //     currentLang: 'en',
+    // });
+
+    // $rootScope.switchLanguage = function(langCode_iso639){
+    //     $rootScope.langInstance.change(langCode_iso639)
+    // }
     
     // initial the menu after the ng-include finished
     $rootScope.$on("$includeContentLoaded", function(event, templateName){
@@ -27,6 +38,14 @@ app.run(function($rootScope, $transitions, $timeout, $q, $trace){
     $rootScope.$on("$viewContentLoaded", function(targetScope){
         Prism.highlightAll();
         Prism.fileHighlight();
+
+        $('.nav-tabs a').click(function (e) {
+            e.preventDefault()
+            $(this).tab('show')
+        })
+    
+        // if add <base target="_self"> in index.html, no effect.
+        $('.nav-tabs a').attr('target','_self');
     });
 
     // https://ui-router.github.io/guide/transitions#lifecycle-events
@@ -37,6 +56,25 @@ app.run(function($rootScope, $transitions, $timeout, $q, $trace){
 
     $transitions.onSuccess({}, function(transition) {
         load_sbAdmin2Js(transition);
+        var pageName = transition.to().name;
+
+        // multi-language setting
+        // $rootScope.langInstance.dynamic('en', '../demo/lang/demoHome.en.json');
+        // $rootScope.langInstance.dynamic('zh-hans', '../demo/lang/demoHome.zh-hans.json');
+        // $rootScope.langInstance.dynamic('zh-hant', '../demo/lang/demoHome.zh-hant.json');
+        
+        // $rootScope.langInstance.dynamic('en', '../demo/lang/'+pageName+'.en.json');
+        // $rootScope.langInstance.dynamic('zh-hans', '../demo/lang/'+pageName+'.zh-hans.json');
+        // $rootScope.langInstance.dynamic('zh-hant', '../demo/lang/'+pageName+'.zh-hant.json');
+        // $rootScope.langInstance.loadPack($rootScope.langInstance.currentLang, function(err, lang, path){
+        //     if (!err) {
+        //     } else {
+        //         console.log("load language pack failure")
+        //         console.log(err)
+        //         console.log(lang)
+        //         console.log(path)
+        //     }
+        // });
     })
   
     function load_sbAdmin2Js(transition){

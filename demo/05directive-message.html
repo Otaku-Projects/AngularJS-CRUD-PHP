@@ -4,24 +4,99 @@
 			<h1 class="page-header">&lt;message&gt; Directive</h1>
 		</div>
 		<div class="col-lg-12">
-			Display the message for the entry form, inquire result and process result on the page. By default, the CRUD action result will auto put into the message directive. If you put the message directive on the top and the page too long, you may required to call javascript scroll to the top action after each CRUD response
+			The result of entry action will auto bring the message to this directive, the message will auto floating on the page. You may use this directive to display the in-line message.<br><br>
+			If you put the message directive on the top and the page too long, you may required to call javascript scroll to the top action after each CRUD response
 			<br><br>
 			Usage<br>
-			- Use inside of entry<br>
-			- Use inside of pageview
+			- Display the inline message
 		</div>
 		<div class="col-lg-12">
-			<pre class="language-markup"><code>
-				&#x3C;message ng-model=&#x22;processMsg&#x22; auto-close&#x3E;
-				  &#x3C;div class=&#x22;well well-sm&#x22; ng-if=&#x22;msgCtrl.ngModel.length &#x3E; 0&#x22;&#x3E;
-				&#x9;&#x3C;div ng-repeat=&#x22;dspMsg in msgCtrl.ngModel track by $index&#x22; ng-bind=&#x22;dspMsg&#x22;&#x3E;&#x3C;/div&#x3E;
-				  &#x3C;/div&#x3E;
-				&#x3C;/message&#x3E;</code></pre>
+			<script type="text/plain" class="line-numbers language-markup">
+				<message
+					ng-model="processMsg"
+					auto-close>
+						<div class="well well-sm" ng-if="msgCtrl.ngModel.length > 0">
+						<div ng-repeat="dspMsg in msgCtrl.ngModel track by $index" ng-bind="dspMsg"></div>
+						</div>
+				</message>
+			</script>
 		</div>
 		<div class="col-lg-12">
-			ng-model = object<br>
-			prorgam-id = string<br>
-			OpenPageView() = method<br>
+				<h3>Arguments</h3>
+		</div>
+		<div class="col-lg-12">
+				<div class="table-responsive">
+						<table class="table">
+								<tr>
+										<th>Param</th>
+										<th>Type</th>
+										<th>Details</th>
+								</tr>
+								<tr>
+										<td>ng-model</td>
+										<td>expression</td>
+										<td>assignable expression to bind to</td>
+								</tr>
+								<tr>
+										<td>auto-close</td>
+										<td>string</td>
+										<td>auto close the message</td>
+								</tr>
+						</table>
+				</div>
+		</div>
+		<div class="col-lg-12">
+				<h3>Methods</h3>
+		</div>
+		<div class="col-lg-12">
+				<div class="table-responsive">
+						<table class="table">
+								<tr>
+										<th>Method</th>
+										<th>Return Value</th>
+										<th>Description</th>
+								</tr>
+								<tr>
+									<td>Initialize()</td>
+									<td>null</td>
+									<td>Initialize the directive</td>
+								</tr>
+								<tr>
+									<td>InitScope</td>
+									<td>null</td>
+									<td>Initialize the directive scope</td>
+								</tr>
+								<tr>
+									<td>InitDirective</td>
+									<td>null</td>
+									<td>Build the default behaviors</td>
+								</tr>
+						</table>
+				</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<h2>Example</h2>
+		</div>
+		<div class="col-lg-12">
+			<div>
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#html" aria-controls="html" role="tab" data-toggle="tab">HTML</a></li>
+						<li role="presentation"><a href="#javascript" aria-controls="javascript" role="tab" data-toggle="tab">Javascript</a></li>
+				</ul>
+				
+				<!-- Tab panes -->
+				<div class="tab-content">
+						<div role="tabpanel" class="tab-pane active" id="html">
+								<pre class="line-numbers" data-src="15display-inline-message.html"></pre>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="javascript">
+								<pre class="line-numbers" data-src="js/controller/15display-inline-message.js"></pre>
+						</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<!-- /.row -->

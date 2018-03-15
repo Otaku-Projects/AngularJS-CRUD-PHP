@@ -5,39 +5,209 @@
 		</div>
 		<div class="col-lg-12">
 			Display a data set in pagination view, use this element for viewing records and/or select record.
-			<br><br>
-			Usage<br>
+		</div>
+		<div class="col-lg-12">
+			<h2>Usage</h2>
 			- Use this element as a view for selecting one record for amendment.<br>
 			- This element may reuse in &lt;editbox&gt; directive, to display foreign key table records and allowed to select one in &lt;entry&gt; form
 		</div>
-	    <div class="col-lg-12">
-	        <pre class="language-markup"><code>
-				&#x3C;pageview ng-model=&#x22;deptDataList&#x22; program-id=&#x22;dw01dp&#x22;&#x3E;
-				  &#x3C;div class=&#x22;table-responsive&#x22;&#x3E;
-				    &#x3C;table class=&#x22;table table-condensed table-hover&#x22;&#x3E;
-				      &#x3C;thead&#x3E;
-				        &#x3C;tr&#x3E;
-				          &#x3C;th&#x3E;Department Code&#x3C;/th&#x3E;
-				          &#x3C;th&#x3E;Description&#x3C;/th&#x3E;
-				        &#x3C;/tr&#x3E;
-				      &#x3C;/thead&#x3E;
-				      &#x3C;tbody&#x3E;
-				        &#x3C;tr ng-repeat=&#x22;deptRow in pageviewCtrl.ngModel&#x22; 
-				        ng-click=&#x22;PointedToRecord(deptRow, $event, this)&#x22;
-				        ng-dblclick=&#x22;SelectedToRecord(deptRow, $event, this)&#x22;&#x3E;
-				          &#x3C;td&#x3E;{{deptRow.DepartmentCode}}&#x3C;/td&#x3E;
-				          &#x3C;td&#x3E;{{deptRow.Description}}&#x3C;/td&#x3E;
-				        &#x3C;/tr&#x3E;
-				      &#x3C;/tbody&#x3E;
-				    &#x3C;/table&#x3E;
-				  &#x3C;/div&#x3E;
-				&#x3C;/pageview&#x3E;
-			</code></pre>
-	    </div>
 		<div class="col-lg-12">
-			ng-model = object<br>
-			prorgam-id = string<br>
+				<script type="text/plain" class="line-numbers language-markup" data-line="2, 3, 13-17">
+						<pageview
+								ng-model="expression"
+								program-id="string">
+								<div class="table-responsive">
+									<table class="table table-condensed table-hover">
+										<thead>
+											<tr>
+												<th>Department Code</th>
+												<th>Description</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr ng-repeat="deptRow in pageviewCtrl.ngModel"
+											ng-click="PointedToRecord(deptRow, $event, this)"
+											ng-dblclick="SelectedToRecord(deptRow, $event, this)">
+												<td>{{deptRow.DepartmentCode}}</td>
+												<td>{{deptRow.Description}}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+						</pageview>
+				</script>
 		</div>
+		<div class="col-lg-12">
+				<h3>Arguments</h3>
+		</div>
+		<div class="col-lg-12">
+				<div class="table-responsive">
+						<table class="table">
+								<tr>
+										<th>Param</th>
+										<th>Type</th>
+										<th>Details</th>
+								</tr>
+								<tr>
+										<td>ng-model</td>
+										<td>expression</td>
+										<td>assignable expression to bind to</td>
+								</tr>
+								<tr>
+										<td>program-id</td>
+										<td>string</td>
+										<td>Name of the program id</td>
+								</tr>
+						</table>
+				</div>
+		</div>
+		<div class="col-lg-12">
+				<h3>Methods</h3>
+		</div>
+		<div class="col-lg-12">
+				<div class="table-responsive">
+						<table class="table">
+								<tr>
+										<th>Method</th>
+										<th>Return Value</th>
+										<th>Description</th>
+								</tr>
+								<tr>
+									<td>Initialize()</td>
+									<td>null</td>
+									<td>Initialize the directive</td>
+								</tr>
+								<tr>
+									<td>InitScope</td>
+									<td>null</td>
+									<td>Initialize the directive scope</td>
+								</tr>
+								<tr>
+									<td>EventListener($scope, $element, $attrs, $ctrl)</td>
+									<td>null</td>
+									<td>Allows to attach the javascript event.<br>
+										$scope - directive scope<br>
+												$element - directive element<br>
+												$attrs - directive attrs<br>
+												$ctrl - directive controller<br>
+										This function use to attach the event or create the instance for third-party resource.</td>
+								</tr>
+								<tr>
+									<td>DefaultInitDirective</td>
+									<td>null</td>
+									<td>Build the default behaviors</td>
+								</tr>
+								<tr>
+									<td>PointedToRecord(pRecord, event, rowScope)</td>
+									<td>null</td>
+									<td>This function allows to manipluate the record on pointed the record</td>
+								</tr>
+								<tr>
+									<td>SelectedToRecord</td>
+									<td>null</td>
+									<td>This function allows to manipluate the record on selected the record</td>
+								</tr>
+								<tr>
+									<td>ClearSelectedRecord</td>
+									<td>null</td>
+									<td>Clear the selected record, by default in the demo, mouse click on the &lt;table&gt; &lt;tr&gt; record will select that record.</td>
+								</tr>
+								<tr>
+									<td>ClearAllNRefresh</td>
+									<td>null</td>
+									<td>Clear all records and then go to the first page via call the GotoFirstPageRecord()</td>
+								</tr>
+								<tr>
+									<td>ClearNRefreshCurrentPage</td>
+									<td>null</td>
+									<td>Clear and refresh the current page records<br>
+										This function used in the in the pagination button</td>
+								</tr>
+								<tr>
+									<td>GotoFirstPageRecord</td>
+									<td>null</td>
+									<td>Display the first page records<br>
+										This function used in the in the pagination button</td>
+								</tr>
+								<tr>
+									<td>GotoPreviousPageRecord</td>
+									<td>null</td>
+									<td>Display the previous page records<br>
+										This function used in the in the pagination button</td>
+								</tr>
+								<tr>
+									<td>GotoNextPageRecord</td>
+									<td>null</td>
+									<td>Display the next page records, will try to send get records request if records not exists in the storage<br>
+										This function used in the in the pagination button</td>
+								</tr>
+								<tr>
+									<td>GotoLastPageRecord</td>
+									<td>null</td>
+									<td>Display the last page records<br>
+										This function used in the in the pagination button</td>
+								</tr>
+								<tr>
+									<td>CustomGetDataResult(httpResponseObj,
+												httpResponseObj.status,
+												$scope,
+												$element,
+												$attrs,
+												$ctrl</td>
+									<td>null</td>
+									<td>httpResponseObj - promise<br>
+												httpResponseObj.status - http status code<br>
+												$scope - directive scope<br>
+												$element - directive element<br>
+												$attrs - directive attrs<br>
+												$ctrl - directive controller<br>
+												This will auto call after the response return in SubmitData()</td>
+								</tr>
+								<tr>
+									<td>LockAllControls</td>
+									<td>null</td>
+									<td>Lock all the form controls, includes the elements of input, button, textarea, select.<br>
+											This will auto call on the postLink()<br>
+											This will auto call on form submit
+									</td>
+								</tr>
+								<tr>
+									<td>UnLockAllControls</td>
+									<td>null</td>
+									<td>Lock all the form controls, includes the elements of input, button, textarea, select.<br>
+											This will auto call after GetTableStructure() if the form is not view mode and delete mode, unlock the form when table structure obtained.<br>
+											This will auto call on failure of submit validation ValidateBuffer()<br>
+											This will auto call after data submitted SubmitData()<br>
+									</td>
+								</tr>
+						</table>
+				</div>
+		</div>
+	</div>
+	<div class="row">
+			<div class="col-lg-12">
+					<h2>Example</h2>
+			</div>
+			<div class="col-lg-12">
+					<div>
+							<!-- Nav tabs -->
+							<ul class="nav nav-tabs" role="tablist">
+									<li role="presentation" class="active"><a href="#html" aria-controls="html" role="tab" data-toggle="tab">HTML</a></li>
+									<li role="presentation"><a href="#javascript" aria-controls="javascript" role="tab" data-toggle="tab">Javascript</a></li>
+							</ul>
+							
+							<!-- Tab panes -->
+							<div class="tab-content">
+									<div role="tabpanel" class="tab-pane active" id="html">
+											<pre class="line-numbers" data-src="12view-master-data.html"></pre>
+									</div>
+									<div role="tabpanel" class="tab-pane" id="javascript">
+											<pre class="line-numbers" data-src="js/controller/12view-master-data.js"></pre>
+									</div>
+							</div>
+							
+					</div>
+			</div>
 	</div>
 	<!-- /.row -->
 </div>

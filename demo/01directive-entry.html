@@ -1,46 +1,217 @@
 <div id="page-wrapper">
             <div class="row">
-<!--
                 <div class="col-lg-12">
-                    <h1 class="page-header">Login, Logout, Redirect</h1>
+                    <h1 class="page-header">&lt;entry&gt; Directive</h1>
                 </div>
--->
-                <!-- /.col-lg-12 -->
+                <div class="col-lg-12">
+                    Handle the crud action for entry form, create the binding between the form control and the form data object.
+                </div>
+                <div class="col-lg-12">
+                    <h2>Usage</h2>
+                    - As a data form for input record.
+                </div>
+                <div class="col-lg-12">
+                    <script type="text/plain" class="line-numbers language-markup">
+                        <entry
+                            ng-model="expression"
+                            program-id="string"
+                            edit-mode="[create | view | amend | delete]">
+                        </entry>
+                    </script>
+                </div>
+                <div class="col-lg-12">
+                    <h3>Arguments</h3>
+                </div>
+                <div class="col-lg-12">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tr>
+                                <th>Param</th>
+                                <th>Type</th>
+                                <th>Details</th>
+                            </tr>
+                            <tr>
+                                <td>ng-model</td>
+                                <td>expression</td>
+                                <td>assignable expression to bind to</td>
+                            </tr>
+                            <tr>
+                                <td>program-id</td>
+                                <td>string</td>
+                                <td>Name of the program id,  </td>
+                            </tr>
+                            <tr>
+                                <td>edit-mode</td>
+                                <td>string</td>
+                                <td>Specify the mode [create | view | amend | delete] of entry, different mode has different behaviors.</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <h3>Methods</h3>
+                </div>
+                <div class="col-lg-12">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tr>
+                                <th>Method</th>
+                                <th>Return Value</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                              <td>BackupNgModel()</td>
+                              <td>null</td>
+                              <td>Backup the binding model</td>
+                            </tr>
+                            <tr>
+                              <td>RestoreNgModel()</td>
+                              <td>null</td>
+                              <td>Restore the binding model from backup</td>
+                            </tr>
+                            <tr>
+                              <td>FindNClearChildEditbox()</td>
+                              <td>null</td>
+                              <td>Find the editbox embedded in the directive, clear the editbox ngModel.<br>
+                                  This function will auto call by ResetForm()</td>
+                            </tr>
+                            <tr>
+                              <td>ResetForm()</td>
+                              <td>null</td>
+                              <td>Clear the ngModel.<br>
+                                This function will auto call after data created and deleted.</td>
+                            </tr>
+                            <tr>
+                              <td>SetNgModel()</td>
+                              <td>null</td>
+                              <td>This function was deprecated.<br>
+                                This function use to set ngModel after response returned in FindData()</td>
+                            </tr>
+                            <tr>
+                              <td>Initialize()</td>
+                              <td>null</td>
+                              <td>Initialize the directive</td>
+                            </tr>
+                            <tr>
+                              <td>InitScope</td>
+                              <td>null</td>
+                              <td>Initialize the directive scope</td>
+                            </tr>
+                            <tr>
+                              <td>EventListener($scope, $element, $attrs, $ctrl)</td>
+                              <td>null</td>
+                              <td>Allows to attach the javascript event.<br>
+                                $scope - directive scope<br>
+                                    $element - directive element<br>
+                                    $attrs - directive attrs<br>
+                                    $ctrl - directive controller<br>
+                                This function use to attach the event or create the instance for third-party resource.</td>
+                            </tr>
+                            <tr>
+                              <td>DefaultInitDirective</td>
+                              <td>null</td>
+                              <td>Build the default behaviors</td>
+                            </tr>
+                            <tr>
+                              <td>FindData</td>
+                              <td>promise</td>
+                              <td>Use to get a single record, such as obtain the key from pageview, then call this function to retrieve the full record</td>
+                            </tr>
+                            <tr>
+                              <td>SubmitData</td>
+                              <td>promise</td>
+                              <td>Use ng-submit to force the form submission route to this function, or you may handle the trigger point by your own.</td>
+                            </tr>
+                            <tr>
+                              <td>ValidateBuffer($scope, $element, $attrs, $ctrl)</td>
+                              <td>bool</td>
+                              <td>$scope - directive scope<br>
+                                    $element - directive element<br>
+                                    $attrs - directive attrs<br>
+                                    $ctrl - directive controller</td>
+                            </tr>
+                            <tr>
+                              <td>CustomSubmitDataResult(httpResponseObj,
+                                    httpResponseObj.status,
+                                    $scope,
+                                    $element,
+                                    $attrs,
+                                    $ctrl</td>
+                              <td>null</td>
+                              <td>httpResponseObj - promise<br>
+                                    httpResponseObj.status - http status code<br>
+                                    $scope - directive scope<br>
+                                    $element - directive element<br>
+                                    $attrs - directive attrs<br>
+                                    $ctrl - directive controller<br>
+                                    This will auto call after the response return in SubmitData()</td>
+                            </tr>
+                            <tr>
+                              <td>LockAllControls</td>
+                              <td>null</td>
+                              <td>Lock all the form controls, includes the elements of input, button, textarea, select.<br>
+                                  This will auto call on the postLink()<br>
+                                  This will auto call on form submit
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>LockAllInputBox</td>
+                              <td>null</td>
+                              <td>Lock all the input controls in form, includes the elements of input, textarea.</td>
+                            </tr>
+                            <tr>
+                              <td>UnLockSubmitButton</td>
+                              <td>null</td>
+                              <td>Unlock the submit button</td>
+                            </tr>
+                            <tr>
+                              <td>UnLockAllControls</td>
+                              <td>null</td>
+                              <td>Lock all the form controls, includes the elements of input, button, textarea, select.<br>
+                                  This will auto call after GetTableStructure() if the form is not view mode and delete mode, unlock the form when table structure obtained.<br>
+                                  This will auto call on failure of submit validation ValidateBuffer()<br>
+                                  This will auto call after data submitted SubmitData()<br>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>ShowLoadModal</td>
+                              <td>null</td>
+                              <td>Show loading image in a popup modal<br>
+                                This will auto call after pass the submit validation ValidateBuffer()<br></td>
+                            </tr>
+                            <tr>
+                              <td>HideLoadModal</td>
+                              <td>null</td>
+                              <td>Hide the popup loading modal<br>
+                                This will auto call after the response return in SubmitData()<br></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <h1 class="page-header">&lt;entry&gt; Directive</h2>
+                    <h2>Example</h2>
                 </div>
                 <div class="col-lg-12">
-                    Handle the crud action for entry form, create the binding between the form control and the form data object.<br><br>
-                    Usage<br>
-                    As a data form for input record.
-                </div>
-                <div class="col-lg-12">
-            <pre class="language-markup"><code>
-                &#x3C;entry ng-model=&#x22;entryForm&#x22; program-id=&#x22;hs02dp&#x22; edit-mode=&#x22;create&#x22;&#x3E;
-                  &#x3C;form ng-submit=&#x22;SubmitData()&#x22;&#x3E;
-                    &#x3C;fieldset&#x3E;
-                      &#x3C;div class=&#x22;form-group&#x22;&#x3E;
-                        &#x3C;label for=&#x22;inputDeptCode&#x22;&#x3E;Department Code&#x3C;/label&#x3E;
-                        &#x3C;input type=&#x22;text&#x22; class=&#x22;form-control&#x22; id=&#x22;inputDeptCode&#x22; ng-model=&#x22;entryForm.DepartmentCode&#x22;&#x3E;
-                      &#x3C;/div&#x3E;
-                      &#x3C;div class=&#x22;form-group&#x22;&#x3E;
-                        &#x3C;label for=&#x22;inputDesc&#x22;&#x3E;Description&#x3C;/label&#x3E;
-                        &#x3C;textarea class=&#x22;form-control&#x22; id=&#x22;inputDesc&#x22; ng-model=&#x22;entryForm.Description&#x22;&#x3E;&#x3C;/textarea&#x3E;
-                      &#x3C;/div&#x3E;
-                      &#x3C;div class=&#x22;form-group&#x22;&#x3E;
-                        &#x3C;button type=&#x22;submit&#x22; class=&#x22;btn btn-default&#x22;&#x3E;Create&#x3C;/button&#x3E;
-                      &#x3C;/div&#x3E;
-                    &#x3C;/fieldset&#x3E;
-                  &#x3C;/form&#x3E;
-                &#x3C;/entry&#x3E;
-            </code></pre>
-                </div>
-                <div class="col-lg-12">
-                    ng-model = object<br>
-                    prorgam-id = string<br>
-                    edit-mode = [create | view | amend | delete]<br>
+                    <div>
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#html" aria-controls="html" role="tab" data-toggle="tab">HTML</a></li>
+                            <li role="presentation"><a href="#javascript" aria-controls="javascript" role="tab" data-toggle="tab">Javascript</a></li>
+                        </ul>
+                        
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active" id="html">
+                                <pre class="line-numbers" data-src="11create-master-data.html"></pre>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="javascript">
+                                <pre class="line-numbers" data-src="js/controller/11create-master-data.js"></pre>
+                            </div>
+                        </div>
+                        
+                    </div>
                 </div>
             </div>
             <!-- /.row -->

@@ -53,6 +53,20 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 	// })
 	.otherwise('/demoHome');
 
+	// AngularJS routing and anchor hash
+	// https://stackoverflow.com/questions/30071821/angularjs-routing-and-anchor-hash
+	// reference: https://stackoverflow.com/questions/13345927/angular-routing-overrides-href-behavior-utilized-by-tab-and-collapse-panel-plugi
+	// $locationProvider.html5Mode(true);
+	//   $locationProvider.html5Mode({
+	// 	  enabled: false,
+	// 	  requireBase: false,
+	// 	  rewriteLinks: true
+	// 	});
+	// $locationProvider.hashPrefix('!');
+	// e.g
+	// <a href="#javascript" target="_self"
+	// <a data-target="#javascript" for bootstrap controls
+
 	var templateState = {
 		name: "demoHome.pageName",
 		url: "/urlName", // root route

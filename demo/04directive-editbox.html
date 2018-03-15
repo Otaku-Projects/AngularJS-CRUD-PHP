@@ -7,28 +7,144 @@
 			For the entry form which required foreign key/reference key from others tables. Click the button to to view the pageview for selecting a record. this example will download the pageview template from Templates/screen/hw92nl.html
 			<br><br>
 			Usage<br>
-			- Use inside of entry<br>
-			- Use inside of pageview
+			- Use in entry, specify for create form or update form<br>
 		</div>
 		<div class="col-lg-12">
-			<pre class="language-markup"><code>
-				&#x3C;editbox ng-model=&#x22;leaveTypeEditBox&#x22; program-id=&#x22;hw92nl&#x22;&#x3E;
-				  &#x3C;div class=&#x22;input-group&#x22;&#x3E;
-				    &#x3C;input type=&#x22;text&#x22; class=&#x22;form-control&#x22; id=&#x22;inputLeaveTypeCode&#x22; ng-model=&#x22;entryForm.LeaveType&#x22; readonly&#x3E;
-				    &#x3C;span class=&#x22;input-group-btn&#x22;&#x3E;
-				  &#x9;&#x3C;button type=&#x22;button&#x22; class=&#x22;btn btn-default&#x22; aria-label=&#x22;Edit List&#x22; ng-click=&#x22;OpenPageView()&#x22;&#x3E;
-				  &#x9;  &#x3C;i class=&#x22;fa fa-list&#x22; aria-hidden=&#x22;true&#x22;&#x3E;&#x3C;/i&#x3E;
-				  &#x9;&#x3C;/button&#x3E;
-				    &#x3C;/span&#x3E;
-				    &#x3C;input type=&#x22;text&#x22; class=&#x22;form-control&#x22; ng-model=&#x22;leaveTypeEditBox.Desc&#x22; readonly&#x3E;
-				  &#x3C;/div&#x3E;
-				&#x3C;/editbox&#x3E;
-			</code></pre>
+			<script type="text/plain" class="line-numbers language-markup" data-line="1, 5, 9">
+				<editbox 
+					ng-model="expression"
+					program-id="string"
+					screen-id="string">
+					<div class="input-group">
+						<input type="text" class="form-control" id="inputLeaveTypeCode" ng-model="entryForm.LeaveType" readonly>
+						<span class="input-group-btn">
+						<button type="button" class="btn btn-default" aria-label="Edit List" ng-click="OpenPageView()">
+							<i class="fa fa-list" aria-hidden="true"></i>
+						</button>
+						</span>
+						<input type="text" class="form-control" ng-model="leaveTypeEditBox.Desc" readonly>
+					</div>
+				</editbox>
+			</script>
 		</div>
 		<div class="col-lg-12">
-			ng-model = object<br>
-			prorgam-id = string<br>
-			OpenPageView() = method<br>
+				<h3>Arguments</h3>
+		</div>
+		<div class="col-lg-12">
+				<div class="table-responsive">
+						<table class="table">
+								<tr>
+										<th>Param</th>
+										<th>Type</th>
+										<th>Details</th>
+								</tr>
+								<tr>
+										<td>ng-model</td>
+										<td>expression</td>
+										<td>assignable expression to bind to</td>
+								</tr>
+								<tr>
+										<td>program-id</td>
+										<td>string</td>
+										<td>Default as the parent program id, but you may specify a new program id</td>
+								</tr>
+								<tr>
+										<td>screen-id</td>
+										<td>string</td>
+										<td>Default as the parent program id, but you may specify a new program id</td>
+								</tr>
+						</table>
+				</div>
+		</div>
+		<div class="col-lg-12">
+				<h3>Methods</h3>
+		</div>
+		<div class="col-lg-12">
+				<div class="table-responsive">
+						<table class="table">
+								<tr>
+										<th>Method</th>
+										<th>Return Value</th>
+										<th>Description</th>
+								</tr>
+								<tr>
+									<td>Initialize()</td>
+									<td>null</td>
+									<td>Initialize the directive</td>
+								</tr>
+								<tr>
+									<td>InitScope</td>
+									<td>null</td>
+									<td>Initialize the directive scope</td>
+								</tr>
+								<tr>
+									<td>EventListener($scope, $element, $attrs, $ctrl)</td>
+									<td>null</td>
+									<td>Allows to attach the javascript event.<br>
+										$scope - directive scope<br>
+												$element - directive element<br>
+												$attrs - directive attrs<br>
+												$ctrl - directive controller<br>
+										This function use to attach the event or create the instance for third-party resource.</td>
+								</tr>
+								<tr>
+									<td>InitDirective</td>
+									<td>null</td>
+									<td>Build the default behaviors</td>
+								</tr>
+								<tr>
+									<td>PopupPageview</td>
+									<td>null</td>
+									<td>Display the hidden pageview
+									</td>
+								</tr>
+								<tr>
+									<td>OpenPageView</td>
+									<td>null</td>
+									<td>Popup a modal and call PopupPageview</td>
+								</tr>
+								<tr>
+									<td>ClosePageView</td>
+									<td>null</td>
+									<td>Hide the modal and pageview</td>
+								</tr>
+								<tr>
+									<td>SetEditboxNgModel</td>
+									<td>null</td>
+									<td>Used by Pageview, bring the record to the editbox when selecting record on pageview<br>
+									</td>
+								</tr>
+								<tr>
+									<td>ClearEditboxNgModel</td>
+									<td>null</td>
+									<td>Used by entry, clear the editbox ngModel when form data created</td>
+								</tr>
+						</table>
+				</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<h2>Example</h2>
+		</div>
+		<div class="col-lg-12">
+			<div>
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#html" aria-controls="html" role="tab" data-toggle="tab">HTML</a></li>
+						<li role="presentation"><a href="#javascript" aria-controls="javascript" role="tab" data-toggle="tab">Javascript</a></li>
+				</ul>
+				
+				<!-- Tab panes -->
+				<div class="tab-content">
+						<div role="tabpanel" class="tab-pane active" id="html">
+								<pre class="line-numbers" data-src="21create-staff-profile.html"></pre>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="javascript">
+								<pre class="line-numbers" data-src="js/controller/21create-staff-profile.js"></pre>
+						</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<!-- /.row -->
