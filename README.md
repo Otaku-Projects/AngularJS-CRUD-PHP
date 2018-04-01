@@ -2,13 +2,13 @@
 
 <a target="_blank" href="https://opensource.org/licenses/MIT" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
 
-A simple idea for Rapid application development, this sample use php and mysql as server side dependency, you need to play some coding effort if you does not.
+I often develop the ERP system with Agile methodologies, such as Rapid application development, this project is a simple idea for reduces the coding effort on both of client and server side. In my case, I use php and mysql as server side dependency, you need to play some coding effort if you have your own server side languages.
 
 In current stage, I am going to perform Code refactoring and add some new features, it may take a long duration.
 
 ## Demo
 Sorry about that I cannot provide a sample that can access the database.  
-For quick view how to use/reuse the source, please check the [online documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)
+For quick learn how to use the source, please check the [online documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)
 
 For further study, please follow the documentation to setup the demo case on your local environment.
 
@@ -22,6 +22,8 @@ In my try, this project good for the small website project that within or around
 There were too many angularJS CRUD open source project in the real, angularJS has received significant recognition since recent years but we are still uncertainty what angularJS can and how much it can. Over the years, the numerous CRUD sample has been made, focus on routeProvider, angularJS <--> Java, angularJS <--> PHP. A vast amount of related work have been created by thousands of people from all over the world.
 
 It is very limiting of my needs(maybe also yours). One day when a project need to provide CRUD on more than one table on one single page. But implement of such sample was copy and edit many lines of HTML. It was so tired and easy to make mistakes. I just want a simple and a lite angularJS controller to help us to develop on the small project.
+
+The project use the basic concept of AngularJS to design the reusable components, provide with flexible design to add new functions or customize the layout if you like.
 
 ## Dependency
 ### Framework, library on web client
