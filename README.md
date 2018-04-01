@@ -1,4 +1,7 @@
 # AngularJS-CRUD-PHP
+
+<a target="_blank" href="https://opensource.org/licenses/MIT" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+
 A simple idea for Rapid application development, this sample use php and mysql as server side dependency, you need to play some coding effort if you does not.
 
 In current stage, I am going to perform Code refactoring and add some new features, it may take a long duration.
