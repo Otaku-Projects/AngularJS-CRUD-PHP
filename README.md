@@ -74,25 +74,40 @@ In the future, some existing problems must be solved
 ### System Architecture
 ```
  Root
+ ├---demo (demo material, this is designed as Single Page Application to reduce my effort)
+ |    ├--- index.html
+ |    ├--- navigation-menu.html
+ |    ├--- home.html
+ |    └--- ...
  ├---js
- |    ├--- config.js ( config of app.js )
+ |    ├--- config.js ( config of web client )
  |    ├--- app.js ( angularJS core)
- |    ├--- directive.js ( angularJS directive )
- |    └--- service.js ( common service, e.g $http )
+ |    ├--- directive.*.js ( entry, editbox, pageview, range, screen, message directives )
+ |    ├--- directive.js ( other directives )
+ |    └--- service.js ( common shared service, e.g LoadingModal, MessageService, $http, etc. )
+ ├---js_ui-router (specified angularjs setting for demo pages)
+ |    ├--- app.config.js
+ |    └--- app.js
  ├---controller
- |    └--- EntryAControllerA.php ( business rules of the entry )
+ |    ├--- EntryAControllerA.php ( business rules of the entry )
+ |    └--- EntryAControllerB.php (              .              )
+ |    ├--- EntryBControllerC.php (              .              )
+ |    ├--- EntryBControllerD.php (              .              )
+ |    └--- EntryNControllerN.php ( business rules of the entry )
  ├---model (role for communicate to MySQL server)
  |    ├--- ConnectionManager.php (centralize the HTTP request and HTTP response)
  |    ├--- DatabaseManager.php (execute sql query, provide insert(), select(), update(), delete() for TableManager to access MySQL DB)
- |    └--- TableAManager.php (inheritance to DatabaseManager.php, allow to overwrite the insert(), select(), update(), delete())
- ├---Templates
+ |    └--- TableAManager.php (inheritance to DatabaseManager.php, allowed to overwrite the insert(), select(), update(), delete())
+ |    └--- TableBManager.php (inheritance to DatabaseManager.php, allowed to overwrite the insert(), select(), update(), delete())
+ |    └--- TableCManager.php (inheritance to DatabaseManager.php, allowed to overwrite the insert(), select(), update(), delete())
+ ├---Templates\screen
  |    ├--- entry.html ( entry directive optional template)
  |    └--- pageview.html ( pageview directive optional template)
- ├---third-party
-      ├---angular.min.js
+ ├---third-party (please refer to the dependency)
+      ├---angular
       ├---jQuery
-      ├---bootstrap-3.3.0
-      └---... and so on (please refer to the dependency)
+      ├---bootstrap
+      └---... and so on 
 ```
 ![System Architecture Design](./System%20Architecture.png)
 
