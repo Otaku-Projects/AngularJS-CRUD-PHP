@@ -582,25 +582,32 @@ app.directive('entry', ['$rootScope',
 		    if ( newValue !== oldValue ) {
 		    	for(var colIndex in $ctrl.ngModel){
 	    			changedField = colIndex;
-	    			changedValue = newValue[colIndex];
-
+                    changedValue = newValue[colIndex];
 	    			if(oldValue!=null){
 	    				if ( Object.prototype.hasOwnProperty ) {
 			    			if(oldValue.hasOwnProperty(colIndex))
 			    			{
                               if(oldValue[colIndex] === newValue[colIndex]){
+                                //   console.log("continue, old value === new value");
                                   continue;
                               }
                               if(oldValue[colIndex] == newValue[colIndex]){
+                                // console.log("continue, old value == new value");
                                   continue;
                               }
-                              // 20170809, if it is a date object, compare with getTime()
-                              if(typeof oldValue[colIndex] == "object"){
-                                  if(oldValue.hasOwnProperty("getMonth"))
+                              // 20180419, if it is a object
+                              if(typeof oldValue[colIndex] == "object" && typeof newValue[colIndex] == "object"){
+                                //   console.warn("check date object euqal")
                                   if(typeof (oldValue[colIndex].getMonth) === 'function'){
-                                      if(oldValue[colIndex].getTime() === newValue[colIndex].getTime()){
-                                          continue;
-                                      }
+                                      // 20170809, if it is a date object, compare with getTime()
+                                    if(typeof (oldValue[colIndex].getMonth) === 'function' && typeof (newValue[colIndex].getMonth) === 'function'){
+                                        if(oldValue[colIndex].getTime() === newValue[colIndex].getTime()){
+                                            // console.log("continue, oldDate === newDate");
+                                            continue;
+                                        }
+                                    }
+                                  }else{
+                                      // if it is a object with some properties
                                   }
                               }
 			    			}
