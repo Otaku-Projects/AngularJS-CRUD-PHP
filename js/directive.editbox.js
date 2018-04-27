@@ -287,7 +287,7 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
                         '<div class="modal pageview-modal">' +
                         '</div>' +
                         '<pageview class="pageview-popup-list-win" ng-model="editboxDataList" program-id="'+programId+'">'+
-                                '<screen></screen>' +
+                                '<screen program-id="'+screenId+'"></screen>' +
                         '</pageview>';
 
                         var linkFn = $compile(pageviewTemplate);

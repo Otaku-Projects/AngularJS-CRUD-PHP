@@ -38,7 +38,10 @@ app.directive('entry', ['$rootScope',
             var programID;
 
             function findEditMode() {
-                var object = $scope.editMode = FindEditModeEnum($attrs.editMode);
+                if(!$scope.editMode)
+                    var object = $scope.editMode = FindEditModeEnum($attrs.editMode);
+                else
+                    var object = $scope.editMode;
                 return object;
             }
             function findProgramID(){
@@ -48,9 +51,9 @@ app.directive('entry', ['$rootScope',
 
             return {
                 getEditMode: function () {
-                    if (!editMode) {
+                    // if (!editMode) {
                         editMode = findEditMode();
-                    }
+                    // }
                     return editMode;
                 },
                 getProgramID: function(){
@@ -428,7 +431,8 @@ app.directive('entry', ['$rootScope',
             }
 
             $scope.ShowLoadModal();
-            SubmitData();
+            var submitPromise = SubmitData();
+            return submitPromise;
         }
 
         function ValidateSubmitData(){
@@ -454,6 +458,31 @@ app.directive('entry', ['$rootScope',
 
             return isValid;
         }
+        $scope.CreateData = function(){
+            var backupEditMode = DirectiveProperties.getEditMode();
+            $scope.editMode = globalCriteria.editMode.Create;
+            var submitPromise = $scope.SubmitData();
+            submitPromise.then(function(){
+                $scope.editMode = backupEditMode;
+                console.dir($scope.editMode)
+            })
+        }
+        $scope.UpdateData = function(){
+            var backupEditMode = DirectiveProperties.getEditMode();
+            $scope.editMode = globalCriteria.editMode.Update;
+            var submitPromise = $scope.SubmitData();
+            submitPromise.then(function(){
+                $scope.editMode = backupEditMode;
+            })
+        }
+        $scope.DeleteData = function(){
+            var backupEditMode = DirectiveProperties.getEditMode();
+            $scope.editMode = globalCriteria.editMode.Delete;
+            var submitPromise = $scope.SubmitData();
+            submitPromise.then(function(){
+                $scope.editMode = backupEditMode;
+            })
+        }
         function SubmitData(){
             var httpResponseObj = {};
             var submitPromise;
@@ -461,8 +490,8 @@ app.directive('entry', ['$rootScope',
             var msg = "";
 
 			if(editMode == globalCriteria.editMode.Create){
-				if(typeof $scope.CreateData == "function"){
-	            	submitPromise = $scope.CreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+				if(typeof $scope.CustomCreateData == "function"){
+	            	submitPromise = $scope.CustomCreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = CreateData($ctrl.ngModel);
 	            }
@@ -481,8 +510,8 @@ app.directive('entry', ['$rootScope',
                 });
 			}
 			else if(editMode == globalCriteria.editMode.Amend){
-				if(typeof $scope.UpdateData == "function"){
-	            	submitPromise = $scope.UpdateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+				if(typeof $scope.CustomUpdateData == "function"){
+	            	submitPromise = $scope.CustomUpdateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = UpdateData($ctrl.ngModel);
 	            }
@@ -502,8 +531,8 @@ app.directive('entry', ['$rootScope',
                 })
 			}
 			else if(editMode == globalCriteria.editMode.Delete){
-				if(typeof $scope.DeleteData == "function"){
-	            	submitPromise = $scope.DeleteData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+				if(typeof $scope.CustomDeleteData == "function"){
+	            	submitPromise = $scope.CustomDeleteData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = DeleteData($ctrl.ngModel);
 	            }
