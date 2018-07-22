@@ -1,5 +1,5 @@
 "use strict";
-  app.controller('staffProfileCreateController', ['$scope', function ($scope, $rootScope) {
+  app.controller('staffProfileCreateController', ['$scope', '$element', function ($scope, $element, $rootScope) {
       function Initialize(){
       var entryForm = {};    
       $scope.entryForm = entryForm;
@@ -11,14 +11,20 @@
       Initialize();
 
       $scope.SetDefaultValue = function(scope, iElement, iAttrs, controller){
-          // entryForm.StaffID = "";
-          // entryForm.Surname = "";
-          // entryForm.GivenName = "";
-          // entryForm.ChineseName = "";
+          // controller.ngModel.StaffID = "";
+          controller.ngModel.LastName = "Peter";
+          controller.ngModel.FirstName = "Pan";
+          // controller.ngModel.ChineseName = "";
 
-      controller.ngModel.DateOfBirth = new Date(0, 0, 0);
-      controller.ngModel.EmployeeDate = new Date(0, 0, 0);
+          //controller.ngModel.Birthday = new Date(0, 0, 0);
+		  controller.ngModel.Birthday = null
+          controller.ngModel.EmploymentDate = new Date();
       }
+
+    $scope.StatusChange = function(fieldName, newValue, newObj, scope, iElement, iAttrs, controller){
+        if(fieldName == "StaffID")
+            newObj.StaffID = newObj.StaffID.toUpperCase(); 
+    }
 
     $scope.EventListener = function(scope, iElement, iAttrs, controller){
       console.log("<"+iElement[0].tagName+">" +" Directive overried EventListener()");

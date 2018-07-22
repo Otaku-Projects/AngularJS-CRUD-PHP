@@ -1,7 +1,7 @@
 // JavaScript Document
 "use strict";
 
-app.factory('LoadingModal', function ($window, $document) {
+app.factory('LoadingModal', function ($window, $document, $rootScope) {
 	var loadingModal = {};
 	var loadingIcon = {};
 	var loadingIconContainer = {};
@@ -16,11 +16,22 @@ app.factory('LoadingModal', function ($window, $document) {
 		  //   $( this ).toggleClass( "test" );
 		  // }
 		}).show().appendTo("body");
-
+		
+		if($rootScope.icon == "font_awesome4"){
+		// font awesome 4.7
 		loadingIcon = $("<div/>", {
 			"class": "loading-icon",
 			"html": '<i class="fa fa-circle-o-notch fa-spin fa-5x fa-fw"></i>',
 		});
+		}else if ($rootScope.icon == "font_awesome5"){
+		
+		// font awesome 5
+		loadingIcon = $("<div/>", {
+			"class": "loading-icon",
+			"html": '<i class="fas fa-circle-notch fa-spin fa-5x fa-fw"></i>',
+		});
+		
+		}
 
 		loadingIconContainer = $("<div/>", {
 		  "class": "modal",
@@ -37,7 +48,7 @@ app.factory('LoadingModal', function ($window, $document) {
     return root;
 });
 
-app.service('MessageService', function($rootScope, $timeout){
+app.service('MessageService', function($rootScope, $timeout, ThemeService){
 	var self = this;
 	self.messageList = [];
     $rootScope.$on('$routeChangeStart', function () {
@@ -50,9 +61,31 @@ app.service('MessageService', function($rootScope, $timeout){
 	self.addMsg = function(msg){
         if(!msg)
             return;
-        
-        if(typeof(UIkit) != "undefined")
-        	UIkit.notify("<i class='uk-info-circle'></i> "+msg, {timeout: 7000, status:'primary'});
+		
+		var themeName = ThemeService.GetThemeName();
+		switch(theme){
+			case "D":
+			case "B":
+				if($.notify){
+					$.notify({
+						// options
+						message: msg 
+					},{
+						// settings
+						type: 'success',
+						placement: {
+							from: "top",
+							align: "center"
+						},
+						timer: 7000
+					});
+				}
+			break;
+			case "U":
+				if(typeof(UIkit) != "undefined")
+					UIkit.notify("<i class='uk-info-circle'></i> "+msg, {timeout: 7000, status:'primary'});
+			break;
+		}
 
 		self.messageList.push(msg);
     }
@@ -251,9 +284,26 @@ app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMyS
 		})
 		return promise;
 	}
+	adapter.ProcessData = function(opts){
+		var requestObj = dAdapter.ProcessDataRequest(opts);
+
+		var promise = $q(function(resolve, reject){
+			HttpRequeset.send(requestObj).then(
+			function(responseObj) {
+				var massagedObj = dAdapter.ProcessDataResponse(responseObj);
+				resolve(massagedObj);
+			}, function(reasonObj){
+				Security.HttpPromiseReject(reasonObj);
+				reject(reasonObj);
+			}).catch(function(e) {
+				Security.HttpPromiseErrorCatch(e);
+            });
+		})
+		return promise;
+	}
 })
-app.service('DataAdapterISAM', function($rootScope, Security){
-	var dataFlex = this;
+app.service('DataAdapterMongoDB', function($rootScope, Security){
+	var dataMongoDB = this;
 })
 app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 	var dataMySQL = this;
@@ -362,9 +412,16 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 	}
 	dataMySQL.FindDataResponse = function(responseObj){
 		var data_or_JqXHR = responseObj.data;
+		var converted_Data = ConvertGetTableStructure(data_or_JqXHR.ActionResult);
 		var massagedObj = {
 			table_schema: data_or_JqXHR.ActionResult.table_schema,
+			TableSchema: {
+				DataDict: data_or_JqXHR.ActionResult.table_schema,
+				DataColumns: converted_Data.DataColumns,
+				KeyColumns: data_or_JqXHR.ActionResult.KeyColumns
+			},
 			data: data_or_JqXHR.ActionResult.data,
+			TotalRecordCount: (data_or_JqXHR.TotalRecordCount) ? data_or_JqXHR.TotalRecordCount : -1,
 			message: data_or_JqXHR.Message,
 			status: data_or_JqXHR.Status,
 			HTTP: {
@@ -468,6 +525,43 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 		var massagedObj = {
 			table_schema: data_or_JqXHR.ActionResult.table_schema,
 			data: data_or_JqXHR.ActionResult.data,
+			message: data_or_JqXHR.Message,
+			status: data_or_JqXHR.Status,
+			HTTP: {
+				statusCode: responseObj.status,
+				statusText: responseObj.statusText,
+			}
+		}
+
+		return massagedObj;
+	}
+	dataMySQL.ProcessDataRequest = function(opts){
+		var url = $rootScope.serverHost;
+		var clientID = Security.GetSessionID();
+		var requestOptions = {
+			Session: clientID,
+			Action: "ProcessData"
+		}
+		
+		var requestOptions = Object.assign({}, requestOptions, opts);
+		var requestObject = {
+			method: 'POST',
+			data: JSON.stringify(requestOptions),
+		}
+		return requestObject;
+	}
+	dataMySQL.ProcessDataResponse = function(responseObj){
+		var data_or_JqXHR = responseObj.data;
+		var converted_Data = ConvertGetTableStructure(data_or_JqXHR.ActionResult);
+		var massagedObj = {
+			table_schema: data_or_JqXHR.ActionResult.table_schema,
+			TableSchema: {
+				DataDict: data_or_JqXHR.ActionResult.table_schema,
+				DataColumns: converted_Data.DataColumns,
+				KeyColumns: data_or_JqXHR.ActionResult.KeyColumns
+			},
+			data: data_or_JqXHR.ActionResult.data,
+			TotalRecordCount: (data_or_JqXHR.TotalRecordCount) ? data_or_JqXHR.TotalRecordCount : -1,
 			message: data_or_JqXHR.Message,
 			status: data_or_JqXHR.Status,
 			HTTP: {

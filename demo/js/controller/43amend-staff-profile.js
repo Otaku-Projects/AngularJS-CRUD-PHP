@@ -1,5 +1,5 @@
 "use strict";
-  app.controller('staffProfileCtrl', ['$scope', '$element', function ($scope, $element, $rootScope) {
+  app.controller('staffProfileAmendController', ['$scope', '$element', function ($scope, $element, $rootScope) {
       function Initialize(){
       var entryForm = {};    
       $scope.entryForm = entryForm;

@@ -46,6 +46,7 @@ app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($root
 		$rootScope.afterLoginPage = $rootScope.webRoot+config.afterLoginPage;
 		
 		$rootScope.uiTheme = config.uiTheme.toUpperCase();
+		$rootScope.icon = (config.icon) ? config.icon : "font_awesome4";
 		
 		$rootScope.controller = $rootScope.webRoot+config.reservedPath.controller;
 		$rootScope.templateFolder = $rootScope.webRoot+config.reservedPath.templateFolder;

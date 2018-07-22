@@ -89,7 +89,7 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 		url: "/demoHome", // root route
 		views: {
 			"navmenu":{
-				templateUrl: '../demo_ui_router/navigation-menu.html',
+				templateUrl: '../demo/navigation-menu.html',
 			},
 			"content": {
 				templateUrl: '../demo/home.html',
@@ -214,156 +214,166 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 			}
 		}
 	}
-	var demo_09 = {
-		name: "demoHome.09directive-process",
-		url: "/09directive-process",
-		views: {
-			"content@": {
-				templateUrl: '../demo/09directive-process.html',
-			}
-		}
-	}
+	
 	var demo_10 = {
-		name: "demoHome.10directive-range",
-		url: "/10directive-range",
+		name: "demoHome.10directive-inquiry",
+		url: "/10directive-inquiry",
 		views: {
 			"content@": {
-				templateUrl: '../demo/10directive-range.html',
+				templateUrl: '../demo/10directive-inquiry.html',
 			}
 		}
 	}
 	var demo_11 = {
-		name: "demoHome.11create-master-data",
-		url: "/11create-master-data",
+		name: "demoHome.11directive-process",
+		url: "/11directive-process",
 		views: {
 			"content@": {
-				templateUrl: '../demo/11create-master-data.html',
+				templateUrl: '../demo/11directive-process.html',
+			}
+		}
+	}
+	var demo_12 = {
+		name: "demoHome.12directive-range",
+		url: "/12directive-range",
+		views: {
+			"content@": {
+				templateUrl: '../demo/12directive-range.html',
+			}
+		}
+	}
+	var demo_21 = {
+		name: "demoHome.21create-master-data",
+		url: "/21create-master-data",
+		views: {
+			"content@": {
+				templateUrl: '../demo/21create-master-data.html',
                 controller: 'createDepartmentController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/11create-master-data.js');
+				return $ocLazyLoad.load('./js/controller/21create-master-data.js');
 			}]
 		}
 	}
-	var demo_12 = {
-		name: "demoHome.12view-master-data",
-		url: "/12view-master-data",
+	var demo_22 = {
+		name: "demoHome.22view-master-data",
+		url: "/22view-master-data",
 		views: {
 			"content@": {
-				templateUrl: '../demo/12view-master-data.html',
+				templateUrl: '../demo/22view-master-data.html',
                 controller: 'viewDepartmentController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/12view-master-data.js');
+				return $ocLazyLoad.load('./js/controller/22view-master-data.js');
 			}]
 		}
 	}
-	var demo_13 = {
-		name: "demoHome.13amend-master-data",
-		url: "/13amend-master-data",
+	var demo_23 = {
+		name: "demoHome.23amend-master-data",
+		url: "/23amend-master-data",
 		views: {
 			"content@": {
-				templateUrl: '../demo/13amend-master-data.html',
+				templateUrl: '../demo/23amend-master-data.html',
                 controller: 'amendDepartmentController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/13amend-master-data.js');
+				return $ocLazyLoad.load('./js/controller/23amend-master-data.js');
 			}]
 		}
 	}
-	var demo_14 = {
-		name: "demoHome.14delete-master-data",
-		url: "/14delete-master-data",
+	var demo_24 = {
+		name: "demoHome.24delete-master-data",
+		url: "/24delete-master-data",
 		views: {
 			"content@": {
-				templateUrl: '../demo/14delete-master-data.html',
+				templateUrl: '../demo/24delete-master-data.html',
                 controller: 'deleteDepartmentController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/14delete-master-data.js');
+				return $ocLazyLoad.load('./js/controller/24delete-master-data.js');
 			}]
 		}
 	}
-	var demo_15 = {
-		name: "demoHome.15display-inline-message",
-		url: "/15display-inline-message",
+	var demo_25 = {
+		name: "demoHome.25display-inline-message",
+		url: "/25display-inline-message",
 		views: {
 			"content@": {
-				templateUrl: '../demo/15display-inline-message.html',
+				templateUrl: '../demo/25display-inline-message.html',
                 controller: 'displayMessageController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/15display-inline-message.js');
+				return $ocLazyLoad.load('./js/controller/25display-inline-message.js');
 			}]
 		}
 	}
-	var demo_16 = {
-		name: "demoHome.16reusable-screen",
-		url: "/16reusable-screen",
+	var demo_26 = {
+		name: "demoHome.26reusable-screen",
+		url: "/26reusable-screen",
 		views: {
 			"content@": {
-				templateUrl: '../demo/16reusable-screen.html',
+				templateUrl: '../demo/26reusable-screen.html',
                 controller: 'reuseController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/16reusable-screen.js');
+				return $ocLazyLoad.load('./js/controller/26reusable-screen.js');
 			}]
 		}
 	}
-	var demo_20 = {
-		name: "demoHome.20range-selection",
-		url: "/20range-selection",
+	var demo_30 = {
+		name: "demoHome.31range-selection",
+		url: "/31range-selection",
 		views: {
 			"content@": {
-				templateUrl: '../demo/20range-selection.html',
+				templateUrl: '../demo/31range-selection.html',
                 controller: 'rangeController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/20range-selection.js');
+				return $ocLazyLoad.load('./js/controller/31range-selection.js');
 			}]
 		}
 	}
-	var demo_21 = {
-		name: "demoHome.21create-staff-profile",
-		url: "/21create-staff-profile",
+	var demo_41 = {
+		name: "demoHome.41create-staff-profile",
+		url: "/41create-staff-profile",
 		views: {
 			"content@": {
-				templateUrl: '../demo/21create-staff-profile.html',
+				templateUrl: '../demo/41create-staff-profile.html',
                 controller: 'staffProfileCreateController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/21create-staff-profile.js');
+				return $ocLazyLoad.load('./js/controller/41create-staff-profile.js');
 			}]
 		}
 	}
-	var demo_23 = {
-		name: "demoHome.23amend-staff-profile",
-		url: "/23amend-staff-profile",
+	var demo_43 = {
+		name: "demoHome.43amend-staff-profile",
+		url: "/43amend-staff-profile",
 		views: {
 			"content@": {
-				templateUrl: '../demo/23amend-staff-profile.html',
+				templateUrl: '../demo/43amend-staff-profile.html',
                 controller: 'staffProfileAmendController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/23amend-staff-profile.js');
+				return $ocLazyLoad.load('./js/controller/43amend-staff-profile.js');
 			}]
 		}
 	}
@@ -379,16 +389,17 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 	$stateProvider.state(demo_06);
 	$stateProvider.state(demo_07);
 	$stateProvider.state(demo_08);
-	$stateProvider.state(demo_09);
 	$stateProvider.state(demo_10);
 	$stateProvider.state(demo_11);
 	$stateProvider.state(demo_12);
-	$stateProvider.state(demo_13);
-	$stateProvider.state(demo_14);
-	$stateProvider.state(demo_15);
-	$stateProvider.state(demo_16);
-	$stateProvider.state(demo_20);
 	$stateProvider.state(demo_21);
+	$stateProvider.state(demo_22);
 	$stateProvider.state(demo_23);
+	$stateProvider.state(demo_24);
+	$stateProvider.state(demo_25);
+	$stateProvider.state(demo_26);
+	$stateProvider.state(demo_30);
+	$stateProvider.state(demo_41);
+	$stateProvider.state(demo_43);
 
 }]);

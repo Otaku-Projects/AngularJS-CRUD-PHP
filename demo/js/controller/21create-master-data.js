@@ -14,7 +14,7 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
     }
 
     $scope.SetDefaultValue = function(scope, iElement, iAttrs, controller){
-        // controller.ngModel.DepartmentCode = "ABC"
+        controller.ngModel.DepartmentCode = "ABC"
         //controller.ngModel.DepartmentCode = 125
     }
 
@@ -26,6 +26,4 @@ app.controller('createDepartmentController', ['$scope', 'Security', function ($s
     $scope.ValidateBuffer = function(scope, iElement, iAttrs, controller){
         return true;
     }
-    Prism.highlightAll();
-    Prism.fileHighlight();
 }]);

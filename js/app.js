@@ -3,7 +3,7 @@
 
 //angular.element() === jQuery() === $();
 // using the angular ui of Bootstrap
-var app = angular.module('myApp', ['ngCookies', 'ngFileUpload', 'ui.router', "oc.lazyLoad"]);
+var app = angular.module('myApp', ['ngCookies', 'ngFileUpload']);
 
 
 app.constant('config', {
@@ -14,6 +14,7 @@ app.constant('config', {
 	dataServer: dataServer,
 	
 	uiTheme: theme,
+	icon: icon,
 	
 	editMode: directiveEditMode,
 	reservedPath: reservedPath,
@@ -47,6 +48,7 @@ app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($root
 		$rootScope.afterLoginPage = $rootScope.webRoot+config.afterLoginPage;
 		
 		$rootScope.uiTheme = config.uiTheme.toUpperCase();
+		$rootScope.icon = (config.icon) ? config.icon : "font_awesome4";
 		
 		$rootScope.controller = $rootScope.webRoot+config.reservedPath.controller;
 		$rootScope.templateFolder = $rootScope.webRoot+config.reservedPath.templateFolder;
@@ -950,13 +952,23 @@ app.directive('importExport', ['Security', '$rootScope', function(Security, $roo
         // scope: [false | true | {...}]
         // false = use parent scope
         // true =  A new child scope that prototypically inherits from its parent
-        // {} = create a isolate scope
+		// {} = create a isolate scope
+		// scope: {
+			// oneWay: '@',
+			// twoWay: '=',
+            // expr: '&
+		// }
         scope: true,
 
         controller: ImportExportConstructor,
-        controllerAs: 'imExCtrl',
-
+		controllerAs: 'imExCtrl',
+		
         //If both bindToController and scope are defined and have object hashes, bindToController overrides scope.
+        bindToController: {
+        someObject: '=',
+        someString: '@',
+        someExpr: '&'
+        }
         bindToController: {
             ngModel: '=',
             // editMode: '=?',

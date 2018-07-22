@@ -408,15 +408,15 @@ app.directive('entry', ['$rootScope',
             var request = DataAdapter.FindData(submitData); 
 
     //         var request = HttpRequeset.send(requestOption);
-    //         request.then(function(responseObj) {
-    //             var data_or_JqXHR = responseObj.data;
-    //             // need to handle if record not found.
-				// SetNgModel(data_or_JqXHR);
-    //         }, function(reason) {
-    //           console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
-    //           Security.HttpPromiseFail(reason);
-    //         }).finally(function() {
-    //         });
+            // request.then(function(responseObj) {
+            //     var data_or_JqXHR = responseObj.data;
+            //     // need to handle if record not found.
+			// 	SetNgModel(data_or_JqXHR);
+            // }, function(reason) {
+            //   console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
+            //   Security.HttpPromiseFail(reason);
+            // }).finally(function() {
+            // });
             return request;
         }
 
@@ -464,12 +464,11 @@ app.directive('entry', ['$rootScope',
             var submitPromise = $scope.SubmitData();
             submitPromise.then(function(){
                 $scope.editMode = backupEditMode;
-                console.dir($scope.editMode)
             })
         }
         $scope.UpdateData = function(){
             var backupEditMode = DirectiveProperties.getEditMode();
-            $scope.editMode = globalCriteria.editMode.Update;
+            $scope.editMode = globalCriteria.editMode.Amend;
             var submitPromise = $scope.SubmitData();
             submitPromise.then(function(){
                 $scope.editMode = backupEditMode;
@@ -488,7 +487,7 @@ app.directive('entry', ['$rootScope',
             var submitPromise;
         	var editMode = DirectiveProperties.getEditMode();
             var msg = "";
-
+            
 			if(editMode == globalCriteria.editMode.Create){
 				if(typeof $scope.CustomCreateData == "function"){
 	            	submitPromise = $scope.CustomCreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
@@ -499,8 +498,8 @@ app.directive('entry', ['$rootScope',
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     msg = responseObj.message;
-                    if(responseObj.status){
-                        //
+                    
+                    if(responseObj.status == "success"){
                         console.dir("CreateData response: "+responseObj.status+", reset form")
                         $scope.ResetForm();
                     }
@@ -540,13 +539,21 @@ app.directive('entry', ['$rootScope',
                     httpResponseObj = responseObj;
                     msg = responseObj.message;
 
-                    $scope.ResetForm();
+                    if(responseObj.status == "success"){
+                        console.dir("DeleteData response: "+responseObj.status+", reset form")
+                        $scope.ResetForm();
+                    }
                     SetTableStructure($scope.tableStructure);
                 }, function(reason) {
                   console.error(tagName + ":"+$scope.programId + " - Fail in DeleteData()")
                   throw reason;
                 })
-			}
+			}else{
+                // MessageService.addMsg("Cannot identify edit-mode '"+editMode+"'");
+                submitPromise = $q(function(resolve, reject){
+                    reject("Cannot identify edit-mode '"+editMode+"'");
+                });
+            }
 
             submitPromise.catch(function(e){
                 // handle errors in processing or in error.
@@ -784,7 +791,7 @@ app.directive('entry', ['$rootScope',
          * @param {Object} recordObj - provide the ngModel of entry
          * @return {Object} strictObj - a new record row strict with the table schema
          */
-        function ConvertEntryModelStrictWithSchema(recordObj){
+        function ConvertEntryModelStrictWithSchema(recordObj, editMode){
             var tbStructure = $scope.tableStructure;
             var itemsColumn = tbStructure.DataColumns;
             var keyColumns = tbStructure.KeyColumns;
@@ -811,6 +818,8 @@ app.directive('entry', ['$rootScope',
 //                    }
 //                }
                 
+                // 20180515, keithpoon, allow to set null in create mode only
+                if(editMode == globalCriteria.editMode.Create)
                 // if the column is auto increase set it null
                 if(itemsColumn[colIndex].extra == "auto_increment"){
                     continue;
@@ -832,7 +841,7 @@ app.directive('entry', ['$rootScope',
 
             var isModelStrictWithSchema = TryToCallIsLimitModelStrictWithSchema();
             if(isModelStrictWithSchema)
-                recordObj = ConvertEntryModelStrictWithSchema(recordObj);
+                recordObj = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
 
 			var submitData = {
 				"Table": programId,
@@ -856,8 +865,8 @@ app.directive('entry', ['$rootScope',
         		"Items":{}
         	}
         	updateObj.Header[1] = {};
-        	//updateObj.Header[1] = recordObj;
-            updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj);
+            //updateObj.Header[1] = recordObj;
+            updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
 
         	var isRowEmpty = jQuery.isEmptyObject(updateObj.Header[1])
         	if(isRowEmpty){
