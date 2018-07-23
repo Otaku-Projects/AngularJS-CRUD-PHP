@@ -23,21 +23,6 @@ var dataServer = "php";
 
 var CookiesEffectivePath = '/';
 
-var directiveEditMode = {
-	None: 0,
-	NUll: 1,
-	
-	Create: 5,
-	Amend: 6,
-	Delete: 7,
-	View: 8,
-	AmendAndDelete: 9,
-	ImportExport: 10,
-	Import: 11,
-	Export: 12,
-	
-	Copy: 15
-}
 var reservedPath = {
 	controller: 'controller/',
 	templateFolder: 'Templates/',

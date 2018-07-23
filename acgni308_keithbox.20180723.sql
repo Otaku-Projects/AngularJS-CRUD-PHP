@@ -132,47 +132,6 @@ CREATE TABLE `permissiongroupright` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `profile`
---
-
-DROP TABLE IF EXISTS `profile`;
-CREATE TABLE `profile` (
-  `profileID` int(10) NOT NULL,
-  `userID` int(10) DEFAULT NULL,
-  `lastName` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `firstName` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `title` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
-  `fullName` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `fullNameChi` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `fullNameEng` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `nickName` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `gender` char(1) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `dateOfBirth` date DEFAULT NULL,
-  `address` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `localation` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `phone` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `imagePath` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `facebookEmail` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `createDate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `createUser` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `lastUpdateDate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `lastUpdateUser` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `systemUpdateUser` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `systemUpdateDate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `systemUpdateProgram` varchar(50) COLLATE utf8_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
---
--- Dumping data for table `profile`
---
-
-INSERT INTO `profile` (`profileID`, `userID`, `lastName`, `firstName`, `title`, `fullName`, `fullNameChi`, `fullNameEng`, `nickName`, `gender`, `dateOfBirth`, `address`, `email`, `localation`, `phone`, `imagePath`, `facebookEmail`, `createDate`, `createUser`, `lastUpdateDate`, `lastUpdateUser`, `systemUpdateUser`, `systemUpdateDate`, `systemUpdateProgram`) VALUES
-(2, 11, 'POON', 'YAT LAM', '', NULL, '潘日林先生', 'POON YAT LAM', NULL, NULL, '2015-12-04', NULL, 'o.keithpoon@gmail.com', NULL, 'NULL', NULL, 'o.keithpoon@gmail.com', '2015-12-14 17:00:12', NULL, '2015-12-14 17:00:12', NULL, NULL, '0000-00-00 00:00:00', '');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `staff`
 --
 
@@ -283,13 +242,6 @@ ALTER TABLE `permissiongroupright`
   ADD KEY `permissionID` (`permissionID`);
 
 --
--- Indexes for table `profile`
---
-ALTER TABLE `profile`
-  ADD PRIMARY KEY (`profileID`),
-  ADD KEY `FKProfile745830` (`userID`);
-
---
 -- Indexes for table `staff`
 --
 ALTER TABLE `staff`
@@ -319,12 +271,6 @@ ALTER TABLE `webuser`
 --
 ALTER TABLE `permission`
   MODIFY `permissionID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `profile`
---
-ALTER TABLE `profile`
-  MODIFY `profileID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `student`

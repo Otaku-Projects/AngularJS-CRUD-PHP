@@ -1,6 +1,49 @@
 // JavaScript Document
 "use strict";
 
+app.constant('config', {
+	serverHost: serverHost,
+	webRoot: webRoot,
+	requireLoginPage: requireLoginPage,
+	afterLoginPage: afterLoginPage,
+	dataServer: dataServer,
+	
+	uiTheme: theme,
+	icon: icon,
+	
+	editMode: {
+		None: 0,
+		NUll: 1,
+		
+		Create: 5,
+		Amend: 6,
+		Delete: 7,
+		View: 8,
+		AmendAndDelete: 9,
+		ImportExport: 10,
+		Import: 11,
+		Export: 12,
+		
+		Copy: 15,
+		Fulllist: 20,
+		Pageview: 21,
+		Scrollview: 22
+	},
+	
+	reservedPath: reservedPath,
+	CookiesEffectivePath: CookiesEffectivePath,
+    
+    debugLog: {
+        AllLogging: false,
+        PageRecordsLimitDefault: true,
+        LockControl: false,
+        UnlockControl: false,
+        TableStructureObtained: true,
+		DirectiveFlow: false,
+        ShowCallStack: false
+    }
+});
+
 app.config(['config',
 '$httpProvider',
 '$locationProvider',
