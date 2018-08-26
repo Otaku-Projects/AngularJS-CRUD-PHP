@@ -1,0 +1,236 @@
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1 class="page-header">&lt;inquiry&gt; Directive</h1>
+		</div>
+		<div class="col-lg-12">
+			Inquiry merged the entry and pageview concept, inquiry can do more in rich.<br>
+			Inquiry will not get data on loaded.<br>
+			User may provide the record features and/or special criteria to search and filter the records.<br>
+			The search result is a data set, it will display in the element, use this element for display records in a list, display summary on dashboard.<br>
+
+			<br><br>
+			Usage<br>
+			- Display a data set in a view/table without/with navigation controls like arrows, pagination<br>
+			- Display a data set in select, radio, checkbox HTML element<br>
+			- As pre select critical records for &lt;process&gt;<br>
+		</div>
+		<div class="col-lg-12">
+			<script type="text/plain" class="line-numbers language-markup">
+				<inquiry 
+					ng-model="expression"
+					program-id="string"
+					mode="[fulllist| pageview | scrollview]"
+					display="[table|tile]"
+					pageRecordLimit=99
+					pageinationLimit=3>
+					<iheader
+						tools="search [, pageRecordLimit | display]"
+						></iheader>
+					<ibody></ibody>
+					<ifooter
+						tools="refresh [, select | pageination]"
+						></ifooter>
+				</inquiry>
+			</script>
+		</div>
+		<div class="col-lg-12">
+			<h3>Arguments</h3>
+		</div>
+		<div class="col-lg-12">
+			<div class="table-responsive">
+				<table class="table">
+					<tr>
+						<th>Param</th>
+						<th>Type</th>
+						<th>Details</th>
+					</tr>
+					<tr>
+						<td>ng-model</td>
+						<td>expression</td>
+						<td>assignable expression to bind to</td>
+					</tr>
+					<tr>
+						<td>program-id</td>
+						<td>string</td>
+						<td>Name of the program id</td>
+					</tr>
+					<tr>
+						<td>mode</td>
+						<td>string</td>
+						<td>Specify the mode [fulllist | pageview | scrollview] of it, different mode has different behaviors.</td>
+					</tr>
+					<tr>
+						<td>display</td>
+						<td>string</td>
+						<td>Specify the mode [table | tile] of it, different mode has different behaviors.</td>
+					</tr>
+					<tr>
+						<td>pageRecordLimit</td>
+						<td>number</td>
+						<td>only effect on pageview and scrollview mode, <br>
+						for pageview - control how many records on single page.<br>
+						for scrollview - control how many records scrolled will triger the read next action.</td>
+					</tr>
+					<tr>
+						<td>pageinationLimit</td>
+						<td>number</td>
+						<td>only effect on pageview with pagination,<br>
+						if set as 3, current page is 5 then &lt; . . . 4 5 6 . . . &gt;<br>
+						if set as 5, current page is 5 then &lt; . . 3 4 5 6 7 . . &gt;<br></td>
+					</tr>
+					<tr>
+						<td>tool</td>
+						<td>string</td>
+						<td>Specify the tools [search | pageRecordLimit | display | refresh | select | pageination] on header and footer.<br>
+						allowed to specify more than one, please separate the tool by space<br></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<div class="col-lg-12">
+			<h3>Methods</h3>
+		</div>
+		<div class="col-lg-12">
+			<div class="table-responsive">
+				<table class="table">
+					<tr>
+						<th>Method</th>
+						<th>Return Value</th>
+						<th>Description</th>
+					</tr>
+					<tr>
+						<td>Initialize()</td>
+						<td>null</td>
+						<td>Initialize the directive</td>
+					</tr>
+					<tr>
+						<td>InitScope</td>
+						<td>null</td>
+						<td>Initialize the directive scope</td>
+					</tr>
+					<tr>
+						<td>InitDirective</td>
+						<td>null</td>
+						<td>Build the default behaviors</td>
+					</tr>
+					<tr>
+					  <td>ResetForm()</td>
+					  <td>null</td>
+					  <td>Clear the ngModel.</td>
+					</tr>
+					<tr>
+					  <td>SubmitData</td>
+					  <td>promise</td>
+					  <td>Use ng-submit to force the form submission route to this function, or you may handle the trigger point by your own.</td>
+					</tr>
+					<tr>
+					  <td>ValidateBuffer($scope, $element, $attrs, $ctrl)</td>
+					  <td>bool</td>
+					  <td>$scope - directive scope<br>
+							$element - directive element<br>
+							$attrs - directive attrs<br>
+							$ctrl - directive controller</td>
+					</tr>
+					<tr>
+					  <td>CustomSubmitDataResult(httpResponseObj,
+							httpResponseObj.status,
+							$scope,
+							$element,
+							$attrs,
+							$ctrl</td>
+					  <td>null</td>
+					  <td>httpResponseObj - promise<br>
+							httpResponseObj.status - http status code<br>
+							$scope - directive scope<br>
+							$element - directive element<br>
+							$attrs - directive attrs<br>
+							$ctrl - directive controller<br>
+							This will auto call after the response return in SubmitData()</td>
+					</tr>
+					<tr>
+					  <td>LockAllControls</td>
+					  <td>null</td>
+					  <td>Lock all the form controls, includes the elements of input, button, textarea, select.<br>
+						  This will auto call on the postLink()<br>
+						  This will auto call on form submit
+					  </td>
+					</tr>
+					<tr>
+					  <td>LockAllInputBox</td>
+					  <td>null</td>
+					  <td>Lock all the input controls in form, includes the elements of input, textarea.</td>
+					</tr>
+					<tr>
+					  <td>UnLockSubmitButton</td>
+					  <td>null</td>
+					  <td>Unlock the submit button</td>
+					</tr>
+					<tr>
+					  <td>UnLockAllControls</td>
+					  <td>null</td>
+					  <td>Lock all the form controls, includes the elements of input, button, textarea, select.<br>
+						  This will auto call after GetTableStructure() if the form is not view mode and delete mode, unlock the form when table structure obtained.<br>
+						  This will auto call on failure of submit validation ValidateBuffer()<br>
+						  This will auto call after data submitted SubmitData()<br>
+					  </td>
+					</tr>
+					<tr>
+					  <td>ShowLoadModal</td>
+					  <td>null</td>
+					  <td>Show loading image in a popup modal<br>
+						This will auto call after pass the submit validation ValidateBuffer()<br></td>
+					</tr>
+					<tr>
+					  <td>HideLoadModal</td>
+					  <td>null</td>
+					  <td>Hide the popup loading modal<br>
+						This will auto call after the response return in SubmitData()<br></td>
+					</tr>
+					<tr>
+						<td>PointedToRecord(pRecord, event, rowScope)</td>
+						<td>null</td>
+						<td>This function allows to manipluate the record on pointed the record</td>
+					</tr>
+					<tr>
+						<td>SelectedToRecord</td>
+						<td>null</td>
+						<td>This function allows to manipluate the record on selected the record</td>
+					</tr>
+					<tr>
+						<td>ClearSelectedRecord</td>
+						<td>null</td>
+						<td>Clear the selected record, by default in the demo, mouse click on the &lt;table&gt; &lt;tr&gt; record will select that record.</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div class="row" style="display:none;">
+		<div class="col-lg-12">
+			<h2>Example</h2>
+		</div>
+		<div class="col-lg-12">
+			<div>
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#html" aria-controls="html" role="tab" data-toggle="tab">HTML</a></li>
+						<li role="presentation"><a href="#javascript" aria-controls="javascript" role="tab" data-toggle="tab">Javascript</a></li>
+				</ul>
+				
+				<!-- Tab panes -->
+				<div class="tab-content">
+				<!--
+						<div role="tabpanel" class="tab-pane active" id="html">
+								<pre class="line-numbers" data-src="15display-inline-message.html"></pre>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="javascript">
+								<pre class="line-numbers" data-src="js/controller/15display-inline-message.js"></pre>
+						</div>
+						-->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- /.row -->
+</div>
