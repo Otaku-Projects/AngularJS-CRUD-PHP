@@ -12,9 +12,12 @@ For quick learn how to use the source, please check the [online documentation](h
 
 For further study, please follow the documentation to setup the demo case on your local environment.
 
-[PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System), a branch of this one and practice for an E-Appraisal system.
+### Other Implementations
+[PPSP-360_Degree_Evaluation_System](https://github.com/keithbox/PPSP-360_Degree_Evaluation_System) (Mar 2017), a branch of this one and practice for an E-Appraisal system.
 
-[NoSQLSystem](https://github.com/keithbox/NoSQLSystem), a branch of this one and practice for a website that using MongoDB database
+[NoSQLSystem](https://github.com/keithbox/NoSQLSystem) (Aug 2017), a branch of this one and practice for a website that using MongoDB database
+
+[Passive-Investment-Management-System](https://github.com/keithbox/Passive-Investment-Management-System) (Sep 2018), manage and provide the views of certificate deposit, exchange and stocks. Using a new generation of Core.
 
 In my try, this project good for the small website project that within or around 30 pages.
 
