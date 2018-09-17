@@ -136,6 +136,9 @@ switch ($action) {
 	case 'ExportData':
 		$funcName = "ExportData";
 		break;
+    case 'InquiryData':
+        $funcName = "InquiryData";
+        break;
     case 'ProcessData':
         $funcName = "ProcessData";
         break;
@@ -144,7 +147,7 @@ switch ($action) {
 		break;
 	default:
 		$responseData->Status = "UnkownAction";
-		array_unshift($responseData->Message, "Unkown action: $action");
+		array_unshift($responseData->Message, "Undefined action: $action");
 		break;
 }
 
@@ -152,7 +155,11 @@ switch ($action) {
 $isProgramExists = function_exists($funcName);
 if(!$isProgramExists){
 	$responseData->Status = "FuncNotFound";
-	array_unshift($responseData->Message, "Function $funcName() not found in $prgmName");
+	if(empty($funcName)){
+		
+	}else{
+		array_unshift($responseData->Message, "Function $funcName() not found in $prgmName");
+	}
 
 	$responseData =  (object)array_merge((array)$responseData, (array)$sqlResultData);
 
@@ -210,28 +217,25 @@ try{
 		case 'CreateData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
 			if($sqlResultData['ActionResult']['access_status'] == "OK"){
-				$sqlResultData['Message'] = "Data has been successfully created.";
+				$sqlResultData['Message'] = "Data created.";
 			}else{
-//				$sqlResultData['Message'] = "Data create failure.";
-                $sqlResultData['Message'] = $sqlResultData['ActionResult']['error'];
+				$sqlResultData['Message'] = "Data create fail.";
 			}
 			break;
 		case 'UpdateData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
 			if($sqlResultData['ActionResult']['access_status'] == "OK"){
-				$sqlResultData['Message'] = "Data has been successfully updated.";
+				$sqlResultData['Message'] = "Data updated.";
 			}else{
-//				$sqlResultData['Message'] = "Data update failure.";
-                $sqlResultData['Message'] = $sqlResultData['ActionResult']['error'];
+				$sqlResultData['Message'] = "Data update fail.";
 			}
 			break;
 		case 'DeleteData':
 			$sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
 			if($sqlResultData['ActionResult']['access_status'] == "OK"){
-				$sqlResultData['Message'] = "Data has been successfully deleted.";
+				$sqlResultData['Message'] = "Data deleted.";
 			}else{
-//				$sqlResultData['Message'] = "Data delete failure.";   
-                $sqlResultData['Message'] = $sqlResultData['ActionResult']['error'];
+				$sqlResultData['Message'] = "Data delete fail.";
 			}
 			break;
 		case 'ImportData':
@@ -244,6 +248,9 @@ try{
 			//$sqlResultData['ActionResult'] = call_user_func($funcName);
 			// print_r(call_user_func($funcName));
 			break;
+        case 'InquiryData':
+            $sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
+            break;
         case 'ProcessData':
             $sqlResultData['ActionResult'] = call_user_func_array($funcName, array($requestData));
             break;
@@ -258,9 +265,9 @@ try{
 	}
 	
 	if($action != "GetTableStructure")
-        if($sqlResultData['ActionResult']['access_status'] != "OK"){
-            $responseData->Status = "Fail";
-        }
+		if($sqlResultData['ActionResult']['access_status'] != "OK"){
+			$responseData->Status = "Fail";
+		}
 
 }catch (Exception $e) {
 	$responseData->Status = "Error";

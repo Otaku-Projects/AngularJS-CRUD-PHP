@@ -55,7 +55,7 @@ class ExcelManager {
 		// Default value
 		$this->isTemplate = false;
         
-		$this->filename = $this->table."_Export_Excel_" . date('Y-m-d_His');
+		// $this->filename = $this->table."_Export_Excel_" . date('Y-m-d_His');
 		$this->outputAsFileType = $this->fileType["xlsx"];
 		$this->ClearExportColumnSequence();
 		$this->ClearSkipExportColumn();
@@ -140,6 +140,7 @@ class ExcelManager {
 				case strpos($tempDataType, "mediumint") !== FALSE:
 				case strpos($tempDataType, "int") !== FALSE:
 				case strpos($tempDataType, "bigint") !== FALSE:
+				case strpos($tempDataType, "year") !== FALSE:
 					preg_match_all('!\d+!', $tempDataType, $columnLength);
 					if(isset($columnLength[0])){
 						$format = str_pad('',$columnLength[0][0],"#");
@@ -308,14 +309,14 @@ class ExcelManager {
 								$fitColumn = $this->getNameFromNumber($columnIndex);
 								$objPHPExcel->getActiveSheet()->getStyle($excelCellCoordinate)
 								    ->getNumberFormat()
-								    ->setFormatCode('yyyy-m-d');
+								    ->setFormatCode('yyyy-mm-dd');
 								break;
 							case $tempDataType==="datetime":
 							case $tempDataType==="timestamp":
 								$fitColumn = $this->getNameFromNumber($columnIndex);
 								$objPHPExcel->getActiveSheet()->getStyle($excelCellCoordinate)
 								    ->getNumberFormat()
-								    ->setFormatCode('yyyy-m-d hh:mm:ss');
+								    ->setFormatCode('yyyy-mm-dd hh:mm:ss');
 								break;
 							case $tempDataType==="time":
 								$fitColumn = $this->getNameFromNumber($columnIndex);
@@ -376,21 +377,45 @@ class ExcelManager {
 							if( $tempColValue != NULL ){
 								
 								// 20150706, fixed: leave the cell blank when datetime value is zero.
-								$isEmptyDate = false;
+                                $isEmptyDate = false;
+                                $isDateValue = false;
 								switch ($tempDataType) {
 									case $tempDataType==="date":
 									case $tempDataType==="datetime":
 									case $tempDataType==="timestamp":
 									case $tempDataType==="time":
 										if(strtotime($tempColValue) == 0 || empty($tempColValue))
-											$isEmptyDate = true;
-										break;
-								}
-								
-								if(!$isEmptyDate){
-								   // echo $tempColValue;
+                                            $isEmptyDate = true;
+                                        $isDateValue = true;
+                                        break;
+                                        
+                                        $dateObject = date_create($tempColValue);
+                                        $tempColValue = $dateObject;
+                                }
+                                
+								if($isDateValue){
+                                    if(!$isEmptyDate){
+                                        // 20180901, keithpoon, fixed: create date value in excel through PHPExcel_Shared_Date::PHPToExcel class
+                                        switch ($tempDataType) {
+                                            case $tempDataType==="date":
+                                                $tempColValue = DateTime::createFromFormat('Y-m-d', $tempColValue)->setTime(0, 0, 0);
+                                                break;
+                                            case $tempDataType==="datetime":
+                                                $tempColValue = DateTime::createFromFormat('Y-m-d hh:mm:ss', $tempColValue);
+                                                break;
+                                            case $tempDataType==="timestamp":
+                                                $tempColValue = DateTime::createFromFormat('Y-m-d hh:mm:ss', $tempColValue);
+                                                break;
+                                            case $tempDataType==="time":
+                                                $tempColValue = DateTime::createFromFormat('hh:mm:ss', $tempColValue);
+                                                break;
+                                        }
+                                        $objPHPExcel->getActiveSheet()->setCellValue($excelCellCoordinate, PHPExcel_Shared_Date::PHPToExcel($tempColValue));
+                                        
+                                    }
+                                }else{
 									$objPHPExcel->getActiveSheet()->setCellValue($excelCellCoordinate, $tempColValue);
-								}
+                                }
 							}
 
 						$columnIndex++;
@@ -584,11 +609,20 @@ class ExcelManager {
 		}
 
 		// assign the filename
-		if(Core::IsNullOrEmptyString($this->filename))
-		if(count($this->tableList) == 1)
-			$this->filename = $this->tableList[0];
-		else
-			$this->filename = basename($_SERVER['PHP_SELF']);
+		if(Core::IsNullOrEmptyString($this->filename)){
+            if(count($this->tableList) == 1)
+                $this->filename = $this->tableList[0];
+            // this will return ConnectionManager.php, because the import/export call are centralize in it
+            // else
+            //     $this->filename = basename($_SERVER['PHP_SELF']);
+            else
+                $this->filename = "Excel";
+
+            if($this->isTemplate)
+                $this->filename .= "_Template";
+            $this->filename .= ".".date('Ymd_His');
+        }
+
 
 		$this->filenamePost = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
 
@@ -879,7 +913,7 @@ class ExcelManager {
 		foreach($this->tableList as $tableName) {
 			$tempProcessMessage = "Import $tableName";
 			array_push($this->processMessageList, $tempProcessMessage);
-			$dataTable = $dataSet[$tableName]['excelData'];
+            $dataTable = $dataSet[$tableName]['excelData'];
 			$this->ImportData($dataTable, $tableName);
 		}
 
@@ -892,8 +926,9 @@ class ExcelManager {
 //		$responseArray = $this->GetResponseArray();
 		$responseArray['processed_message'] = $this->processMessageList;
 		$responseArray['access_status'] = Core::$access_status['OK'];
-
+		
 		return $responseArray;
+		
 		// return $this->processMessageList;
 	}
 	
@@ -948,15 +983,30 @@ class ExcelManager {
 	
 	function CustomImportInsertOrUpdateData($tableObject, $rowIndex){
 		$isPKMissing = true;
+        $isPKAutoIncrement = false;
 		$primaryKeySchema = $tableObject->getPrimaryKeyName();
-		$keyString = "";
+        $keyString = "";
+        
+        $dataSchema = $tableObject->dataSchema;
+        
+		foreach ($primaryKeySchema['data']['Field'] as $index => $pkFieldName){
+            // if primary key allow auto_increment, by pass the checking
+            foreach ($dataSchema['data'] as $index => $value){
+                $column = $value['Field'];
+                $type = $value['Type'];
+                if($column == $pkFieldName){
+                    if($value['Extra']){
+                        $isPKAutoIncrement = true;
+                        break;
+                    }
+                }
+            }
 
-		foreach ($primaryKeySchema['data']['Field'] as $index => $value){
-			if(Core::IsNullOrEmptyString($tableObject->_[$value])){
+			if(Core::IsNullOrEmptyString($tableObject->_[$pkFieldName])){
 				$isPKMissing = $isPKMissing && true;
 				//break;
 			}else{
-				$keyString = $keyString . $tableObject->_[$value].", ";
+				$keyString = $keyString . $tableObject->_[$pkFieldName].", ";
 				$isPKMissing = false;
 			}
 		}
@@ -967,17 +1017,24 @@ class ExcelManager {
 		$tempProcessMessage = "";
 		
 		$tableObject->topRightToken = true;
-		$tableObject->debug = true;
+        $tableObject->debug = true;
 
 		// Check key exists
 		$isKeyExists = $tableObject->CheckKeyExists();
 		// Update if exists, insert if not exists
-		if($isKeyExists)
-			$responseArray = $tableObject->update(true);
-		else
-			$responseArray = $tableObject->insert();
         
-//        print_r($responseArray);
+		if($isKeyExists){
+            $responseArray = $tableObject->update(true);
+        }
+		else{
+            $responseArray = $tableObject->insert();
+            
+            if($isPKMissing && $isPKAutoIncrement){
+                $keyString = $responseArray['insert_id'];
+            }
+        }
+
+    //    print_r($responseArray);
 
 		if(!$isKeyExists)
 		{
@@ -1113,8 +1170,10 @@ class ExcelManager {
 								
 								$tempDateObj = new DateTime();
 								$tempDateObj = date_create_from_format($format, $cellValue);
-								
-								$tempDateObj->sub(new DateInterval('PT8H'));
+                                // 20180829, keithpoon, PHPExcel translates to UTC time inside, and then go back to the default timezone.
+                                // https://stackoverflow.com/questions/10887967/phpexcel-gets-wrong-timezone-even-after-setting-date-default-timezone-set/31237645#31237645
+                                // should not add 8 hours to Hong Kong local time zone by manual 
+								// $tempDateObj->sub(new DateInterval('PT8H'));
 								
 								$cellValue = $tempDateObj->format($format);
 								break;
@@ -1126,9 +1185,11 @@ class ExcelManager {
 								
 								$tempDateObj = new DateTime();
 								$tempDateObj = date_create_from_format($format, $cellValue);
-								$tempDateObj->sub(new DateInterval('PT8H'));
-								
-								$cellValue = $tempDateObj->format($format);
+                                // 20180829, keithpoon, PHPExcel translates to UTC time inside, and then go back to the default timezone.
+                                // $tempDateObj->sub(new DateInterval('PT8H'));
+                                
+                                $cellValue = $tempDateObj->format($format);
+                                
 								break;
 							case "time":
 								$format = "H:i:s";
@@ -1139,7 +1200,8 @@ class ExcelManager {
 								
 								$tempDateObj = new DateTime();
 								$tempDateObj = date_create_from_format($format, $cellValue);
-								$tempDateObj->sub(new DateInterval('PT8H'));
+                                // 20180829, keithpoon, PHPExcel translates to UTC time inside, and then go back to the default timezone.
+								// $tempDateObj->sub(new DateInterval('PT8H'));
 								
 								$cellValue = $tempDateObj->format($format);
 								break;
@@ -1153,6 +1215,8 @@ class ExcelManager {
 								break;
 							case "bigint":
 								break;
+                            case "year":
+                                break;
 							
 							case "float":
 								break;
@@ -1168,7 +1232,7 @@ class ExcelManager {
 							case "text":
 								break;
 							default:
-								$cellValue = $cell->getValue();
+                                $cellValue = $cell->getValue();
 								break;
 						}
 					}else{

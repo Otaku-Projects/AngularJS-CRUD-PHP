@@ -13,7 +13,7 @@ var theme = "B";
 // W = w3c
 // J = jQueryUI
 
-var icon = "font_awesome4"
+var icon = "font_awesome5"
 // font_awesome4
 // font_awesome5
 

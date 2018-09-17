@@ -25,6 +25,7 @@ app.directive('process', ['$rootScope',
     	var constructor = this;
     	var $ctrl = $scope.processCtrl;
         var tagName = $element[0].tagName.toLowerCase();
+        var loadModelInstance = {};
 
     	var globalCriteria = $rootScope.globalCriteria;
         var backupNgModelObj = {};
@@ -75,7 +76,21 @@ app.directive('process', ['$rootScope',
             DirectiveProperties.getProgramID();
 
             $scope.DisplayMessageList = MessageService.getMsg();
-            $ctrl.ngModel = {};
+            
+            var ngModel = $scope.$eval($attrs.ngModel);
+            if(ngModel === null){
+                console.log("ctrl.ngModel is === null, assign as new object {}")
+                $ctrl.ngModel = {};
+            }
+            else if(ngModel == null){
+                console.log("ctrl.ngModel is == null, assign as new object {}")
+                $ctrl.ngModel = {};
+            }
+            else{
+                $ctrl.ngModel = ngModel;
+            }
+
+            $ctrl.ngModel.Record = {};
         }
 
         function TryToCallInitDirective(){
@@ -100,9 +115,8 @@ app.directive('process', ['$rootScope',
         $scope.DefaultInitDirective = function(){
 
         }
-
+		
         $scope.SubmitData = function(){
-        	console.log("<"+$element[0].tagName+"> submitting data")
             var globalCriteria = $rootScope.globalCriteria;
             MessageService.clear();
 
@@ -114,6 +128,7 @@ app.directive('process', ['$rootScope',
             $scope.ShowLoadModal();
             SubmitData();
         }
+		
         function ValidateSubmitData(){
             var isValid = true;
         	// if Buffer invalid, cannot send request
@@ -130,28 +145,29 @@ app.directive('process', ['$rootScope',
 
             return isValid;
         }
-        function SubmitData(){
+        function SubmitData(){			
             var httpResponseObj = {};
             var submitPromise;
             var msg = "";
 
-				if(typeof $scope.ProcessData == "function"){
-	            	submitPromise = scope.ProcessData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
-	            }else{
-	            	submitPromise = ProcessData($ctrl.ngModel);
-	            }
+			if(typeof $scope.CustomProcessData == "function"){
+				submitPromise = $scope.CustomProcessData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+			}else{
+				submitPromise = ProcessData($ctrl.ngModel);
+			}
 
-                submitPromise.then(function(responseObj) {
-                    httpResponseObj = responseObj;
-                    var data_or_JqXHR = responseObj.data;
-                    msg = data_or_JqXHR.message;
-                    $ctrl.ngModel = data_or_JqXHR;
-					MessageService.setMsg(msg);
+			submitPromise.then(function(responseObj) {
+				httpResponseObj = responseObj;
+				var data_or_JqXHR = responseObj.data;
+				
+				$ctrl.ngModel = data_or_JqXHR;
+				
+				MessageService.setMsg(httpResponseObj.message);
 
-                }, function(reason) {
-                  console.error(tagName + ":"+$scope.programId + " - Fail in ProcessData()")
-                  throw reason;
-                });
+			}, function(reason) {
+			  console.error(tagName + ":"+$scope.programId + " - Fail in ProcessData()")
+			  throw reason;
+			});
 
 
             submitPromise.catch(function(e){
@@ -184,7 +200,7 @@ app.directive('process', ['$rootScope',
 
             return submitPromise;
         }
-
+        
         function ProcessData(recordObj){
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
@@ -214,10 +230,11 @@ app.directive('process', ['$rootScope',
         }
 
         $scope.ShowLoadModal = function(){
-            LoadingModal.showModal();
+            loadModelInstance = new LoadingModal();
+            loadModelInstance.showModal();
         }
         $scope.HideLoadModal = function(){
-            LoadingModal.hideModal();
+            loadModelInstance.hideModal();
         }
 
         // StatusChange() event listener

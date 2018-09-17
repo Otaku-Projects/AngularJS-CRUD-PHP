@@ -66,12 +66,10 @@
 
       if(prgmID == "dw01dp"){
         // asign the selected record to ng-model
-        $scope.deptEditBox = sRecord;
         $scope.entryForm.DeptCode = sRecord.DepartmentCode;
       }
 
       else if (prgmID == "dw02se"){
-        $scope.sectionEditBox = sRecord;
         $scope.entryForm.SectionCode = sRecord.SectionCode; 
       }
 

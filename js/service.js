@@ -883,57 +883,71 @@ app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "
     }
 }]);
 
+// 20180917, keithpoon, fixed: now can create instance for LoadingModal
 app.factory('LoadingModal', function ($window, $document, $rootScope) {
-	var loadingModal = {};
-	var loadingIcon = {};
-	var loadingIconContainer = {};
-    var root = {};
-    root.showModal = function(msg){
-    	if(typeof(msg) == "undefined" || msg == null || msg == "")
-    		msg = "Loading...";
+    var root = function(){
+        var loadingModal = {};
+        var loadingIcon = {};
+        var loadingIconContainer = {};
+        var seed = Math.floor(Math.random() * 100) + 1;
 
-    	loadingModal = $( "<div/>", {
-		  "class": "modal loading-modal",
-		  // click: function() {
-		  //   $( this ).toggleClass( "test" );
-		  // }
-		}).show().appendTo("body");
-		
-		if($rootScope.icon == "font_awesome4"){
-		// font awesome 4.7
-		loadingIcon = $("<div/>", {
-			"class": "loading-icon",
-			"html": '<i class="fa fa-circle-o-notch fa-spin fa-5x fa-fw"></i>',
-		});
-		}else if ($rootScope.icon == "font_awesome5"){
-		
-		// font awesome 5
-		loadingIcon = $("<div/>", {
-			"class": "loading-icon",
-			"html": '<i class="fas fa-circle-notch fa-spin fa-5x fa-fw"></i>',
-		});
-		
-		}
+        var showModal = function(msg){
+            if(typeof(msg) == "undefined" || msg == null || msg == "")
+                msg = "Loading...";
 
-		loadingIconContainer = $("<div/>", {
-		  "class": "modal",
-		  "html": loadingIcon,
-		}).show();
+            loadingModal = $( "<div/>", {
+            "class": "modal loading-modal",
+            // click: function() {
+            //   $( this ).toggleClass( "test" );
+            // }
+            }).show().appendTo("body");
+            
+            if($rootScope.icon == "font_awesome4"){
+            // font awesome 4.7
+            loadingIcon = $("<div/>", {
+                "class": "loading-icon",
+                "html": '<i class="fa fa-circle-o-notch fa-spin fa-5x fa-fw"></i>',
+            });
+            }else if ($rootScope.icon == "font_awesome5"){
+            
+            // font awesome 5
+            loadingIcon = $("<div/>", {
+                "class": "loading-icon",
+                "html": '<i class="fas fa-circle-notch fa-spin fa-5x fa-fw"></i>',
+            });
+            
+            }
 
-		loadingIconContainer.appendTo("body");
-		loadingIcon.css("margin-top", ( jQuery(window).height() - loadingIcon.height() ) / 2 + "px");
+            loadingIconContainer = $("<div/>", {
+            "class": "modal",
+            "html": loadingIcon,
+            }).show();
+
+            loadingIconContainer.appendTo("body");
+            loadingIcon.css("margin-top", ( jQuery(window).height() - loadingIcon.height() ) / 2 + "px");
+        };
+        var hideModal = function(){
+            loadingModal.remove();
+            loadingIconContainer.remove();
+        }
+
+        return {
+            showModal: showModal,
+            hideModal: hideModal
+        }
     };
-    root.hideModal = function(){
-    	loadingModal.remove();
-    	loadingIconContainer.remove();
-    }
     return root;
 });
 
 app.service('MessageService', function($rootScope, $timeout, ThemeService){
 	var self = this;
-	self.messageList = [];
+    self.messageList = [];
+    // clear message when ng-route event
     $rootScope.$on('$routeChangeStart', function () {
+		self.messageList = [];
+    });
+    // clear message when ui-route event
+    $rootScope.$on("$viewContentLoaded", function(targetScope){
 		self.messageList = [];
     });
     
@@ -943,37 +957,38 @@ app.service('MessageService', function($rootScope, $timeout, ThemeService){
 	self.addMsg = function(msg){
         if(!msg)
             return;
-		
-		var themeName = ThemeService.GetThemeName();
-		switch(theme){
-			case "D":
-			case "B":
-				if($.notify){
-					$.notify({
-						// options
-						message: msg 
-					},{
-						// settings
-						type: 'success',
-						placement: {
-							from: "top",
-							align: "center"
-						},
-						timer: 7000
-					});
-				}
-			break;
-			case "U":
-				if(typeof(UIkit) != "undefined")
-					UIkit.notify("<i class='uk-info-circle'></i> "+msg, {timeout: 7000, status:'primary'});
-			break;
-		}
+            
+        var themeName = ThemeService.GetThemeName();
+        switch(theme){
+            case "D":
+            case "B":
+                if($.notify){
+                    $.notify({
+                        // options
+                        message: msg 
+                    },{
+                        // settings
+                        type: 'success',
+                        placement: {
+                            from: "top",
+                            align: "center"
+                        },
+                        timer: 7000
+                    });
+                }
+            break;
+            case "U":
+                if(typeof(UIkit) != "undefined")
+                    UIkit.notify("<i class='uk-info-circle'></i> "+msg, {timeout: 7000, status:'primary'});
+            break;
+        }
 
 		self.messageList.push(msg);
     }
     self.shiftMsg = function(){
         self.messageList.shift();
     }
+    // for import message, no need to prompt as alert
 	self.setMsg = function(msgList){
 		if(typeof(msgList) == "undefined" || msgList == null)
 			return;
@@ -981,11 +996,13 @@ app.service('MessageService', function($rootScope, $timeout, ThemeService){
 			return;
         
         // clear message list
-        self.messageList.length = 0;
+        // self.messageList.length = 0;
+        self.clear();
         
         // cannot copy or assign the object directly to the messageList, it will break the assign by reference between the message directive
 		for(var index in msgList){
-			self.addMsg(msgList[index]);
+            //self.addMsg(msgList[index], hiddenOnScreen);
+            self.messageList.push(msgList[index]);
 		}
         
 	}
@@ -1156,6 +1173,57 @@ app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMyS
 			HttpRequeset.send(requestObj).then(
 			function(responseObj) {
 				var massagedObj = dAdapter.DeleteDataResponse(responseObj);
+				resolve(massagedObj);
+			}, function(reasonObj){
+				Security.HttpPromiseReject(reasonObj);
+				reject(reasonObj);
+			}).catch(function(e) {
+				Security.HttpPromiseErrorCatch(e);
+            });
+		})
+		return promise;
+	}
+	adapter.ExportData = function(opts){
+		var requestObj = dAdapter.ExportDataRequest(opts);
+
+		var promise = $q(function(resolve, reject){
+			HttpRequeset.send(requestObj).then(
+			function(responseObj) {
+				var massagedObj = dAdapter.ExportDataResponse(responseObj);
+				resolve(massagedObj);
+			}, function(reasonObj){
+				Security.HttpPromiseReject(reasonObj);
+				reject(reasonObj);
+			}).catch(function(e) {
+				Security.HttpPromiseErrorCatch(e);
+            });
+		})
+		return promise;
+	}
+	adapter.ImportData = function(opts){
+		var requestObj = dAdapter.ImportDataRequest(opts);
+
+		var promise = $q(function(resolve, reject){
+			HttpRequeset.send(requestObj).then(
+			function(responseObj) {
+				var massagedObj = dAdapter.ImportDataResponse(responseObj);
+				resolve(massagedObj);
+			}, function(reasonObj){
+				Security.HttpPromiseReject(reasonObj);
+				reject(reasonObj);
+			}).catch(function(e) {
+				Security.HttpPromiseErrorCatch(e);
+            });
+		})
+		return promise;
+	}
+	adapter.InquiryData = function(opts){
+		var requestObj = dAdapter.InquiryDataRequest(opts);
+
+		var promise = $q(function(resolve, reject){
+			HttpRequeset.send(requestObj).then(
+			function(responseObj) {
+				var massagedObj = dAdapter.InquiryDataResponse(responseObj);
 				resolve(massagedObj);
 			}, function(reasonObj){
 				Security.HttpPromiseReject(reasonObj);
@@ -1416,6 +1484,39 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 		}
 
 		return massagedObj;
+    }
+    dataMySQL.ImportDataRequest = function(opts){
+		var clientID = Security.GetSessionID();
+
+		var requestOptions = {
+			Session: clientID,
+			Table: opts.Table,
+			FileUploadedResult: opts.recordObj,
+			Action: "ImportData"
+		}
+		
+		// var requestOptions = Object.assign({}, requestOptions, opts);
+		var requestObject = {
+			method: 'POST',
+			data: JSON.stringify(requestOptions),
+		}
+		return requestObject;
+		
+    }
+	dataMySQL.ImportDataResponse = function(responseObj){
+		var data_or_JqXHR = responseObj.data;
+		var massagedObj = {
+			table_schema: data_or_JqXHR.ActionResult.table_schema,
+			data: data_or_JqXHR.ActionResult.data,
+			message: data_or_JqXHR.ActionResult.processed_message,
+			status: data_or_JqXHR.Status,
+			HTTP: {
+				statusCode: responseObj.status,
+				statusText: responseObj.statusText,
+			}
+		}
+
+		return massagedObj;
 	}
 	dataMySQL.ProcessDataRequest = function(opts){
 		var url = $rootScope.serverHost;
@@ -1434,7 +1535,7 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 	}
 	dataMySQL.ProcessDataResponse = function(responseObj){
 		var data_or_JqXHR = responseObj.data;
-		var converted_Data = ConvertGetTableStructure(data_or_JqXHR.ActionResult);
+        var converted_Data = ConvertGetTableStructure(data_or_JqXHR.ActionResult);
 		var massagedObj = {
 			table_schema: data_or_JqXHR.ActionResult.table_schema,
 			TableSchema: {
@@ -1444,14 +1545,50 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 			},
 			data: data_or_JqXHR.ActionResult.data,
 			TotalRecordCount: (data_or_JqXHR.TotalRecordCount) ? data_or_JqXHR.TotalRecordCount : -1,
-			message: data_or_JqXHR.Message,
+			message: data_or_JqXHR.ActionResult.processed_message,
 			status: data_or_JqXHR.Status,
 			HTTP: {
 				statusCode: responseObj.status,
 				statusText: responseObj.statusText,
 			}
 		}
-
+		return massagedObj;
+    }
+    
+	dataMySQL.InquiryDataRequest = function(opts){
+		var url = $rootScope.serverHost;
+		var clientID = Security.GetSessionID();
+		var requestOptions = {
+			Session: clientID,
+			Action: "InquiryData"
+		}
+		
+		var requestOptions = Object.assign({}, requestOptions, opts);
+		var requestObject = {
+			method: 'POST',
+			data: JSON.stringify(requestOptions),
+		}
+		return requestObject;
+	}
+	dataMySQL.InquiryDataResponse = function(responseObj){
+		var data_or_JqXHR = responseObj.data;
+        var converted_Data = ConvertGetTableStructure(data_or_JqXHR.ActionResult);
+		var massagedObj = {
+			table_schema: data_or_JqXHR.ActionResult.table_schema,
+			TableSchema: {
+				DataDict: data_or_JqXHR.ActionResult.table_schema,
+				DataColumns: converted_Data.DataColumns,
+				KeyColumns: data_or_JqXHR.ActionResult.KeyColumns
+			},
+			data: data_or_JqXHR.ActionResult.data,
+			TotalRecordCount: (data_or_JqXHR.TotalRecordCount) ? data_or_JqXHR.TotalRecordCount : -1,
+			message: data_or_JqXHR.ActionResult.processed_message,
+			status: data_or_JqXHR.Status,
+			HTTP: {
+				statusCode: responseObj.status,
+				statusText: responseObj.statusText,
+			}
+		}
 		return massagedObj;
 	}
 	function ConvertGetTableStructure(data_or_JqXHR){

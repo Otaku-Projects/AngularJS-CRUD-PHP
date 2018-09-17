@@ -9,7 +9,8 @@
  */
 app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeService', 'config', function(Core, Security, $rootScope, $compile, ThemeService, config) {
     function EditboxConstructor($scope, $element, $attrs) {
-        console.log("1 Edotbox - EditboxConstructor()");
+		if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("1 Edotbox - EditboxConstructor()");
         var constructor = this;
         var $ctrl = $scope.editboxCtrl;
 
@@ -154,7 +155,8 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
     	}
 
         $scope.Initialize = function(){
-            console.log("2 Edotbox - Initialize()");
+			if(Core.GetConfig().debugLog.DirectiveFlow)
+				console.log("2 Edotbox - Initialize()");
             InitializeEditBox();
         }
 
@@ -274,10 +276,12 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
 		compile: function compile(tElement, tAttrs, transclude) {
 		    return {
 		        pre: function preLink(scope, iElement, iAttrs, controller) {
-                    console.log("3 Edotbox - compile preLink()");
+					if(Core.GetConfig().debugLog.DirectiveFlow)
+						console.log("3 Edotbox - compile preLink()");
 		        },
 		        post: function postLink(scope, iElement, iAttrs, controller) {
-                    console.log("4 Edotbox - compile postLink()");
+					if(Core.GetConfig().debugLog.DirectiveFlow)
+						console.log("4 Edotbox - compile postLink()");
 
 
                     transclude(scope, function(clone, scope) {

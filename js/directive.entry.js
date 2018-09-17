@@ -29,6 +29,7 @@ app.directive('entry', ['$rootScope',
     	var constructor = this;
     	var $ctrl = $scope.entryCtrl;
         var tagName = $element[0].tagName.toLowerCase();
+        var loadModelInstance = {};
 
     	var globalCriteria = $rootScope.globalCriteria;
         var backupNgModelObj = {};
@@ -600,10 +601,11 @@ app.directive('entry', ['$rootScope',
         }
 
         $scope.ShowLoadModal = function(){
-            LoadingModal.showModal();
+            loadModelInstance = new LoadingModal();
+            loadModelInstance.showModal();
         }
         $scope.HideLoadModal = function(){
-            LoadingModal.hideModal();
+            loadModelInstance.hideModal();
         }
 
         // StatusChange() event listener

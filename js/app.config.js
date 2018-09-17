@@ -44,7 +44,6 @@ app.constant('config', {
     }
 });
 
-
 app.config(['config',
 '$httpProvider',
 '$locationProvider',

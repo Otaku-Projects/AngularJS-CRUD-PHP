@@ -204,37 +204,13 @@ class DatabaseManager{
         return $result;
     }
 	
-    // Deprecated, can be remove on the next time you see
-//	function selectFirstRowFirstElement($sql_str, $isDebug=false) {
-//		$result = $this->dbc->query($sql_str);
-//		$row = $result->fetch_array(MYSQLI_NUM);
-//		//	echo $row[0]."hellp";
-//		//ec
-//		if($isDebug===true){
-//			echo "<br>";
-//			$this->debug($sql_str);  //debug
-//			echo "<br>";
-//			echo "result: ".var_dump($result);
-//			echo "<br>";
-//			echo "elelment".$row[0]."elelment";
-//		}
-//		if($row[0])
-//			return $row[0];
-//		else
-//			return false;
-//		/*
-//		if($result->num_rows)
-//		{
-//			$row = $result->fetch_array(MYSQLI_BOTH);
-//			echo $row[0]
-//			return $result->num_rows;
-//		}
-//		*/
-//        if($result===false){
-//        	return $this->debug($sql_str)."<br><br>".$result."<br><br><pre>".print_r($this->dbc->error_list)."</pre>";
-//        }
-//        return $result;
-//	}
+	public function runSQL($sql_str){		
+		$this->sql_str = $sql_str;
+		$this->responseArray = $this->queryForDataArray();
+		$this->responseArray['table_schema'] = $this->dataSchema['data'];
+
+		return $this->GetResponseArray();
+	}
 
 	/**
 	 * call query() to execute sql query,
@@ -434,7 +410,7 @@ class DatabaseManager{
 
 		$array = $this->_;
 		$dataSchema = $this->dataSchema;
-		$updateWhereColumn = "";
+		$checkWhereClause = "";
 		$isPKMissing = true;
 
 		$primaryKeySchema = $this->getPrimaryKeyName();
@@ -445,7 +421,7 @@ class DatabaseManager{
 				$isPKMissing = $isPKMissing && true;
 				//break;
 			}else{
-				$updateWhereColumn.="`".$value."` =".$this->GetSQLValueString($value)." AND ";
+				$checkWhereClause.="`".$value."` =".$this->$value." AND ";
 				$isPKMissing = false;
 			}
 		}
@@ -453,29 +429,12 @@ class DatabaseManager{
 		// stop and return false if one/part of the Composite Primary Key are missing
 		if($isPKMissing)
 			return false;
-
 		
-		// stop and return error msg if PK missing
-		/*
-        if($isPKMissing){
-			$missingPK = "";
-			foreach ($primaryKeySchema['data']['Field'] as $index => $value){
-				if($this->IsNullOrEmptyString($array[$value])){
-					$missingPK.=$value." , ";
-				}
-			}
-			$missingPK = rtrim($missingPK, " , ");
-			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["InsertFailNoPK"], $missingPK));
-			$this->responseArray['access_status'] = Core::$access_status["Error"];
-			return $this->GetResponseArray();
-		}
-        */
-		
-		$updateWhereColumn = rtrim($updateWhereColumn, " AND ");
+		$checkWhereClause = rtrim($checkWhereClause, " AND ");
 		// mapping a update sql
 		$sql_str = sprintf("SELECT * from `%s` where %s",
 			$this->table,
-        	$updateWhereColumn);
+        	$checkWhereClause);
 			
 		$this->sql_str = $sql_str;
 		$this->responseArray = $this->queryForDataArray();
@@ -486,6 +445,17 @@ class DatabaseManager{
 			$isKeyExists = false;
 
 		return $isKeyExists;
+    }
+
+    // only work with numeric primary key
+    public function next(){
+    	// execute the sql like that 
+    	// select * from foo where id = (select min(id) from foo where id > 4)
+    }
+    // only work with numeric primary key
+    public function previous(){
+    	// execute the sql like that
+    	// select * from foo where id = (select max(id) from foo where id < 4)
     }
 	
     /**
@@ -505,7 +475,7 @@ class DatabaseManager{
 		$isWhere = false;
 		foreach ($array as $index => $value) {
 			// if TableManager->value =null, ignore
-			if(isset($value)){//$array[$index])){
+			if(isset($value)){
 				if(isset($this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default']))
 					if ($value == $this->SearchDataType($dataSchema['data'], 'Field', $index)[0]['Default'])
 						continue;
@@ -584,6 +554,8 @@ class DatabaseManager{
         
         if($responseArray["num_rows"] > 0)
             $responseArray["KeyColumns"] = $responseArray["data"]["Field"];
+        
+		$responseArray['table_schema'] = $this->dataSchema['data'];
 
         return $responseArray;
     }
@@ -631,12 +603,7 @@ Note that using call_user_func_* functions can't be used to call private or prot
 select(), count(), selectPage, insert(), update(), delete() must be public
 // http://stackoverflow.com/questions/18526060/why-should-one-prefer-call-user-func-array-over-regular-calling-of-function
 */
-	public function selectPage($tempOffset = 0, $tempLimit = 10){
-		// $tempStep = $this->selectStep;
-		// $tempLimit = $this->selectStep;
-		// $tempTotalOffset = ($pageNum-1) * $tempOffset;
-		$tempTotalOffset = $tempOffset;
-
+	public function selectPage($recordOffset = 0, $resultLimit = 10){
 		$isBeforeSuccess = $this->beforeCreateInsertUpdateDelete("select");
 
 		$array = $this->_;
@@ -662,13 +629,13 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			$sql_str = sprintf("SELECT $tempSelectWhichCols from `%s` where %s LIMIT %s OFFSET %s",
 					$this->table,
 					$whereSQL,
-					$tempLimit,
-					$tempTotalOffset);
+					$resultLimit,
+					$recordOffset);
 		}else{
 			$sql_str = sprintf("SELECT $tempSelectWhichCols from `%s` LIMIT %s OFFSET %s",
 					$this->table,
-					$tempLimit,
-					$tempTotalOffset);
+					$resultLimit,
+					$recordOffset);
 		}
 
 		$this->sql_str = $sql_str;
@@ -676,7 +643,17 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			return $this->GetResponseArray();
 		}
 		$this->responseArray = $this->queryForDataArray();
+    
+		// 20180213, keithpoon, append table schema into response array
 		$this->responseArray['table_schema'] = $this->dataSchema['data'];
+
+        $tableSchemaResponseArray = array();
+        $tableSchemaResponseArray = $this->getPrimaryKeyName();
+        
+        $this->responseArray["DataColumns"] = $this->dataSchemaCSharp;
+        
+        if($tableSchemaResponseArray["num_rows"] > 0)
+            $this->responseArray["KeyColumns"] = $tableSchemaResponseArray["data"]["Field"];
 
 		$this->afterCreateInsertUpdateDelete("select");
 		return $this->GetResponseArray();
@@ -698,8 +675,8 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 		$array_value = "";
 		$isPKMissing = false;
 
-		$primaryKeySchema = $this->getPrimaryKeyName();
-
+        $primaryKeySchema = $this->getPrimaryKeyName();
+        
 		// is primary key missing?
 		foreach ($primaryKeySchema['data']['Field'] as $index => $pkFieldName){
             // if primary key allow auto_increment, by pass the checking
@@ -758,7 +735,8 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			}
 			// if value exist are not null and empty
 			else {
-				$array_value = $this->GetSQLValueString($column);
+                $array_value = $this->$column;
+                
 			}
 			// if column cannot null
 			if(strtolower($value['Null']) == 'no'){
@@ -859,7 +837,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				$isPKMissing = true;
 				break;
 			}else{
-				$updateWhereColumn.="`".$value."` =".$this->GetSQLValueString($value)." AND ";
+				$updateWhereColumn.="`".$value."` =".$this->$value." AND ";
 			}
 		}
 		
@@ -875,29 +853,56 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			array_push($this->responseArray_errs, sprintf(Core::$sys_err_msg["UpdateFailNoPK"], $missingPK));
 			return $this->GetResponseArray();
 		}
+
+		// 20180207, that will happen, when the user want to earse the record instead of delete,
+		// allow update all column is empty except PK.
+
 		// stop and return error msg if all fields except PK are null or empty
-		$isAllColumnNullOrEmpty = true;
+		$isAllColumnNullOrEmpty = false;
 		$nullOrEmptyColumn = "";
 		foreach ($array as $key=>$value){
 			if($this->IsSystemField($key)){
 				continue;
 			}
             
+            // 20180207, allow update to empty, if fk and value is empty, assign null
+            // is fk
+            // is empty
+            // assign null
+            $isFK_NULL = false;
+            foreach ($dataSchema["data"] as $index => $columnSchema) {
+            	if($columnSchema["Field"] != $key)
+            		continue;
+            	if(!$this->IsNullOrEmptyString($columnSchema["Key"])){
+            		if($columnSchema["Key"] != "PRI"){
+            			if(!isset($value)){
+            				$value = null;
+            				$isFK_NULL = true;
+            			}
+            		}
+            	}
+
+            }
+
             // 20170221, keithpoon, fixed: if the fk was null, don't assign empty
-            if(!isset($value))
-                continue;
+            // if(!isset($value))
+            //     continue;
             
 			$isColumnAPK = array_search($key, $primaryKeySchema['data']['Field']);
 			// array_search return key index if found, false otherwise
 			if($isColumnAPK === false){
 
-				$isAllColumnNullOrEmpty = $isAllColumnNullOrEmpty && $this->IsNullOrEmptyString($value);
+				//$isAllColumnNullOrEmpty = $isAllColumnNullOrEmpty && $this->IsNullOrEmptyString($value);
 
 				if(!$this->IsNullOrEmptyString($value)){
-					$updateSetColumn.="`".$key."` =".$this->GetSQLValueString($key)." , ";
+					$updateSetColumn.="`".$key."` =".$this->$key." , ";
 				}else{
                     // 20170111, keithpoon, also allowed to assign empty, if the user want to update the record from text to empty
-                    $updateSetColumn.="`".$key."` ='', ";
+                    if($isFK_NULL){
+                    	$updateSetColumn.="`".$key."` = NULL, ";
+                    }else{
+                    	$updateSetColumn.="`".$key."` = '', ";
+                	}
 				}
 			}
 		}
@@ -930,7 +935,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			$updateSetColumn .= Core::$reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
 			$updateWhereColumn .= Core::$reserved_fields["lastUpdateDate"] . 
 				"=" . 
-				$this->GetSQLValueString(Core::$reserved_fields["lastUpdateDate"]) . 
+				$this->_[Core::$reserved_fields["lastUpdateDate"]] . 
 				" AND ";
 		}
 		//// END - check the lastUpdateDate column
@@ -975,7 +980,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				$isPKMissing = true;
 				break;
 			}else{
-				$updateWhereColumn.=$value."=".$this->GetSQLValueString($value)." AND ";
+				$updateWhereColumn.=$value."=".$this->$value." AND ";
 			}
 		}
 		$updateWhereColumn = rtrim($updateWhereColumn, " AND ");
@@ -1000,7 +1005,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			if($isColumnAPK === false){
 				$isAllColumnNullOrEmpty = $isAllColumnNullOrEmpty && $this->IsNullOrEmptyString($value);
 				if(!$this->IsNullOrEmptyString($value)){
-					$updateSetColumn.=$key."=".$this->GetSQLValueString($key)." , ";
+					$updateSetColumn.=$key."=".$this->$key." , ";
 				}else{
 					$nullOrEmptyColumn.=$key." , ";
 				}
@@ -1055,7 +1060,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				$isPKMissing = true;
 				break;
 			}else{
-				$deleteWhereColumn.="`".$value."` =".$this->GetSQLValueString($value)." AND ";
+				$deleteWhereColumn.="`".$value."` =".$this->$value." AND ";
 			}
 		}
 		// stop and return error msg if PK missing
@@ -1108,7 +1113,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			//$updateSetColumn .= Core::$reserved_fields["lastUpdateDate"]."='".date("Y-m-d H:i:s")."'";
 			$deleteWhereColumn .= Core::$reserved_fields["lastUpdateDate"] . 
 				"=" . 
-				$this->GetSQLValueString(Core::$reserved_fields["lastUpdateDate"]) . 
+				$this->_[Core::$reserved_fields["lastUpdateDate"]] . 
 				" AND ";
 		}
 		//// END - check the lastUpdateDate column
@@ -1437,6 +1442,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			case strpos($type, "mediumint") !== FALSE: // -8388608 to 8388607, 0 to 16777215
 			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
 			case strpos($type, "bigint") !== FALSE: // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
+			case strpos($type, "year") !== FALSE: // 1901 to 2155
 				$setValue = ($setValue != "") ? intval($setValue) : NULL;
 				$typeCaseAs = "integer";
 				break;
@@ -1444,10 +1450,10 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			//http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
 			case strpos($type, "float") !== FALSE:
 			case strpos($type, "double") !== FALSE:
+			case strpos($type, "decimal") !== FALSE:
 				$setValue = ($setValue != "") ? doubleval($setValue) : NULL;
 				$typeCaseAs = "decimal";
 				break;
-
 			case $type==="date":
 					$tmpDate = date_parse($setValue);
 					if($tmpDate["error_count"] > 0)
@@ -1542,6 +1548,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 			case $type === "mediumint": // -8388608 to 8388607, 0 to 16777215
 			case strpos($type, "int") !== FALSE: // -2147483648 to 2147483647, 0 to 4294967295
 			case $type === "bigint": // -9223372036854775808 to 9223372036854775807, 0 to 18446744073709551615
+			case strpos($type, "year") !== FALSE: // 1901 to 2155
                 // both are cannot identify the $valueIn is NULL, always convert the NULL to 0 and return
 //                $valueOut = ($valueIn != "" && $valueIn != null) ? intval($valueIn) : "NULL";
 //				$valueOut = (is_null($valueIn) || $valueIn == "" || $valueIn == null) ? echo "NULL" : intval($valueIn);
@@ -1551,8 +1558,9 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				break;
 				//http://dev.mysql.com/doc/refman/5.0/en/fixed-point-types.html
 				//http://dev.mysql.com/doc/refman/5.0/en/floating-point-types.html
-			case $type==="float":
-			case $type==="double":
+			case strpos($type, "float") !== FALSE:
+			case strpos($type, "double") !== FALSE:
+			case strpos($type, "decimal") !== FALSE:
 //				$valueOut = ($valueIn != "") ? doubleval($valueIn) : NULL;
                 $valueOut = is_float($valueIn) ? doubleval($valueIn) : "NULL";
 				$typeCaseAs = "decimal";
@@ -1645,7 +1653,7 @@ select(), count(), selectPage, insert(), update(), delete() must be public
 				break;
 		}
 		
-//		echo "value in:$valueIn, type:$type, entryType:$typeCaseAs, value out:$valueOut";
+		// echo "value in:$valueIn, type:$type, entryType:$typeCaseAs, value out:$valueOut";
 		return $valueOut;
 	}
 	

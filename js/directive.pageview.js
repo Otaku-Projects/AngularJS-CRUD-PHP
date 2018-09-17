@@ -30,7 +30,7 @@ app.directive('pageview', ['$rootScope',
     	var $ctrl = $scope.pageviewCtrl;
         var tagName = $element[0].tagName.toLowerCase();
 
-    	var recordStructure = {};
+        var recordStructure = {};
 
         function LockAllControls(){
             LockManager.LockAllControls($element, "pageview");

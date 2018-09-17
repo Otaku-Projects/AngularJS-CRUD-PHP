@@ -13,6 +13,7 @@ app.directive('message', ['$rootScope',
         $scope.autoClose = false;
         var DirectiveProperties = (function () {
             var autoClose;
+            var type;
 
             function findAutoClose(){
                 var object = $attrs.autoClose;
@@ -20,6 +21,13 @@ app.directive('message', ['$rootScope',
                     return true;
                 else
                     return false;
+            }
+            function findType(){
+                var object = $attrs.type;
+                if(typeof(object) != "undefined")
+                    return object;
+                else
+                    return "alert";
             }
 
             return {
@@ -29,6 +37,13 @@ app.directive('message', ['$rootScope',
                     }
                     $scope.autoClose = autoClose;
                     return autoClose;
+                },
+                getType: function () {
+                    if (!type) {
+                        type = findType();
+                    }
+                    $scope.type = type;
+                    return type;
                 }
             };
         })();
@@ -46,6 +61,7 @@ app.directive('message', ['$rootScope',
         }
         function InitializeMessage() {
             DirectiveProperties.getAutoClose();
+            DirectiveProperties.getType();
 
             $ctrl.ngModel = [];
             
@@ -81,11 +97,11 @@ app.directive('message', ['$rootScope',
               
             if ( newValueLength !== oldValueLength ) {
 //                if(newValueLength > oldValueLength){
+                    if($scope == "alert")
                     if($scope.autoClose)
                         $timeout(function(){
                             MessageService.shiftMsg();
                         }, 7000); // (milliseconds),  1s = 1000ms
-//                }
             }
           }
         );
