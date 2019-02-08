@@ -1,6 +1,11 @@
 # AngularJS-CRUD-PHP
 
-<a target="_blank" href="https://opensource.org/licenses/MIT" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+![](https://img.shields.io/github/license/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
+![](https://img.shields.io/github/release/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
+[![Build Status](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/badges/build.png?b=master)](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/build-status/master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/?branch=master)
+![](https://img.shields.io/github/languages/top/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
+![](https://img.shields.io/github/languages/count/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
 
 I often develop the ERP system with Agile methodologies, such as Rapid application development, this project is a simple idea for reduces the coding effort on both of client and server side. In my case, I use php and mysql as server side dependency, you need to play some coding effort if you have your own server side languages.
 
