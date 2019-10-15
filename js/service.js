@@ -78,7 +78,21 @@ app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($root
 			throw ("Unable to identify the edit mode '"+attrEditMode+"' on directive");
 		}
         return editMode;
-    }
+	}
+	
+	core.IsDateInvalid = function(dateObj){
+		var isDate = true;
+
+		if(typeof (dateObj) == "undefined" || dateObj == null){
+			isDate = false;
+		}else{
+			if(dateObj.getFullYear() <= 1970){
+				isDate = false;
+			}
+		}
+
+		return isDate;
+	}
 	
 	core.ConvertMySQLDataType = function(mySqlDataType){
         var dataType ="string";
@@ -90,10 +104,13 @@ app.service('Core', ['$rootScope', 'config', 'SysMessageManager', function($root
             mySqlDataType == "longtext"){
             dataType = "string";
         }
-        else if (mySqlDataType == "datetime" ||
-            mySqlDataType == "timestamp"  ||
-            mySqlDataType == "date" ){
+        else if (
+            mySqlDataType == "date"){
             dataType = "date";
+        }
+        else if (mySqlDataType == "datetime" ||
+            mySqlDataType == "timestamp" ){
+            dataType = "datetime";
         }
         else if (mySqlDataType == "double" ||
             mySqlDataType == "decimal"  ||
@@ -238,8 +255,8 @@ app.service('LockManager', ['$rootScope', '$timeout', 'config', function($rootSc
 
 	locker.UnLockAllControls = function(lockArea, tagName){
 		// var lockArea = locker.lockArea;
-		// var tagName = locker.tagName;
-
+        // var tagName = locker.tagName;
+        
 		var isLockArea = CheckLockArea(lockArea);
 		if(!isLockArea)
 			return;
@@ -942,6 +959,7 @@ app.factory('LoadingModal', function ($window, $document, $rootScope) {
 app.service('MessageService', function($rootScope, $timeout, ThemeService){
 	var self = this;
     self.messageList = [];
+    self.postponeMsgList = [];
     // clear message when ng-route event
     $rootScope.$on('$routeChangeStart', function () {
 		self.messageList = [];
@@ -1010,7 +1028,29 @@ app.service('MessageService', function($rootScope, $timeout, ThemeService){
         for(var index in self.messageList){
             self.messageList.shift();
         }
-	}
+    }
+    self.getPostponeMsg = function(){
+        return self.postponeMsgList;
+    }
+    self.setPostponeMsg = function(msgList){
+		if(typeof(msgList) == "undefined" || msgList == null)
+			return;
+		if(msgList.length <= 0)
+            return;
+        self.postponeMsgList = msgList;
+    }
+    self.addPostponeMsg = function(msg){
+        postponeMsgList.push(msg);
+    }
+    self.printPostponeMsg = function(){
+        self.setMsg(self.postponeMsgList);
+        self.clearPostponeMsg();
+    }
+    self.clearPostponeMsg = function(){
+        for(var index in self.postponeMsgList){
+            self.postponeMsgList.shift();
+        }
+    }
 });
 
 //
@@ -1219,7 +1259,6 @@ app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMyS
 	}
 	adapter.InquiryData = function(opts){
 		var requestObj = dAdapter.InquiryDataRequest(opts);
-
 		var promise = $q(function(resolve, reject){
 			HttpRequeset.send(requestObj).then(
 			function(responseObj) {
@@ -1603,7 +1642,6 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 			jQuery.extend(true, newDataCol, dataColumn);
 
 			newDataCol.type = Core.ConvertMySQLDataType(dataColumn.type);
-
 
 			if(newDataCol.default === null){
 				var defaultValue = null;

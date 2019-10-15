@@ -60,7 +60,7 @@ app.directive('entry', ['$rootScope',
                 getProgramID: function(){
                     var isProgramIdFound = false;
                     if(!programID){
-                        programID = findProgramID;
+                        programID = findProgramID();
                     }
                     if(typeof(programID) != undefined){
                         if(programID != null && programID !=""){
@@ -78,7 +78,8 @@ app.directive('entry', ['$rootScope',
         })();
 
         function InitializeEntry() {
-        	$scope.tableStructure = {};
+            $scope.tableStructure = {};
+            
             DirectiveProperties.getEditMode();
             DirectiveProperties.getProgramID();
 
@@ -129,20 +130,16 @@ app.directive('entry', ['$rootScope',
         }
 
 		$scope.SetNgModel = function(dataRecord){
-			var dataJson = {};
-			//dataJson.data = {};
-			//dataJson.data.Items = [];
-			//dataJson.data.Items[1] = dataRecord;
-			//console.dir(dataJson)
-			//SetNgModel(dataJson);
-			SetNgModel(dataRecord);
+            if(dataRecord.length > 0)
+			    SetNgModel(dataRecord[0]);
 		}
 
         function SetNgModel(dataJson){
             var dataColumns = $scope.tableStructure.DataColumns;
             var keyColumns = $scope.tableStructure.KeyColumns;
 
-            var dataRecord = dataJson.ActionResult.data[0];
+            // var dataRecord = dataJson.ActionResult.data[0];
+            var dataRecord = dataJson;
 
         	for(var columnName in dataColumns){
         		var column = dataColumns[columnName];
@@ -160,13 +157,13 @@ app.directive('entry', ['$rootScope',
         			if(colDataType == "string"){
         				dataValue = "";
         			}
-        			else if (colDataType == "date"){
+        			else if (colDataType == "date" || colDataType == "datetime"){
         				dataValue = new Date(0, 0, 0);
         			}
         			else if (colDataType == "double"){
         				dataValue = 0.0;
         			}
-        		}
+                }
 
         		if (colDataType == "date"){
                     if(typeof dataValue == "string"){
@@ -176,6 +173,13 @@ app.directive('entry', ['$rootScope',
                         month = parseInt(month);
                         day = parseInt(day);
                         newColumn = new Date(year, month, day);
+                    }else{
+                        newColumn = dataValue;
+                    }
+                }
+                else if (colDataType == "datetime"){
+                    if(typeof dataValue == "string"){
+                        newColumn = getDateFromFormat(dataValue, "yyyy-MM-dd HH:mm:ss");
                     }else{
                         newColumn = dataValue;
                     }
@@ -195,7 +199,7 @@ app.directive('entry', ['$rootScope',
         	var programId = $scope.programId.toLowerCase();
 			var submitData = {
 				"Table": programId
-			};
+            };
 
             var tbResult = TableManager.GetTableStructure(submitData);
             tbResult.then(function(responseObj) {
@@ -211,10 +215,19 @@ app.directive('entry', ['$rootScope',
             return tbResult;
         }
         function SetTableStructure(dataJson){
+            console.dir("entry SetTableStructure")
+            console.dir($scope.tableStructure)
             $scope.tableStructure.DataColumns = dataJson.DataColumns;
             $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
             $scope.tableSchema = dataJson.TableSchema;
-        	var itemsColumn = $scope.tableStructure.DataColumns;
+            var itemsColumn = $scope.tableStructure.DataColumns;
+            
+            // 20190630,
+            // bug:: sometime the table Structure will be updated by the child directive.
+            // e.g time deposit entry's table Structure mandatory field will be turn into BankCode only
+            console.dir(dataJson)
+            console.dir($scope.tableStructure)
+
 
             if($ctrl.ngModel == null)
                 $ctrl.ngModel = {};
@@ -243,7 +256,7 @@ app.directive('entry', ['$rootScope',
     			if(colDataType == "string"){
     				colObj = "";
     			}
-    			else if (colDataType == "date"){
+    			else if (colDataType == "date" || colDataType == "datetime"){
     				colObj = new Date(0, 0, 0);
     			}
     			else if (colDataType == "double"){
@@ -349,6 +362,7 @@ app.directive('entry', ['$rootScope',
             }else{
                 EventListener();
             }
+            
             TryToCallInitDirective();
         }
         $scope.InitScope = function(){
@@ -406,18 +420,25 @@ app.directive('entry', ['$rootScope',
 				"Data": findObj
 			};
 
-            var request = DataAdapter.FindData(submitData); 
-
-    //         var request = HttpRequeset.send(requestOption);
-            // request.then(function(responseObj) {
-            //     var data_or_JqXHR = responseObj.data;
-            //     // need to handle if record not found.
-			// 	SetNgModel(data_or_JqXHR);
-            // }, function(reason) {
-            //   console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
-            //   Security.HttpPromiseFail(reason);
-            // }).finally(function() {
-            // });
+            var request = DataAdapter.FindData(submitData);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                // need to handle if record not found.
+				$scope.SetNgModel(data_or_JqXHR);
+				
+                if(typeof $scope.CustomGetDataResult == "function"){
+                    $scope.CustomGetDataResult(responseObj,
+                        responseObj.status,
+                        $scope,
+                        $element,
+                        $attrs,
+                        $ctrl);
+                }
+            }, function(reason) {
+              console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+            });
             return request;
         }
 
@@ -425,33 +446,53 @@ app.directive('entry', ['$rootScope',
         	console.log("<"+$element[0].tagName+"> submitting data")
             var globalCriteria = $rootScope.globalCriteria;
 
-        	$scope.LockAllControls();
+            $scope.LockAllControls();
 
+            var submitPromise;
+            
             if(!ValidateSubmitData()){
-                return;
+                return $q.reject("ValidateBuffer() return false");
             }
 
             $scope.ShowLoadModal();
-            var submitPromise = SubmitData();
+            submitPromise = SubmitData();
             return submitPromise;
         }
 
         function ValidateSubmitData(){
             var isValid = true;
-        	var editMode = DirectiveProperties.getEditMode();
-
-        	// if Buffer invalid, cannot send request
-        	var isBufferValid = true;
-			if(typeof $scope.ValidateBuffer == "function"){
-				isBufferValid = $scope.ValidateBuffer($scope, $element, $attrs, $ctrl);
-			}else{
-				isBufferValid = ValidateBuffer();
-			}
+            var editMode = DirectiveProperties.getEditMode();
+            
+            // clear all message in message service
+            MessageService.clearPostponeMsg();
+            MessageService.clear();
+            // if Buffer invalid, cannot send request
+            var isBufferValid = true;
+            if(typeof $scope.ValidateBuffer == "function"){
+                isBufferValid = $scope.ValidateBuffer($scope, $element, $attrs, $ctrl);
+            }else{
+                isBufferValid = ValidateBuffer();
+            }
             isValid = isValid && isBufferValid;
-			if(!isBufferValid && editMode != globalCriteria.editMode.Delete){
+            if(!isBufferValid && editMode != globalCriteria.editMode.Delete){
                 if(editMode == globalCriteria.editMode.Create ||
                     editMode == globalCriteria.editMode.Amend)
                 $scope.UnLockAllControls();
+
+                // print error msg to message service
+                var postponeMsgList = MessageService.getPostponeMsg();
+                var abortMsg = "";
+                if(editMode == globalCriteria.editMode.Create){
+                    abortMsg = "Create aborted.";
+                }else if(editMode == globalCriteria.editMode.Amend){
+                    abortMsg = "Amend aborted.";
+                }else if(editMode == globalCriteria.editMode.Delete){
+                    abortMsg = "Delete aborted.";
+                }
+                
+                postponeMsgList.unshift(abortMsg)
+                MessageService.setPostponeMsg(postponeMsgList);
+                MessageService.printPostponeMsg();
             }
 
             var tbStructure = ValidateTableStructure();
@@ -488,7 +529,7 @@ app.directive('entry', ['$rootScope',
             var submitPromise;
         	var editMode = DirectiveProperties.getEditMode();
             var msg = "";
-            
+
 			if(editMode == globalCriteria.editMode.Create){
 				if(typeof $scope.CustomCreateData == "function"){
 	            	submitPromise = $scope.CustomCreateData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
@@ -636,12 +677,17 @@ app.directive('entry', ['$rootScope',
                               // 20180419, if it is a object
                               if(typeof oldValue[colIndex] == "object" && typeof newValue[colIndex] == "object"){
                                 //   console.warn("check date object euqal")
-                                  if(typeof (oldValue[colIndex].getMonth) === 'function'){
-                                      // 20170809, if it is a date object, compare with getTime()
-                                    if(typeof (oldValue[colIndex].getMonth) === 'function' && typeof (newValue[colIndex].getMonth) === 'function'){
-                                        if(oldValue[colIndex].getTime() === newValue[colIndex].getTime()){
-                                            // console.log("continue, oldDate === newDate");
-                                            continue;
+                                // 20190618, keithpoon, exclude if the date object is null
+                                  if(oldValue[colIndex] != null && typeof (oldValue[colIndex].getMonth) === 'function'){
+                                    //20190202, the oldValue is javascript minimum Date (Sun Dec 31 1899 00:00:00), newValue is null
+                                    if(newValue[colIndex] === null || newValue[colIndex] == null){
+                                    }else{
+                                        // 20170809, if it is a date object, compare with getTime()
+                                        if(typeof (oldValue[colIndex].getMonth) === 'function' && typeof (newValue[colIndex].getMonth) === 'function'){
+                                            if(oldValue[colIndex].getTime() === newValue[colIndex].getTime()){
+                                                // console.log("continue, oldDate === newDate");
+                                                continue;
+                                            }
                                         }
                                     }
                                   }else{
@@ -834,7 +880,7 @@ app.directive('entry', ['$rootScope',
         }
 
         function CreateData(recordObj){
-        	var programId = $scope.programId.toLowerCase();
+            var programId = $scope.programId.toLowerCase();
 
             var isAllKeyExists = IsKeyInDataRow(recordObj);
             if(!isAllKeyExists){
@@ -842,13 +888,16 @@ app.directive('entry', ['$rootScope',
             }
 
             var isModelStrictWithSchema = TryToCallIsLimitModelStrictWithSchema();
-            if(isModelStrictWithSchema)
-                recordObj = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
+            // 20190630
+            // sometime in bug, need to investigate
+            // if(isModelStrictWithSchema)
+            //     recordObj = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
 
 			var submitData = {
 				"Table": programId,
                 "recordObj": recordObj
 			};
+
             var request = DataAdapter.CreateData(submitData);
             return request;
         }
@@ -868,7 +917,7 @@ app.directive('entry', ['$rootScope',
         	}
         	updateObj.Header[1] = {};
             //updateObj.Header[1] = recordObj;
-            updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
+            // updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
 
         	var isRowEmpty = jQuery.isEmptyObject(updateObj.Header[1])
         	if(isRowEmpty){

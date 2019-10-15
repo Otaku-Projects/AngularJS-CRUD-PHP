@@ -29,6 +29,18 @@ app.constant('config', {
 		Pageview: 21,
 		Scrollview: 22
 	},
+    
+    schedulePropertyDataType:{
+        DATATYPE_STRING: "DATATYPE_STRING",
+        DATATYPE_INTEGER: "DATATYPE_INTEGER",
+        DATATYPE_DOUBLE: "DATATYPE_DOUBLE",
+        DATATYPE_BOOLEAN: "DATATYPE_BOOLEAN",
+        DATATYPE_ARRAY: "DATATYPE_ARRAY",
+        DATATYPE_DATE: "DATATYPE_DATE",
+        DATATYPE_DATETIME: "DATATYPE_DATETIME",
+        DATATYPE_TIME: "DATATYPE_TIME",
+        DATATYPE_TEXT_AREA: "DATATYPE_TEXT_AREA"
+    },
 	
 	reservedPath: reservedPath,
 	CookiesEffectivePath: CookiesEffectivePath,

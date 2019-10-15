@@ -8,7 +8,8 @@ js/config.js
 resourse/
 
 # Ignoring temp folder which stores the uploaded files, export templates
-temp/
+temp/export/*.*
+temp/upload/*.*
 
 # Windows image file caches
 Thumbs.db

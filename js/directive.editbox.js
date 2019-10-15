@@ -7,7 +7,7 @@
  * @param {Object} ng-model - store the user selected record from the pageview, to display the record details on the UI.
  * @param {String} program-id - the pageview will display the records regarding to this program id
  */
-app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeService', 'config', function(Core, Security, $rootScope, $compile, ThemeService, config) {
+app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeService', 'TableManager', 'DataAdapter', 'config', function(Core, Security, $rootScope, $compile, ThemeService, TableManager, DataAdapter, config) {
     function EditboxConstructor($scope, $element, $attrs) {
 		if(Core.GetConfig().debugLog.DirectiveFlow)
 			console.log("1 Edotbox - EditboxConstructor()");
@@ -95,6 +95,223 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
             return isParentScopeFromRange;
         }
 
+        
+		$scope.SetNgModel = function(dataRecord){
+            if(dataRecord.length > 0)
+			    SetNgModel(dataRecord[0]);
+		}
+
+        function SetNgModel(dataJson){
+            var dataColumns = $scope.tableStructure.DataColumns;
+            var keyColumns = $scope.tableStructure.KeyColumns;
+
+            // var dataRecord = dataJson.ActionResult.data[0];
+            var dataRecord = dataJson;
+
+        	for(var columnName in dataColumns){
+        		var column = dataColumns[columnName];
+        		var colDataType = column.type;
+
+                var isSystemField = Core.IsSystemField(columnName);
+                if(isSystemField)
+                    continue;
+
+                var newColumn = dataRecord[columnName];
+                var dataValue = dataRecord[columnName];
+
+//        		// is column exists in ngModel
+        		if(typeof(dataValue) == "undefined" || !dataValue){
+        			if(colDataType == "string"){
+        				dataValue = "";
+        			}
+        			else if (colDataType == "date" || colDataType == "datetime"){
+        				dataValue = new Date(0, 0, 0);
+        			}
+        			else if (colDataType == "double"){
+        				dataValue = 0.0;
+        			}
+                }
+
+        		if (colDataType == "date"){
+                    if(typeof dataValue == "string"){
+                        var dateArray = dataValue.split("-");
+                        var year = dateArray[0]; var month = dateArray[1]; var day = dateArray[2];
+                        year = parseInt(year);
+                        month = parseInt(month);
+                        day = parseInt(day);
+                        newColumn = new Date(year, month, day);
+                    }else{
+                        newColumn = dataValue;
+                    }
+                }
+                else if (colDataType == "datetime"){
+                    if(typeof dataValue == "string"){
+                        newColumn = getDateFromFormat(dataValue, "yyyy-MM-dd HH:mm:ss");
+                    }else{
+                        newColumn = dataValue;
+                    }
+    			}
+    			else if (colDataType == "double"){
+    				newColumn = parseFloat(dataValue);
+    			}
+//    			else{
+//    				newColumn = items[colIndex];
+//    			}
+
+                $ctrl.ngModel[columnName] = newColumn;
+        	}
+
+        }
+
+        function GetTableStructure(){
+        	var programId = $scope.programId.toLowerCase();
+			var submitData = {
+				"Table": programId
+			};
+
+            var tbResult = TableManager.GetTableStructure(submitData);
+            tbResult.then(function(responseObj) {
+                if(Core.GetConfig().debugLog.DirectiveFlow)
+                    console.log("ProgramID: "+programId+", Table structure obtained.")
+                SetTableStructure(responseObj);
+            }, function(reason) {
+
+            }).finally(function() {
+                // Always execute this on both error and success
+            });
+
+            return tbResult;
+        }
+        function SetTableStructure(dataJson){
+            // console.dir("editbox SetTableStructure")
+            // console.dir($scope.tableStructure)
+            $scope.tableStructure.DataColumns = dataJson.DataColumns;
+            $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
+            $scope.tableSchema = dataJson.TableSchema;
+            var itemsColumn = $scope.tableStructure.DataColumns;
+            
+            // console.dir(dataJson)
+            // console.dir($scope.tableStructure)
+
+            if($ctrl.ngModel == null)
+                $ctrl.ngModel = {};
+
+        	for(var colIndex in itemsColumn){
+        		var columnName = colIndex;
+                var colDataType = itemsColumn[columnName].type;
+
+        		var isSystemField = Core.IsSystemField(columnName);
+
+        		if(isSystemField)
+        			continue;
+
+        		var isScopeColExists = true;
+        		var colObj;
+
+        		// scope did not defined this column
+        		if($ctrl.ngModel == null){
+        			isScopeColExists = false;
+        		}
+        		else if(typeof($ctrl.ngModel[columnName]) == "undefined")
+        		{
+        			isScopeColExists = false;
+        		}
+
+    			if(colDataType == "string"){
+    				colObj = "";
+    			}
+    			else if (colDataType == "date" || colDataType == "datetime"){
+    				colObj = new Date(0, 0, 0);
+    			}
+    			else if (colDataType == "double"){
+    				colObj = 0.0;
+    			}
+
+    			if(!isScopeColExists){
+
+    			}else{
+
+    				// if the data type equal
+    				if(typeof($ctrl.ngModel[columnName]) === typeof(colObj)){
+                        // if the scope already per-defined some value before GetTableStructure() and SetDefaultValue()
+                        if($ctrl.ngModel[columnName] != colObj)
+    					   colObj = $ctrl.ngModel[columnName];
+    				}else{
+    					console.warn("The pre-defined default value data type not match of the table structure");
+    					console.warn("ProgramID: "+$scope.programId +
+    						", colName:"+columnName+
+    						", colDataType:"+colDataType+
+    						", $ctrl.ngModel:"+$ctrl.ngModel[columnName]);
+    				}
+    			}
+
+    			//$scope[columnName] = colObj;
+
+    			$ctrl.ngModel[columnName] = colObj;
+        	}
+        }
+
+        function ConvertKeyFieldToUppercase(recordObj, isRemoveNonKeyField){
+            var isKeyValid = true;
+            var upperRecordObj = {};
+
+            var tbStructure = $scope.tableStructure;
+            var itemsColumn = tbStructure.DataColumns;
+
+            if(typeof(itemsColumn) == "undefined"){
+                return recordObj;
+            }
+
+            if(typeof(isRemoveNonKeyField) == "undefined" || isRemoveNonKeyField == null)
+                var isRemoveNonKeyField = false;
+
+            var keyColumnList = tbStructure.KeyColumns;
+
+            for(var keyIndex in keyColumnList){
+                var colName = keyColumnList[keyIndex];
+                var keyColIndex = 0;
+                var colDataType = "";
+
+                // key column in table structure not match with param
+                if(!recordObj.hasOwnProperty(colName)){
+                    isKeyValid = false;
+                    break;
+                }else{
+                    upperRecordObj[colName] = recordObj[colName];
+                }
+
+                // find the key column data type
+                for(var colNameIndex in itemsColumn){
+                    if(colName == itemsColumn[colNameIndex])
+                    {
+                        keyColIndex = colNameIndex
+                        break;
+                    }
+                }
+                colDataType = itemsColumn[colName].type;
+
+                // convert to upper case if the key column is a string data type
+                if(colDataType == "string"){
+                    upperRecordObj[colName] = upperRecordObj[colName].toUpperCase();
+                }
+            }
+
+            // if(!isKeyValid){
+            //     console.log("Avoid to FindData(), upperRecordObj was incomplete.");
+            //     return;
+            // }
+
+            if(!isRemoveNonKeyField){
+                for(var colName in recordObj){
+                    if(!upperRecordObj.hasOwnProperty(colName)){
+                        upperRecordObj[colName] = recordObj[colName];
+                    }
+                }
+            }
+
+            return upperRecordObj;
+        }
+
         function TryToCallInitDirective(){
             $ctrl.programId = $scope.programId;
             // $ctrl.screenId = $scope.screenId;
@@ -109,7 +326,68 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
         $scope.DefaultInitDirective = function(){
             if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
+
+            var getTableStructurePromiseResult = GetTableStructure();
+            getTableStructurePromiseResult.then(function(){
+            });
         }
+
+        $scope.FindData = function(){
+            var clientID = Security.GetSessionID();
+            var programId = $scope.programId.toLowerCase();
+
+            var tempKeyObj = $ctrl.ngModel;
+
+            var isAllKeyExists = IsKeyInDataRow(tempKeyObj);
+            if(!isAllKeyExists){
+                return;
+            }
+
+            var isKeyValid = true;
+            var keyObj = {};
+            keyObj = ConvertKeyFieldToUppercase(tempKeyObj, true);
+
+            if(!keyObj)
+                isKeyValid = false;
+
+            if(!isKeyValid){
+                console.log("Avoid to FindData(), keyObj was incomplete.");
+                return;
+            }
+
+        	var findObj = {
+        		"Header":{}
+        	}
+        	findObj.Header[1] = {};
+            findObj.Header[1] = keyObj;
+
+			var submitData = {
+				"Table": programId,
+				"Data": findObj
+			};
+
+            var request = DataAdapter.FindData(submitData);
+            request.then(function(responseObj) {
+                var data_or_JqXHR = responseObj.data;
+                // need to handle if record not found.
+				$scope.SetNgModel(data_or_JqXHR);
+				
+                if(typeof $scope.CustomGetDataResult == "function"){
+                    $scope.CustomGetDataResult(responseObj,
+                        responseObj.status,
+                        $scope,
+                        $element,
+                        $attrs,
+                        $ctrl);
+                }
+            }, function(reason) {
+              console.error("Fail in FindData() - "+tagName + ":"+$scope.programId)
+              Security.HttpPromiseFail(reason);
+            }).finally(function() {
+            });
+            return request;
+        }
+
         function EventListener(){
             if(Core.GetConfig().debugLog.DirectiveFlow)
             console.log("$scope.$id:"+$scope.$id+", must implement $scope.EventListener() function in webapge");
@@ -215,6 +493,48 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
         }
         $scope.ClearEditboxNgModel = function(editboxNgModel){
             $ctrl.ngModel = {};
+        }
+
+        function IsKeyInDataRow(recordObj){
+            var tbStructure = $scope.tableStructure;
+            var itemsColumn = tbStructure.DataColumns;
+            var keyColumn = tbStructure.KeyColumns;
+
+            var isAllKeyExists = true;
+            // if PHP check, do not check if do not use PHP, because we don't is the key allow auto gen
+            if(!Core.IsMySQLServer())
+                return isAllKeyExists;
+
+            for(var keyIndex in keyColumn){
+                var keyColName = keyColumn[keyIndex];
+                if(typeof(recordObj[keyColName]) == "undefined"){
+                    isAllKeyExists = false;
+                    continue;
+                }
+                // find the data type
+                var dataTypeFound = false;
+                var keyColDataType = "";
+                for (var colIndex in itemsColumn) {
+                    var colName = colIndex;
+                    var colValue = recordObj[colName];
+                    if(keyColName == colName){
+                        dataTypeFound = true;
+                        keyColDataType = itemsColumn[colIndex].type;
+                        break;
+                    }
+                }
+
+                if(keyColDataType == "string"){
+                    if(recordObj[keyColName] == null || recordObj[keyColName] == "")
+                    {
+                        isAllKeyExists = false;
+                        continue;
+                    }
+                }
+
+            }
+
+            return isAllKeyExists;
         }
 
         //process flow

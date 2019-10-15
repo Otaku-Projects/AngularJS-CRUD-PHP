@@ -51,8 +51,7 @@ app.directive('inquiry', ['$rootScope',
             else{
                 $ctrl.ngModel = ngModel;
             }
-            $ctrl.ngModel.Data = [];
-            $ctrl.ngModel.Record = {};
+            // $ctrl.ngModel.Data = [];
 			
 			$scope.programId = $attrs.programId;
 			//$scope.editMode = Core.GetEditModeEnum($attrs.editMode)
@@ -91,6 +90,12 @@ app.directive('inquiry', ['$rootScope',
             }
             if(!isProgramIdFound)
                 console.warn("<inquiry> Must declare a attribute of program-id");
+
+            $ctrl.ngModel.Record = {}; // this structure same as the filtering record structure
+            $ctrl.ngModel.InquiryCriteria = {}; // this store the customize criteria data for inquiry
+            $ctrl.ngModel.InquiryResult = {}; // store the inquiry result
+            $ctrl.ngModel.InquiryResult.Data = []; // store the inquiry data array records
+            $ctrl.ngModel.InquiryResult.Result = {}; // store other structure request
 
             CreateEventListener();
         }
@@ -198,8 +203,11 @@ app.directive('inquiry', ['$rootScope',
                 submitPromise.then(function(responseObj) {
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
+
                     
-                    $ctrl.ngModel.Data = data_or_JqXHR;
+                    
+                    // $ctrl.ngModel.Data = data_or_JqXHR;
+                    $ctrl.ngModel.InquiryResult.Data = data_or_JqXHR;
                     MessageService.setMsg(httpResponseObj.message);
 
                 }, function(reason) {
@@ -241,11 +249,12 @@ app.directive('inquiry', ['$rootScope',
         
         function InquiryData(recordObj){
         	var clientID = Security.GetSessionID();
-        	var programId = $scope.programId.toLowerCase();
-
+            var programId = $scope.programId.toLowerCase();
+            
 			var submitData = {
 				"Table": programId,
-				"InquiryData": recordObj,
+				"InquiryCriteria": recordObj.InquiryCriteria,
+				"InquiryRecord": recordObj.Record
 			};
 
             var request = DataAdapter.InquiryData(submitData);

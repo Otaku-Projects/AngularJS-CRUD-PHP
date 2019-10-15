@@ -53,7 +53,7 @@ app.directive('process', ['$rootScope',
                 getProgramID: function(){
                     var isProgramIdFound = false;
                     if(!programID){
-                        programID = findProgramID;
+                        programID = findProgramID();
                     }
                     if(typeof(programID) != undefined){
                         if(programID != null && programID !=""){
@@ -90,7 +90,18 @@ app.directive('process', ['$rootScope',
                 $ctrl.ngModel = ngModel;
             }
 
-            $ctrl.ngModel.Record = {};
+            $ctrl.ngModel.Record = {}; // this structure same as the filtering record structure
+            $ctrl.ngModel.InquiryCriteria = {}; // this store the customize criteria data for inquiry
+            $ctrl.ngModel.InquiryResult = {}; // store the inquiry result
+            $ctrl.ngModel.InquiryResult.Data = []; // store the inquiry data array records
+            $ctrl.ngModel.InquiryResult.Result = {}; // store other structure result
+
+            $ctrl.ngModel.ProcessCriteria = {}; // user customize criteria data for further process
+            $ctrl.ngModel.ProcessRecord = []; // user select part of the InquiryResult.Data for further process
+
+            $ctrl.ngModel.ProcessResult = {}; // store the process result
+            $ctrl.ngModel.ProcessResult.Data = []; // store the process data array records
+            $ctrl.ngModel.ProcessResult.Result = {}; // store other structure process
         }
 
         function TryToCallInitDirective(){
@@ -113,7 +124,19 @@ app.directive('process', ['$rootScope',
             InitializeProcess();
         }
         $scope.DefaultInitDirective = function(){
+            TryToCallSetDefaultValue();
+        }
 
+        $scope.InquiryData = function(){
+            MessageService.clear();
+
+        	$scope.LockAllControls();
+
+            if(!ValidateSubmitData()){
+                return;
+            }
+            $scope.ShowLoadModal();
+            InquiryData();
         }
 		
         $scope.SubmitData = function(){
@@ -145,6 +168,60 @@ app.directive('process', ['$rootScope',
 
             return isValid;
         }
+        function InquiryData(){
+            var httpResponseObj = {};
+            var submitPromise;
+            var msg = "";
+
+				if(typeof $scope.CustomInquiryData == "function"){
+	            	submitPromise = $scope.CustomInquiryData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            }else{
+	            	submitPromise = MergeInquiryData($ctrl.ngModel);
+	            }
+
+                submitPromise.then(function(responseObj) {
+                    httpResponseObj = responseObj;
+                    var data_or_JqXHR = responseObj.data;
+                    
+                    $ctrl.ngModel.InquiryResult.Data = data_or_JqXHR;
+                    MessageService.setMsg(httpResponseObj.message);
+
+                }, function(reason) {
+                  console.error(tagName + ":"+$scope.programId + " - Fail in InquiryData()")
+                  throw reason;
+                });
+
+
+            submitPromise.catch(function(e){
+                // handle errors in processing or in error.
+                console.log("Submit data error catch in process");
+                Security.HttpPromiseFail(e);
+            }).finally(function() {
+                // Always execute unlock on both error and success
+                $scope.UnLockAllControls();
+                $timeout(function() {
+                    $scope.HideLoadModal();
+                }, 200);
+
+                if(msg.length > 0)
+                    MessageService.addMsg(msg);
+                InquiryDataResult(httpResponseObj, httpResponseObj.status);
+
+                if(typeof $scope.CustomInquiryDataResult == "function"){
+                    $scope.CustomInquiryDataResult(httpResponseObj,
+                        httpResponseObj.status,
+                        $scope,
+                        $element,
+                        $attrs,
+                        $ctrl);
+                }
+            }).catch(function(e){
+                // handle errors in processing or in error.
+                console.warn(e)
+            })
+
+            return submitPromise;
+        }
         function SubmitData(){			
             var httpResponseObj = {};
             var submitPromise;
@@ -160,8 +237,7 @@ app.directive('process', ['$rootScope',
 				httpResponseObj = responseObj;
 				var data_or_JqXHR = responseObj.data;
 				
-				$ctrl.ngModel = data_or_JqXHR;
-				
+				$ctrl.ngModel.ProcessResult.Data = data_or_JqXHR;
 				MessageService.setMsg(httpResponseObj.message);
 
 			}, function(reason) {
@@ -201,13 +277,31 @@ app.directive('process', ['$rootScope',
             return submitPromise;
         }
         
-        function ProcessData(recordObj){
+        function MergeInquiryData(ngModelObj){
+        	var clientID = Security.GetSessionID();
+        	var programId = $scope.programId.toLowerCase();
+
+			var submitData = {
+                "Table": programId,
+                "InquiryData": {
+				    "Record": ngModelObj.Record,
+				    "CriteriaData": ngModelObj.InquiryCriteria
+                }
+			};
+
+            var request = DataAdapter.InquiryData(submitData);
+            return request;
+        }
+        function ProcessData(ngModelObj){
         	var clientID = Security.GetSessionID();
         	var programId = $scope.programId.toLowerCase();
 
 			var submitData = {
 				"Table": programId,
-				"Data": recordObj,
+				"ProcessData": {
+				    "ProcessRecord": ngModelObj.ProcessRecord,
+				    "CriteriaData": ngModelObj.ProcessCriteria
+                },
 			};
 
             var request = DataAdapter.ProcessData(submitData);
@@ -326,11 +420,16 @@ app.directive('process', ['$rootScope',
             var progID = $scope.programId;
             //console.log("scope.$id:"+$scope.$id+", programId:"+progID+", must implement $scope.CustomGetDataResult() function in webapge");
         }
+        function InquiryDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
+			var responseData = data_or_JqXHR.data
+            $ctrl.ngModel.InquiryResult.Data = responseData;
+			$ctrl.ngModel.ProcessRecord = $ctrl.ngModel.InquiryResult.Data;
+        }
         function SubmitDataResult(data_or_JqXHR, textStatus, jqXHR_or_errorThrown){
 
         }
-
-//        $scope.Initialize();
+    
+        // $scope.Initialize();
     }
 
     function templateFunction(tElement, tAttrs) {

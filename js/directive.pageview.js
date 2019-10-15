@@ -116,7 +116,12 @@ app.directive('pageview', ['$rootScope',
         }
 
     	function SetRecordStructure(dataJson){
+            // console.dir("pageview SetTableStructure")
+            // console.dir($scope.tableStructure)
             $scope.tableStructure = dataJson;
+
+            // console.dir(dataJson)
+            // console.dir($scope.tableStructure)
             
             // if structure already defined, escape the function
             if(!jQuery.isEmptyObject(recordStructure)){
@@ -184,10 +189,14 @@ app.directive('pageview', ['$rootScope',
                     if(isSystemField)
                         continue;
 
-            		var newColumn = newRecordRow[columnName];
-
+                    var newColumn = newRecordRow[columnName];
+                    
             		if (colDataType == "date"){
         				newColumn = new Date(singleItem[columnName]);
+        			}else if (colDataType == "datetime"){
+                        if(typeof singleItem[columnName] == "string"){
+                            newColumn = getDateFromFormat(singleItem[columnName], "yyyy-MM-dd HH:mm:ss");
+                        }
         			}else if (colDataType == "double"){
         				newColumn = parseFloat(singleItem[columnName]);
         			}else{
@@ -314,16 +323,20 @@ app.directive('pageview', ['$rootScope',
             $scope.selectedRecord = {};
             $scope.$parent.SetEditboxNgModel({});
         }
-        $scope.ClearAllNRefresh = function(){
-            var pageNum = $scope.pageNum;
-
+        $scope.ClearNgModel = function(){
             $scope.DisplayMessage = "";
             $scope.dataSource = [];
             $scope.sortedDataSource = [];
             $scope.currentPageRecords = {};
             $ctrl.ngModel = {};
-            $scope.maxRecordsCount = -1;
+            $scope.maxRecordsCount = 0;
             $scope.getNextPageTimes = 0;
+
+        }
+        $scope.ClearAllNRefresh = function(){
+            $scope.ClearNgModel();
+
+            $scope.maxRecordsCount = -1;
 
             $scope.GotoFirstPageRecord();
         }
@@ -517,11 +530,18 @@ app.directive('pageview', ['$rootScope',
                 if(recordCount > 0){
                     AppendToDataSource(pageNum, responseObj.data);
                     SortingTheDataSource();
+                }else{
+                    // 20181021, keithpoon, if record count is 0 and on the first page, all data just deleted, then reset the 
+                    if(pageNum == 1 && $scope.getNextPageTimes == 1 && recordCount == 0){
+                        $scope.ClearNgModel();
+                        $scope.ZeroRecordCount();
+                    }
                 }
 
                 // 20170312, keithpoon, fixed: end page problem caused when the record counts is the multiple of 10
                 if(!responseObj.data || (recordCount < $rootScope.serEnv.phpRecordLimit && $scope.getNextPageTimes > 1) || recordCount == 0){
                     $scope.maxRecordsCount = $scope.sortedDataSource.length;
+                    // console.dir("here")
                     if($scope.getNextPageTimes == 1){
                         $scope.ZeroRecordCount();
                     }else{
