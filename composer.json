@@ -1,0 +1,14 @@
+{
+    "require": {
+        "monolog/monolog": "1.0.*",
+        "components/flag-icon-css": "3.0.0",
+        "dompdf/dompdf":"0.6.2",
+        "mpdf/mpdf":"6.1.0",
+        "tecnickcom/tcpdf":"6.2.12",
+        "phpoffice/phpword":"0.13.0",
+        "phpoffice/phpexcel":"1.8.1",
+        "phpoffice/phpspreadsheet":"1.6.0",
+        "peppeocchi/php-cron-scheduler": "2.4",
+        "adodb/adodb-php": "5.20.14"
+    }
+}
