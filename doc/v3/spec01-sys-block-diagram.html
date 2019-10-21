@@ -1,0 +1,108 @@
+<div id="page-wrapper">
+    <div class="row">
+<!--
+        <div class="col-lg-12">
+            <h1 class="page-header">Login, Logout, Redirect</h1>
+        </div>
+-->
+        <!-- /.col-lg-12 -->
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <h2 class="page-header">System Architecture</h2>
+            <h4>Block Diagram</h4>
+        </div>
+        <div class="col-lg-12">
+          The system architecture model designed in Model View Controller (MVC), the below figure point out these three fundamental parts of Model, View, Controller.<br>
+          <br>
+          <p>Model point out in red circle<br>
+          The model represents the data, and does nothing else. The model does not depend on the controller or the view.<br>
+          </p>
+          <p>
+          Controller point out in blue circle<br>
+          The controller provides model data to the view, and interprets user operation on the data, such as insert record. The controller depends on the view and the model.<br>
+          </p>
+          <p>
+          View point out in green circle<br>
+          The view displays the model data, and sends user interaction between the web page and user to the controller in server side(e.g. Submit button clicks).<br>
+          </p>
+        </div>
+        <div class="col-lg-12">
+			<button class="btn btn-link" data-toggle="lightbox">
+			  <img src="images/System%20Architecture%20-%20System%20Block%20Diagram.png" class="img-fluid img-thumbnail">
+			</button>
+        </div>
+        <div class="col-lg-12">
+            <h4>Details Description</h4>
+            <p>About the details of the above figure, explicate each symbol as below:<br></p>
+            <p>The  arrow is the data flow between the symbol.</p>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                  <tr>
+                    <td><p>Symbol</p></td>
+                    <td><p>Explanation</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>MySQL</p></td>
+                    <td><p>The data storage we use is MySQL database</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>DatabaseManager</p></td>
+                    <td><p>A php class responsible to get connection    to database, generate and execute sql statement, get back the result and    communicate between database and the system.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>TableNManager</p></td>
+                    <td><p>A php class inheritance to    DatabaseManager, as a child of it.<br>
+                      A table manager responsible for single    one table in database.<br>
+                      Allowed to override the select, insert,    update, delete action in parent class to fulfill the indicated table behavior    and business rules.<br>
+                      I.e. There are parent table and child    table, when perform the delete record on parent table, it should be also    delete all the related records in child table.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>EntityNControllerN</p></td>
+                    <td><p>A pure function to extract the user input    and perform CRUD operation and some process. Such as view, insert, update,    delete records.<br>
+                      Process like calculation, generation,    import, export, inquiry, reporting.<br>
+                      The controller must create or new the    table instance to do so.<br>
+                      A entity may implement many controller    for different users that own difference security dimension.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>ConnectionManager</p></td>
+                    <td><p>A stateful programming to collect the    HTTP request from the client side, before to perform the request whatever it    is. Check the user authentication and user authorization. Deny to perform if    the user validation is fail, return the status code and error message.<br>
+                      If the user is valid, perform the request    and return the process result.<br>
+                      All the data and message will format as    text in JSON format return as HTTP response.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>WebClient + AngularJS</p></td>
+                    <td><p>Front end of the end users, The user will    access the data through the web.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>SecurityManager</p></td>
+                    <td><p>A class responsible for security issues,    login, logout, store and destroy the login session.<br>
+                      Check the user authentication and user    authorization and return the result.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>ExcelManager</p></td>
+                    <td><p>A stateless program class responsible to    manipulate the excel engine, also as a adapter to handle the data conversion    between the excel engine and data set.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>Excel Engine</p></td>
+                    <td><p>A third party PHP base excel engine - PHPExcel 1.8.1, use to operate the excel read and write.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>PDF Engine</p></td>
+                    <td><p>A third party PHP base pdf engine - mpdf-6.1.3, PHPExcel 1.7+ use it to convert the excel instance as pdf format.</p></td>
+                  </tr>
+<!--                   <tr>
+                    <td><p>PDF Converter</p></td>
+                    <td><p>OfficeToPDF - Is a free command line tool    that automates server-based PDF conversion for Microsoft Office document    (2007, 2010, 2013 and 2016) users.<br>
+                      It can be integrated into a batch    conversion process or other applications to produce PDFs of the highest    quality.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>PDF Manipulator</p></td>
+                    <td><p>Cpdf - The Coherent PDF Command Line    Tools allow you to manipulate existing PDF files in a variety of ways.</p></td>
+                  </tr> -->
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+</div>

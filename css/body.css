@@ -1,16 +1,13 @@
 @charset "utf-8";
 /* CSS Document */
 
-html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif}
 .w3-sidenav a,.w3-sidenav h4{padding:12px;}
 .w3-navbar a{padding-top:12px !important;padding-bottom:12px !important;}
 
 body {
-	font-family: 新細明體,Times New Roman, Times, serif;
 	margin: 0px;
-	background-color: #f7f7f7;
-	background-image: url(../images/bg.png);
 	padding: 0px;
+	color: #737373;
 }
 
 entry {
@@ -66,3 +63,31 @@ pageview {
 		margin-right: initial;
 	}
 }
+
+.sidebar .nav-item .nav-link {
+	padding: .5rem 1rem;
+}
+
+@media (min-width:768px) {
+.sidebar .nav-item .nav-link {
+	padding: .75rem 1rem;
+}
+}
+
+.sidebar .nav-item.active .nav-link {
+	font-weight:700
+}
+
+footer {
+	margin-top: 150px;
+}
+
+.modal-full {
+    min-width: 100%;
+}
+
+/*
+.modal-full .modal-content {
+    min-height: 100vh;
+}
+*/

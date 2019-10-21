@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>AngularJS-CRUD-PHP Doc v3</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" type="text/css" href="../../third-party/bootstrap/bootstrap-4.3.1-dist/css/bootstrap.min.css">
+	<!-- Custom fonts for this template-->
+	<link href="../../third-party/font-awesome/fontawesome-free-5.11.2-web/css/all.min.css" rel="stylesheet" type="text/css">
+	<link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <script src="../../third-party/font-awesome/fontawesome-free-5.11.2-web/js/all.min.js"></script>
+	<!-- add this make backward compatible with fontawesome 4 -->
+    <script src="../../third-party/font-awesome/fontawesome-free-5.11.2-web/js/v4-shims.min.js"></script>
+
+	<!-- Custom styles for this template-->
+    <link href="../../third-party/bootstrap/startbootstrap-sb-admin-2-4.0.7/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../css/body.css">
+    <link rel="stylesheet" type="text/css" href="../../css/chrome.css">
+    <link rel="stylesheet" type="text/css" href="../../third-party/prism.js/prism.css">
+</head>
+
+<body ng-app="myApp" id="page-top">
+	
+  <!-- Page Wrapper -->
+  <div id="wrapper">
+
+    <!-- Sidebar -->
+	<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar"  ng-include src="'navigation-menu.html'">
+	</ul>
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+      <!-- Main Content -->
+      <div id="content">
+        <!-- Topbar -->
+		<div ng-include src="'top-bar.html'"></div>
+        <!-- End of Topbar -->
+		<main>
+			<!-- Begin Page Content -->
+			<div class="container-fluid bg-light">
+				<div ui-view="content"></div>
+			</div>
+			<!-- /.container-fluid -->
+		</main>
+	  </div>
+      <!-- End of Main Content -->
+
+      <!-- Footer -->
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto">
+            <span>Copyright &copy; AngularJS-CRUD-PHP Documentation 2019</span>
+          </div>
+        </div>
+      </footer>
+      <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+  <!-- End of Page Wrapper -->
+
+  <!-- Scroll to Top Button-->
+  <a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+  </a>
+
+    
+    <script type="text/javascript" src="../../third-party/jQuery/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="../../third-party/jQuery/jquery.cookie-1.4.1.min.js"></script>
+    <!--<script src="../third-party/jQuery-plugins/jquery-lang-js-3.0.3/js/jquery-lang.js"></script>-->
+    
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular.min.js"></script>
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular-animate.min.js"></script>
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular-aria.js"></script>
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular-route.min.js"></script>
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular-touch.min.js"></script>
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular-messages.js"></script>
+    <script type="text/javascript" src="../../third-party/angularjs/angular-1.6.5/angular-cookies.min.js"></script>
+    
+    <script type="text/javascript" src="../../third-party/angularjs-modules-plugins/ui-router/ui-router-1.0.15.js"></script>
+    <script type="text/javascript" src="../../third-party/ocLazyLoad/ocLazyLoad.js"></script>
+
+    <script type="text/javascript" src="../../config/config.js"></script>
+    <script type="text/javascript" src="../../js/load_js_files.js"></script>
+    <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript" src="js/app.config.js"></script>
+    <script type="text/javascript" src="../../js/directive.pageview.js"></script>
+    <script type="text/javascript" src="../../js/directive.entry.js"></script>
+    <script type="text/javascript" src="../../js/directive.screen.js"></script>
+    <script type="text/javascript" src="../../js/directive.editbox.js"></script>
+    <script type="text/javascript" src="../../js/directive.message.js"></script>
+    <script type="text/javascript" src="../../js/directive.range.js"></script>
+    <script type="text/javascript" src="../../js/directive.export.js"></script>
+    <script type="text/javascript" src="../../js/directive.import.js"></script>
+    <script type="text/javascript" src="../../js/directive.upload.js"></script>
+    <script type="text/javascript" src="../../js/directive.js"></script>
+    <script type="text/javascript" src="../../js/service.js"></script>
+    
+    <script type="text/javascript" src="../../third-party/angularjs-modules-plugins/UI-Bootstrap/ui-bootstrap-tpls-1.3.2.js"></script>
+    
+    <script type="text/javascript" src="../../third-party/Blob.js-master/Blob.js"></script>
+    <script type="text/javascript" src="../../third-party/FileSaver.js/FileSaver.js-1.3.2/FileSaver.min.js"></script>
+    <script src="../../third-party/angularjs-modules-plugins/ng-file-upload-12.2.12/demo/src/main/webapp/js/ng-file-upload-shim.js"></script>
+    <script src="../../third-party/angularjs-modules-plugins/ng-file-upload-12.2.12/demo/src/main/webapp/js/ng-file-upload.js"></script>
+
+    <script src="../../third-party/prism.js/prism.min.js"></script>
+	
+	
+	<!-- Bootstrap core JavaScript-->
+	<script src="../../third-party/bootstrap/bootstrap-4.3.1-dist/js/bootstrap.bundle.min.js"></script>
+
+	<!-- Core plugin JavaScript-->
+	<script src="../../third-party/bootstrap/startbootstrap-sb-admin-2-4.0.7/vendor/jquery-easing/jquery.easing.min.js"></script>
+    
+	<!-- Custom scripts for all pages-->
+	<!-- loaded sb-admin-2.min.js in $transitions.onSuccess -->
+	<!--<script src="../../third-party/bootstrap/startbootstrap-sb-admin-2-4.0.7/js/sb-admin-2.min.js"></script>-->
+
+    <!-- sb-admin-2 Theme JavaScript -->
+    <script src="js/demo.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,154 @@
+<div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="index.html">AngularJS-CRUD-PHP</a>
+</div>
+<!-- /.navbar-header -->
+
+<ul class="nav navbar-top-links navbar-right">
+    <li class="dropdown">
+        <a class="dropdown-toggle" href="https://github.com/keithbox/AngularJS-CRUD-PHP" target="_blank" lang="en">
+            <i class="fa fa-github fa-fw"></i> View on GitHub
+        </a>
+    </li>
+    <li class="dropdown">
+        <a class="dropdown-toggle" href="https://github.com/keithbox" target="_blank" lang="en">
+            <i class="fa fa-user fa-fw"></i> Author
+        </a>
+    </li>
+    <!-- <li>
+        <button class="btn btn-link" ng-click="switchLanguage('en')">English
+        </button>
+    </li>
+    <li>
+        <button class="btn btn-link" ng-click="switchLanguage('zh-hant')">繁</button>
+    </li>
+    <li>
+        <button class="btn btn-link" ng-click="switchLanguage('zh-hans')">簡</button>
+    </li> -->
+    <!-- /.dropdown -->
+</ul>
+<!-- /.navbar-top-links -->
+
+<div class="navbar-default sidebar" role="navigation">
+    <div class="sidebar-nav navbar-collapse">
+        <ul class="nav" id="side-menu">
+            <li>
+                <a ui-sref="demoHome" lang="en"><i class="fa fa-sign-in fa-fw fa-lg"></i> Getting Started</a>
+            </li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-file-text-o fa-fw fa-lg"></i> Specification<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref=".spec01-sys-block-diagram" lang="en">System Block Diagram</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".spec02-client-architecture" lang="en">Client Side Architecture</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+            <li>
+                <a ui-sref=".00login-logout" lang="en"><i class="fa fa-user-circle-o fa-fw fa-lg"></i> Login, Logout, Redirect</a>
+            </li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-book fa-fw fa-lg"></i> API Reference<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref=".01directive-entry">&lt;entry&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".02directive-pageview">&lt;pageview&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".03directive-screen">&lt;screen&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".04directive-editbox">&lt;editbox&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".05directive-message">&lt;message&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".06directive-export" class="btn disabled" role="button">&lt;export&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".07directive-upload" class="btn disabled" role="button">&lt;upload&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".08directive-import" class="btn disabled" role="button">&lt;import&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".10directive-inquiry">&lt;inquiry&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".11directive-process" class="btn disabled" role="button">&lt;process&gt;</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".12directive-range">&lt;range&gt;</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+			<li><div style="padding-bottom: 10px; padding-right: 15px; padding-top: 10px;"><i class="fa fa-flask fa-fw fa-lg" aria-hidden="true"></i> Demonstration</div></li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-globe fa-fw fa-lg"></i> Basic Usage<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref=".21create-master-data">Create Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".22view-master-data">View Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".23amend-master-data">Amend Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".24delete-master-data">Delete Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".25display-inline-message">Display In-line Message</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".26reusable-screen">Reusable Screen</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".27data-export.html" class="btn disabled" role="button">Data Export</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".28data-import.html" class="btn disabled" role="button">Data Import</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".29data-inquiry.html" class="btn disabled" role="button">Inquiry</a>
+                    </li>
+                    <li>
+
+                        <a ui-sref=".30data-process.html" class="btn disabled" role="button">Data Processing</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".31range-selection">Range Selection</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-users fa-fw fa-lg"></i> Advance<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref=".41create-staff-profile" lang="en">Create staff profile</a>
+                    </li>
+                    <li>
+                        <a ui-sref=".43amend-staff-profile" lang="en">Amend staff profile</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+        </ul>
+    </div>
+    <!-- /.sidebar-collapse -->
+</div>
+<!-- /.navbar-static-side -->
