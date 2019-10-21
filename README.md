@@ -13,7 +13,7 @@ In current stage, I am going to perform Code refactoring and add some new featur
 
 ## Demo
 Sorry about that I cannot provide a sample that can access the database.  
-For quick learn how to use the source, please check the [online documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)
+For quick learn how to use the source, please check the [online documentation](http://keithbox.github.io/AngularJS-CRUD-PHP/doc/v2/index.html)
 
 For further study, please follow the documentation to setup the demo case on your local environment.
 
@@ -131,7 +131,7 @@ In the future, some existing problems must be solved
 Go to [released version](https://github.com/keithbox/AngularJS-CRUD-PHP/releases) on GitHub
 
 ## Documentation
-[Go here](http://keithbox.github.io/AngularJS-CRUD-PHP/demo/index.html)  
+[Go here](http://keithbox.github.io/AngularJS-CRUD-PHP/doc/v2/index.html)  
 The document includes the:  
 - Installation Guide
 - Configuration
