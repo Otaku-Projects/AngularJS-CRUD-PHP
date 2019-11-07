@@ -2,65 +2,61 @@
 	<div class="row">
 		<div class="col-lg-12">
 			<h1 class="page-header">Getting Started</h1>
-			<h4>An overview of AngularJS-CRUD, how to download and integrate in your web project, basic usage examples and complex combination, and more.</h4>
+			<h4>AngularJS-CRUD-PHP gives you scalable for developing web-based application.</h4>
 		</div>
-		<div class="col-lg-12">
+		<div class="col-lg-6">
 			<h3>Documentation</h3>
-			You may find how to use in the following sections:<br>
-			The sample display converted by HTML encoder https://mothereff.in/html-entities)
+			Docs includes the instruction, diagram and cover the below topics:<br>
 			<ul class="list-group">
-				<li class="list-group-item"><i class="fa fa-user-circle-o fa-fw fa-lg"></i> Login, Logout, Redirect</li>
-				<li class="list-group-item"><i class="fa fa-book fa-fw fa-lg"></i> API Reference</li>
+				<li class="list-group-item">Installation</li>
+				<li class="list-group-item">Configuration</li>
+				<li class="list-group-item">Third-party Dependency</li>
+				<li class="list-group-item">Specification</li>
+				<li class="list-group-item">API Reference</li>
 			</ul>
 		</div>
-		<div class="col-lg-12">
+		<div class="col-lg-6">
 			<h3>Demonstration</h3>
-			If you are interested in the workable example, please follow the installation guide and setup guide before reading the following sections:<br>
+			If you are interested in the workable example, please download and setup the site on your PC to try the case demonstration. The demo include the below use cases:<br>
 			<ul class="list-group">
-				<li class="list-group-item"><i class="fa fa-desktop fa-fw fa-lg"></i> Basic Usage</li>
-				<li class="list-group-item"><i class="fa fa-id-card-o fa-fw fa-lg"></i> Advanace</li>
+				<li class="list-group-item">AngularJS Directive</li>
+				<li class="list-group-item">Basic CRUD</li>
+				<li class="list-group-item">Complex Entry</li>
+				<li class="list-group-item">Import/Export</li>
+				<li class="list-group-item">Inquiry/Process</li>
 			</ul>
 		</div>
 		<div class="col-lg-12">
 			<h3>Installation</h3>
-			<a href="https://github.com/keithbox/AngularJS-CRUD-PHP/archive/2.5.2.zip" class="btn btn-primary">Download version 2.5.2</a> or go to the <a href="https://github.com/keithbox/AngularJS-CRUD-PHP/releases" target="_blank">stable list on Github</a>
-			<h4>Linkage CSS</h4>
-			<pre class="line-numbers"><code class="language-markup">&#x3C;link rel=&#x22;stylesheet&#x22; type=&#x22;text/css&#x22; href=&#x22;css/body.css&#x22;&#x3E;
-&#x3C;link rel=&#x22;stylesheet&#x22; type=&#x22;text/css&#x22; href=&#x22;css/chrome.css&#x22;&#x3E;</code></pre>
-			<!-- <script type="text/plain" class="language-markup">
-<link rel="stylesheet" type="text/css" href="css/body.css">
-<link rel="stylesheet" type="text/css" href="css/chrome.css"></script> -->
+			For Starter, please download the latest release version<br>
+			<a href="https://github.com/Otaku-Projects/AngularJS-CRUD-PHP/archive/2.8.6.zip" class="btn btn-primary">Download version 2.8.6</a><br><br>
+			If you are looking for previous releases, view <a href="https://github.com/Otaku-Projects/AngularJS-CRUD-PHP/releases" target="_blank">Releases on Github</a>
 		</div>
 		<div class="col-lg-12">
-			<h4>Linkage javascript</h4>
+			<h3>Linkage JavaScript core</h3>
 			<pre class="line-numbers"><code class="language-markup">
-&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/common.js&#x22;&#x3E;&#x3C;/script&#x3E;
 &#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/config.js&#x22;&#x3E;&#x3C;/script&#x3E;
-&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/app.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/load_js_files.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/app.initial.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.pageview.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.entry.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.screen.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.editbox.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.message.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.range.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.export.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.import.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.upload.js&#x22;&#x3E;&#x3C;/script&#x3E;
 &#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.js&#x22;&#x3E;&#x3C;/script&#x3E;
 &#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/service.js&#x22;&#x3E;&#x3C;/script&#x3E;</code></pre>
 		</div>
 		<div class="col-lg-12">
-			<h3>Configuration</h3>
-		</div>
-		<div class="col-lg-12">
-			To use the sample template for demonstration and better understand a executable example, pl;ease do the following setting.
-			<br><br>
+			<h3>Dependency</h3>
+			The release package already include the dependency resources, need not to download the below frameworks and libraries.<br>
 			<div class="panel panel-default">
-			  <div class="panel-heading"><h4>Check List</h4></div>
+			  <div class="panel-heading"><h3>Dependency in AngularJS-CRUD-PHP</h3></div>
 			  <div class="panel-body">
-				  Create ./temp/ folder<br>
-				  Create ./temp/export folder<br>
-				  Create ./temp/upload folder<br>
-				  Dependency check<br>
-			  </div>
-			</div>
-		</div>
-		<div class="col-lg-12">
-			<div class="panel panel-default">
-			  <div class="panel-heading"><h3>Dependency</h3></div>
-			  <div class="panel-body">
-				<h4>Framework, library on web client</h4>
+				<h4>Framework, library on client side</h4>
 				<ul>
 				  <li>angularJS 1.5.0 or above</li>
 				  <li>jQuery 2.2.1 or above</li>
@@ -71,11 +67,6 @@
 				  <li>Blob.js</li>
 				  <li>FileSaver.js 1.3.2</li>
 				  </ul>
-				<p>ui framework, the default ui components that i used, you may switch to others</p>
-				<ul>
-				  <li>bootstrap 3.3.6</li>
-				  <li>font awesome 4.7.0</li>
-				</ul>
 				<h4>Framework, library on server side</h4>
 				<ul>
 				  <li>PHP 5.4 or above</li>
@@ -84,21 +75,64 @@
 				  <li>OfficeToPdf.exe (pdf engine) <a href="https://officetopdf.codeplex.com/" rel="nofollow">Requirement</a></li>
 				  </ul>
 				<p>PHPExcel has integrate with dompdf, mpdf, tcpdf, but the excel convert to pdf features has some limitations, I recommended to use OfficeToPdf if your server environment is windows platform</p>
-				<hr>
-				<h4>For this demo materials</h4>
-				<ul>
-				  <li>PrismJs for highlight the syntax </li>
-				  <li><a href="https://mothereff.in/html-entities" rel="nofollow">Online encoder/decoder</a> for HTML encode</li>
-				</ul>
-				
 			  </div>
 			</div>
+			<hr>
+			The below dependency only exists in the Docs and the Demo site, please exclude some of the below bepends on your needs in development.
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h3>Dependency in Docs + Demo</h3></div>
+			  <div class="panel-body">
+			  <h4>UI framework</h4>
+				<p>the demonstration used some UI framework/components, if you would like to use other UI framework, you may need to put some efforts on the coding.</p>
+				<ul>
+				  <li>bootstrap 3.3.6 (optional)</li>
+				  <li>font awesome 4.7.0 (optional)</li>
+				</ul>
+				<h4>AngularJS Third-Party Resources</h4>
+				<ul>
+				  <li>AngularJS ui-router 1.0.15<br>Making Docs, Demo site as the Single Page Application for reduce efforts</li>
+				  <li>angular-bootstrap-lightbox-0.12.0<br>
+				  for diagram lightbox</li>
+				</ul>
+				<h4>Others</h4>
+				<ul>
+				  <li>PrismJs 1.11.0<br>for highlight the syntax </li>
+				  for diagram lightbox</li>
+				  <li>Bootstrap Template - startbootstrap-sb-admin 2 3.3.7-1</li>
+				  <li><a href="https://mothereff.in/html-entities" rel="nofollow">Online encoder/decoder</a> for HTML encode</li>
+				</ul>
+			  </div>
+			</div>
+		</div>
+		<div class="col-lg-12">
+			<h3>Configuration</h3>
+		</div>
+		<div class="col-lg-12">
+			Please follow the "Check List" below to setup the demonstration/docs site on your PC, to better understand how the executable example works.
+			<br><br>
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h4>Check List</h4></div>
+			  <div class="panel-body">
+				  Amend Client side config file (config.js)<br>
+				  Amend Server side config file (config.php)<br>
+				  Create folder: webroot/temp/<br>
+				  Create folder: webroot/temp/export<br>
+				  Create folder: webroot/temp/upload<br>
+				  Dependency check<br>
+			  </div>
+			</div>
+		</div>
+		<div class="col-lg-12">
 			<div class="panel panel-default">
 			  <div class="panel-heading">
 				<h3>Client Side Configuaration</h3></div>
 				<div class="panel-body">
-					<p>The client config file located at ./js/config.js<br>
-					to config the website host, data server host, user main page after login, login page location for those pages required user authentication.
+					<p>File Location: config/config.js<br>
+					Amend the client config file to setup the below properties:<br>
+					- website host<br>
+					- data server host<br>
+					- redirect location for the user who login success<br>
+					- redirect location for those pages which required user authentication<br>
 					</p>
 					<p>
 					<pre class="line-numbers"><code class="language-php">
@@ -114,7 +148,7 @@
 			<div class="panel panel-default">
 			  <div class="panel-heading"><h3>Server Side Configuaration</h3></div>
 			  <div class="panel-body">
-				  <p>The server  config file located at ./model/config.php<br>
+				  <p>File Location: config/config.php<br>Amend the server config file<br>
 					  to config the database(MySQL/MariaDB) connection information.
 				  </p>
 					<p>
@@ -128,7 +162,7 @@
 					 * DB_PASS: the password of the above user
 					 */
 
-					define("_DB_HOST", "192.20.2.60", true);
+					define("_DB_HOST", "192.168.0.190", true);
 					define("_DB_NAME", "acgni308_keithbox", true);
 					define("_DB_USER", "acgni308_kbuser", true);
 					define("_DB_PASS", "Demo-DB3.2", true);
@@ -138,9 +172,11 @@
 			</div>
 		</div>
 		<div class="col-lg-12">
-				<hr>
-				<div class="alert alert-info" role="alert">If you are not the advanced user, please skill the following</div>
-				<hr>
+			<hr>
+		</div>
+		<div class="col-lg-12">
+			<div class="alert alert-info" role="alert">If you are not the advanced user, please skill the following</div>
+			<hr>
 			<div class="panel panel-default">
 			  <div class="panel-heading">
 				<h4>PHPExcel 1.8.0+ integrate with PDF engine</h4></div>

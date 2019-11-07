@@ -1,0 +1,46 @@
+<div id="page-wrapper">
+	<div class="mb-4">
+		Back to the <a class="btn-link" ui-sref="install02-release-history">Release</a>
+	</div>
+	<div class="mb-4">
+		<h1 class="mb-4 border-bottom">{{latestVersion.name}} <span class="h6">(Release ID: {{releaseID}})</h1>
+		<div class="d-flex flex-column flex-lg-row mb-4">
+			<div class="flex-fill py-4 p4-lg-0 mx-lg-2 w-1-3">
+				<div class="loading_info">
+					<i class="fas fa-spinner fa-fw fa-lg fa-spin"></i> loading...
+				</div>
+				<div class="release_info animated fadeIn">
+					<p class="h4 mb-4">Download</p>
+					<div class="mb-2">
+						<a href="#" class="btn btn-primary" target="_blank">v <span id="latest_release_zip"></span>.zip <i class="fab fa-github fa-fw"></i></a> 
+						<a href="#" class="btn btn-primary" target="_blank">v <span id="latest_release_tar"></span>.tar <i class="fab fa-github fa-fw"></i></a>
+					</div>
+				</div>
+			</div>
+			<div class="flex-fill py-4 p4-lg-0 mx-lg-2 w-1-3">
+				<div class="release_info animated fadeIn">
+					<p class="h4 mb-4">Github</p>
+					<div class="mb-2">{{latestVersion.author.login}} released this on {{latestVersion.published_at | date : "MMM dd yyyy"}}
+						<div style="display: none;"><i class="fas fa-tag"></i> {{latestVersion.tag_name}}</div>
+					</div>
+					<div class="mb-2">
+						<a ng-href="{{latestVersion.html_url}}" target="_blank" class="btn btn-link">View on Github <i class="fas fa-external-link-alt fa-fw"></i></a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="mb-4">
+		<h3 class="mb-4 border-bottom">Release Log</h3>
+		<div class="row mb-2 p-4 bg-white border-rounded">
+			<div class="col-12">
+			<div ng-bind-html="latestVersion.html"></div>
+			</div>
+		</div>
+	</div>
+	<div class="mb-4">
+		Back to the <a class="btn-link" ui-sref="install02-release-history">Release</a>
+	</div>
+	
+	<!-- /.row -->
+</div>

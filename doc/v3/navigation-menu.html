@@ -1,16 +1,16 @@
   <!-- Sidebar - Brand -->
-  <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+  <a class="sidebar-brand d-flex align-items-center justify-content-center" ui-sref="Home">
 	<div class="sidebar-brand-icon">
-	  <i class="fas fa-book"></i>
+	  <i class="fa fa-home fa-fw fa-lg"></i>
 	</div>
-	<div class="sidebar-brand-text mx-3">v3 Document</div>
+	<div class="sidebar-brand-text mx-3">Home</div>
   </a>
 
   <!-- Divider -->
   <hr class="sidebar-divider my-0">
 
   <!-- Nav Item -->
-  <li class="nav-item">
+  <li class="nav-item" style="display:none;">
 	<a class="nav-link" ui-sref="Home">
 	  <i class="fa fa-home fa-fw fa-lg"></i>
 	  <span>Home</span></a>
@@ -21,12 +21,33 @@
   
   <!-- Heading -->
   <div class="sidebar-heading">
-	Set Up
+	Preparation
   </div>
   <li class="nav-item">
 	<a class="nav-link" ui-sref="install01-getting-started">
 	  <i class="fa fa-sign-in fa-fw fa-lg"></i>
 	  <span>Getting Started</span></a>
+  </li>
+  <li class="nav-item">
+	<a class="nav-link" ui-sref="install02-release-history">
+	  <i class="fas fa-download fa-fw fa-lg"></i>
+	  <span>Release</span></a>
+  </li>
+  <li class="nav-item">
+	<a class="nav-link collapsed cursor" ui-href="({'#':''})" data-toggle="collapse" data-target="#collapseConfig" aria-expanded="true" aria-controls="collapseConfig">
+	  <i class="fas fa-box-open fa-fw fa-lg"></i>
+	  <span>Extract and Setup</span>
+	</a>
+	<div id="collapseConfig" class="collapse" aria-labelledby="headingConfig" data-parent="#accordionSidebar">
+	  <div class="bg-white py-2 collapse-inner rounded">
+		<h6 class="collapse-header">Web Server</h6>
+		<a class="collapse-item" ui-sref="01directive-entry">Apache Web Server</a>
+		<a class="collapse-item" ui-sref="01directive-entry">IIS</a>
+		<h6 class="collapse-header">Application Config</h6>
+		<a class="collapse-item" ui-sref="01directive-entry">Client Side Configuration</a>
+		<a class="collapse-item" ui-sref="02directive-pageview">Server Side Configuration</a>
+	  </div>
+	</div>
   </li>
 
   <!-- Divider -->
@@ -34,7 +55,7 @@
 
   <!-- Heading -->
   <div class="sidebar-heading">
-	System Specification
+	Framework Specification
   </div>
   <!-- Nav Item -->
   <li class="nav-item">
@@ -44,25 +65,26 @@
 	<a ui-sref="spec02-client-architecture" class="nav-link" lang="en"><i class="fab fa-js fa-fw fa-lg"></i> <span>Client Side Architecture</span></a>
   </li>
   
-  <hr class="sidebar-divider ng-scope mt-2 mb-2">
-  
+  <!-- Heading -->
+  <div class="sidebar-heading">
+	Data Transfer
+  </div>
+
+  <!-- Nav Item - Pages Collapse Menu -->
   <li class="nav-item">
-	<a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseConfig" aria-expanded="true" aria-controls="collapseConfig">
-	  <i class="fas fa-cogs fa-fw fa-lg"></i>
-	  <span>Configuration</span>
+	<a class="nav-link collapsed cursor" ui-href="({'#':''})" data-toggle="collapse" data-target="#collapseData" aria-expanded="true" aria-controls="collapseData">
+	  <i class="fas fa-sync-alt fa-fw fa-lg"></i>
+	  <span>Data Conversion</span>
 	</a>
-	<div id="collapseConfig" class="collapse" aria-labelledby="headingConfig" data-parent="#accordionSidebar">
+	<div id="collapseData" class="collapse" aria-labelledby="headingData" data-parent="#accordionSidebar">
 	  <div class="bg-white py-2 collapse-inner rounded">
-		<h6 class="collapse-header">Application</h6>
-		<a class="collapse-item" ui-sref="01directive-entry">Client Side Configuration</a>
-		<a class="collapse-item" ui-sref="02directive-pageview">Server Side Configuration</a>
-		<h6 class="collapse-header">Web Server</h6>
-		<a class="collapse-item" ui-sref="01directive-entry">IIS Configuration</a>
+		<a class="collapse-item" ui-sref="08directive-import">HTTP request</a>
+		<a class="collapse-item" ui-sref="08directive-import">HTTP response</a>
 	  </div>
 	</div>
   </li>
   
-  <hr class="sidebar-divider ng-scope mt-2 mb-2">
+  <hr class="sidebar-divider">
   
   <div class="sidebar-heading">
 	API Reference
@@ -73,7 +95,7 @@
   </li>
   
   <li class="nav-item">
-	<a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAPI" aria-expanded="true" aria-controls="collapseAPI">
+	<a class="nav-link collapsed cursor" ui-href="({'#':''})" data-toggle="collapse" data-target="#collapseAPI" aria-expanded="true" aria-controls="collapseAPI">
 	  <i class="fas fa-code fa-fw fa-lg"></i>
 	  <span>AngularJS Directive</span>
 	</a>
@@ -100,26 +122,39 @@
 	</div>
   </li>
   
-  <hr class="sidebar-divider ng-scope mt-0 mb-2">
-
-  <!-- Heading -->
+  <hr class="sidebar-divider">
+  
   <div class="sidebar-heading">
-	Data Transfer
+	Migration
   </div>
-
-  <!-- Nav Item - Pages Collapse Menu -->
   <li class="nav-item">
-	<a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseData" aria-expanded="true" aria-controls="collapseData">
+	<a class="nav-link collapsed cursor" ui-href="({'#':''})" data-toggle="collapse" data-target="#collapseUIFramework" aria-expanded="true" aria-controls="collapseUIFramework">
 	  <i class="fas fa-sync-alt fa-fw fa-lg"></i>
-	  <span>Data Conversion</span>
+	  <span>UI Frameowrk</span>
 	</a>
-	<div id="collapseData" class="collapse" aria-labelledby="headingData" data-parent="#accordionSidebar">
+	<div id="collapseUIFramework" class="collapse" aria-labelledby="headingData" data-parent="#accordionSidebar">
 	  <div class="bg-white py-2 collapse-inner rounded">
-		<a class="collapse-item" ui-sref="08directive-import">HTTP request</a>
-		<a class="collapse-item" ui-sref="08directive-import">HTTP response</a>
+		<a class="collapse-item" ui-sref="08directive-import">Materialize CSS</a>
+		<a class="collapse-item" ui-sref="08directive-import">UIkit</a>
+		<a class="collapse-item" ui-sref="08directive-import">AngularJS Material</a>
+		<a class="collapse-item" ui-sref="08directive-import">Semantic UI</a>
+		<a class="collapse-item" ui-sref="08directive-import">Boostrap 3</a>
 	  </div>
 	</div>
   </li>
+  <li class="nav-item">
+	<a class="nav-link collapsed cursor" ui-href="({'#':''})" data-toggle="collapse" data-target="#collapseVistualizationJSTool" aria-expanded="true" aria-controls="collapseVistualizationJSTool">
+	  <i class="fas fa-sync-alt fa-fw fa-lg"></i>
+	  <span>Vistualization JS Tools</span>
+	</a>
+	<div id="collapseVistualizationJSTool" class="collapse" aria-labelledby="headingData" data-parent="#accordionSidebar">
+	  <div class="bg-white py-2 collapse-inner rounded">
+		<a class="collapse-item" ui-sref="08directive-import">FullCalendar</a>
+		<a class="collapse-item" ui-sref="08directive-import">Chart.js</a>
+	  </div>
+	</div>
+  </li>
+  
 
   <!-- Divider -->
   <hr class="sidebar-divider d-none d-md-block">

@@ -1,0 +1,55 @@
+<div id="page-wrapper">
+	<div class="mb-4">
+		<h1 class="text-center mb-4">Release</h1>
+		<p>AngularJS-CRUD-PHP named release by Semantic Versioning 2.0.0, it is a x.y.z version pattern.</p>
+	</div>
+	<div class="mb-4">
+		<h3 class="mb-4 border-bottom">Latest Version</h3>
+		<div class="d-flex flex-column flex-md-row mb-4">
+			<div class="flex-fill py-4 p4-lg-0 mx-md-2 w-1-3">
+				<p class="h4">Release</p>
+				<div class="">
+				Release is a more stable version that completed the testing which include all minified code and docs. Recommended for who start using AngularJS-CRUD-PHP on development.</div>
+				<br>
+				<div class="loading_info">
+					<i class="fas fa-spinner fa-fw fa-lg fa-spin"></i> loading...
+				</div>
+				<div class="release_info animated fadeIn">
+					<a href="#" class="btn btn-primary" target="_blank">v <span id="latest_release_zip"></span>.zip <i class="fab fa-github fa-fw"></i></a> 
+					<a href="#" class="btn btn-primary" target="_blank">v <span id="latest_release_tar"></span>.tar <i class="fab fa-github fa-fw"></i></a>
+				</div>
+			</div>
+			<div class="flex-fill py-4 p4-lg-0 mx-md-2 w-1-3">
+				<p class="h4">Source</p>
+				<div class="">
+				Include testing version of the new features, original source with unminified lines of code and docs. Recommended for who would like to improve or contribute on the source code.<br><br>
+				<a href="https://github.com/Otaku-Projects/AngularJS-CRUD-PHP/releases" target="_blank" class="btn btn-primary">Download Source <i class="fas fa-external-link-alt fa-fw"></i></a>
+				</div>
+			</div>
+		</div>
+		<!--
+		<h4 class="mb-4 border-bottom">Release Log</h4>
+		<div class="loading_info">
+			<i class="fas fa-spinner fa-fw fa-lg fa-spin"></i> loading...
+		</div>
+		<div class="row mb-2 p-4 bg-white border-rounded">
+			<div class="col-12">
+				<div class="release_info" ng-bind-html="latestVersion.html"></div>
+			</div>
+		</div>-->
+	</div>
+	<div class="mb-4">
+		<h3 class="mb-4 border-bottom">All Release</h3>
+		<div class="row mb-4 p-2" ng-repeat="release in releaseInfoStack">
+				<div class="col-12">
+			<a class="text-dark text-decoration-none" ui-sref="install03-release-repository({releaseTagName:release.tag_name,releaseID:release.id})">
+				<h4 class="border-bottom">{{release.name}}</h4>
+				<div><i class="fas fa-tag"></i> {{release.tag_name}}</div>
+				<div>Released on {{release.published_at | date : "MMM dd yyyy"}}</div>
+			</a>
+				</div>
+		</div>
+	</div>
+	
+	<!-- /.row -->
+</div>

@@ -1,0 +1,206 @@
+<div id="page-wrapper">
+	<div class="mb-4">
+		<h1 class="text-center mb-4">Getting started</h1>
+		<p class="text-left">An overview of AngularJS-CRUD-PHP, how to download and use or integrate in your web project, basic usage examples and complex combination, and more.</p>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<h3>Documentation</h3>
+			You may find how to use in the following sections:<br>
+			The sample display converted by HTML encoder https://mothereff.in/html-entities)
+			<ul class="list-group">
+				<li class="list-group-item"><i class="fa fa-user-circle-o fa-fw fa-lg"></i> Login, Logout, Redirect</li>
+				<li class="list-group-item"><i class="fa fa-book fa-fw fa-lg"></i> API Reference</li>
+			</ul>
+		</div>
+		<div class="col-lg-12">
+			<h3>Demonstration</h3>
+			If you are interested in the workable example, please follow the installation guide and setup guide before reading the following sections:<br>
+			<ul class="list-group">
+				<li class="list-group-item"><i class="fa fa-desktop fa-fw fa-lg"></i> Basic Usage</li>
+				<li class="list-group-item"><i class="fa fa-id-card-o fa-fw fa-lg"></i> Advanace</li>
+			</ul>
+		</div>
+		<div class="col-lg-12">
+			<h3>Installation</h3>
+			<a href="https://github.com/keithbox/AngularJS-CRUD-PHP/archive/2.5.2.zip" class="btn btn-primary">Download version 2.5.2</a> or go to the <a href="https://github.com/keithbox/AngularJS-CRUD-PHP/releases" target="_blank">stable list on Github</a>
+			<h4>Linkage CSS</h4>
+			<pre class="line-numbers"><code class="language-markup">&#x3C;link rel=&#x22;stylesheet&#x22; type=&#x22;text/css&#x22; href=&#x22;css/body.css&#x22;&#x3E;
+&#x3C;link rel=&#x22;stylesheet&#x22; type=&#x22;text/css&#x22; href=&#x22;css/chrome.css&#x22;&#x3E;</code></pre>
+			<!-- <script type="text/plain" class="language-markup">
+<link rel="stylesheet" type="text/css" href="css/body.css">
+<link rel="stylesheet" type="text/css" href="css/chrome.css"></script> -->
+		</div>
+		<div class="col-lg-12">
+			<h4>Linkage javascript</h4>
+			<pre class="line-numbers"><code class="language-markup">
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/common.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/config.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/app.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/directive.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;js/service.js&#x22;&#x3E;&#x3C;/script&#x3E;</code></pre>
+		</div>
+		<div class="col-lg-12">
+			<h3>Configuration</h3>
+		</div>
+		<div class="col-lg-12">
+			To use the sample template for demonstration and better understand a executable example, pl;ease do the following setting.
+			<br><br>
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h4>Check List</h4></div>
+			  <div class="panel-body">
+				  Create ./temp/ folder<br>
+				  Create ./temp/export folder<br>
+				  Create ./temp/upload folder<br>
+				  Dependency check<br>
+			  </div>
+			</div>
+		</div>
+		<div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h3>Dependency</h3></div>
+			  <div class="panel-body">
+				<h4>Framework, library on web client</h4>
+				<ul>
+				  <li>AngularJS 1.5.0 or above</li>
+				  <li>jQuery 2.2.1 or above</li>
+				  </ul>
+				<p>if you want the import/export features</p>
+				<ul>
+				  <li>ng-file-upload-12.2.12 or above</li>
+				  <li>Blob.js</li>
+				  <li>FileSaver.js 1.3.2</li>
+				  </ul>
+				<p>ui framework, the default ui components that i used, you may switch to others</p>
+				<ul>
+				  <li>bootstrap 3.3.6</li>
+				  <li>font awesome 4.7.0</li>
+				</ul>
+				<h4>Framework, library on server side</h4>
+				<ul>
+				  <li>PHP 5.4 or above</li>
+				  <li>PHPExcel 1.8.1 (excel engine)</li>
+				  <li>mpdf 6.1.3 (pdf engine)</li>
+				  <li>OfficeToPdf.exe (pdf engine) <a href="https://officetopdf.codeplex.com/" rel="nofollow">Requirement</a></li>
+				  </ul>
+				<p>PHPExcel has integrate with dompdf, mpdf, tcpdf, but the excel convert to pdf features has some limitations, I recommended to use OfficeToPdf if your server environment is windows platform</p>
+				<hr>
+				<h4>For this demo materials</h4>
+				<ul>
+				  <li>PrismJs for highlight the syntax </li>
+				  <li><a href="https://mothereff.in/html-entities" rel="nofollow">Online encoder/decoder</a> for HTML encode</li>
+				</ul>
+				
+			  </div>
+			</div>
+			<div class="panel panel-default">
+			  <div class="panel-heading">
+				<h3>Client Side Configuaration</h3></div>
+				<div class="panel-body">
+					<p>The client config file located at ./js/config.js<br>
+					to config the website host, data server host, user main page after login, login page location for those pages required user authentication.
+					</p>
+					<p>
+					<pre class="line-numbers"><code class="language-php">
+						var serverHost = "http://192.168.0.190/Develop";
+						var webRoot = "http://192.168.0.190/Develop";
+
+						var requireLoginPage = "login.html";
+						var afterLoginPage = "main-menu.html";
+					</code></pre>
+					</p>
+				</div>
+			</div>
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h3>Server Side Configuaration</h3></div>
+			  <div class="panel-body">
+				  <p>The server  config file located at ./model/config.php<br>
+					  to config the database(MySQL/MariaDB) connection information.
+				  </p>
+					<p>
+					<pre class="line-numbers"><code class="language-php">
+					/**
+					 * Configuration for: Database Connection
+					 *
+					 * DB_HOST: database host, usually it's "127.0.0.1" or "localhost", some servers also need port info
+					 * DB_NAME: name of the database. please note: database and database table are not the same thing
+					 * DB_USER: user for your database. the user needs to have rights for SELECT, UPDATE, DELETE and INSERT.
+					 * DB_PASS: the password of the above user
+					 */
+
+					define("_DB_HOST", "192.20.2.60", true);
+					define("_DB_NAME", "acgni308_keithbox", true);
+					define("_DB_USER", "acgni308_kbuser", true);
+					define("_DB_PASS", "Demo-DB3.2", true);
+					</code></pre>
+					</p>
+			  </div>
+			</div>
+		</div>
+		<div class="col-lg-12">
+				<hr>
+				<div class="alert alert-info" role="alert">If you are not the advanced user, please skill the following</div>
+				<hr>
+			<div class="panel panel-default">
+			  <div class="panel-heading">
+				<h4>PHPExcel 1.8.0+ integrate with PDF engine</h4></div>
+				<div class="panel-body">
+					<p>        PHPExcel was integrated with three PDF engines that allowed to config which will be use.<br>
+					  Edit a php file located at ./model/ExcelManager.php          <br><br>
+					Uncomment to pick a one out of three PDF engines (dompdf 0.6.0+, TCPDF 6.2.0+, mpdf 6.1.0+)</p>
+					<p>Default using mpdf as pdf enginers.</p>
+					<p>This setting enable the PHPExcel instance output the file as PDF format, if you want to disable this feature please do not assign pdf engine to PHPExcel and comment all the following lines.
+					<pre class="line-numbers"><code class="language-php">
+					// $rendererName = PHPExcel_Settings::PDF_RENDERER_DOMPDF;
+					// $rendererLibrary = 'PDF engine/dompdf/dompdf-0.6.2/';
+					// local the dompdf enginer folder, PHPExcel 1.8.0+ not support dompdf 0.7.0+
+					// $rendererLibrary = 'PDF engine/dompdf/dompdf-0.7.0/';
+
+					// extremely slow performance
+					// $rendererName = PHPExcel_Settings::PDF_RENDERER_TCPDF;
+					// $rendererLibrary = 'PDF engine/TCPDF/TCPDF-6.2.13/';
+
+					$rendererName = PHPExcel_Settings::PDF_RENDERER_MPDF;
+					$rendererLibrary = 'PDF engine/MPDF/mpdf-6.1.3/';
+
+					$rendererLibraryPath = BASE_3RD . $rendererLibrary;
+					</code></pre>
+					</p>
+				</div>
+			</div>
+			<div class="panel panel-default">
+			  <div class="panel-heading"><h3>IIS Configuaration</h3></div>
+				<div class="panel-body">
+					<p> error about glyphicons-halflings-regular.woff2 not found </p>
+					<p><a href="http://stackoverflow.com/questions/32300578/how-to-remove-error-about-glyphicons-halflings-regular-woff2-not-found">http://stackoverflow.com/questions/32300578/how-to-remove-error-about-glyphicons-halflings-regular-woff2-not-found</a></p>
+					<p>This problem happens because IIS does not know about woff and  woff2 file mime types.</p>
+					<p>Solution 1: Add this lines in your web.config project:</p>
+					<p>
+					<!-- You also need to add some content to highlight, but that is covered elsewhere. -->
+					<script type="text/plain" class="language-markup line-numbers">
+					<system.webServer>
+					  ...
+					  </modules>
+						<staticContent>
+						  <remove fileExtension=".woff" />
+						  <mimeMap fileExtension=".woff" mimeType="application/x-font-woff" />
+						  <remove fileExtension=".woff2" />
+						  <mimeMap fileExtension=".woff2" mimeType="application/font-woff2" />
+						</staticContent>
+					  ...
+					</script>
+					</p>
+					<p>Solution 2:</p>
+					<ol>
+					  <li>Go to your project IIS home page and double click on MIME Types button:</li>
+					  <li> Click on Add button from Actions menu: </li>
+					  <li>In the middle of the screen appears a window and in this window you need to add the two lines from solution 1: </li>
+					</ol>
+				</div>
+			</div>
+		</div>
+		
+		<!-- /.col-lg-12 -->
+	</div>
+	<!-- /.row -->
+</div>

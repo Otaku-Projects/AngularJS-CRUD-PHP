@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>SB Admin 2 - Bootstrap Admin Theme</title>
+    <title>AngularJS-CRUD-PHP 2 Documentation</title>
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" type="text/css" href="../../third-party/bootstrap/bootstrap-3.3.7-dist/css/bootstrap.min.css">
@@ -35,7 +35,7 @@
 
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
-            <div ui-view="navmenu"></div>
+			<div ng-include src="'navigation-menu.html'"></div>
         </nav>
 
         <div ui-view="content"></div>
@@ -61,8 +61,8 @@
 
     <script type="text/javascript" src="../../archive/2.8.x/config/config.js"></script>
     <script type="text/javascript" src="../../archive/2.8.x/js/load_js_files.js"></script>
-    <script type="text/javascript" src="js/app.js"></script>
-    <script type="text/javascript" src="js/app.config.js"></script>
+    <script type="text/javascript" src="js/app.initial.js"></script>
+    <script type="text/javascript" src="js/app.route.config.js"></script>
     <script type="text/javascript" src="../../archive/2.8.x/js/directive.pageview.js"></script>
     <script type="text/javascript" src="../../archive/2.8.x/js/directive.entry.js"></script>
     <script type="text/javascript" src="../../archive/2.8.x/js/directive.screen.js"></script>

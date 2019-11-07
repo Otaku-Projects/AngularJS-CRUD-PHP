@@ -1,0 +1,26 @@
+{
+	"token": {
+		"View on GitHub":"前往 GitHub",
+		"Author":"作者",
+		"Getting Started":"开始",
+		"Specification":"规格",
+		"System Block Diagram":"系统示意图",
+		"Client Side Architecture":"客户端结构",
+		"Login, Logout, Redirect":"登入、登出、重新导向",
+		"API Reference":"应用程式介面参考指南",
+		"Basic Usage":"基础使用",
+		"Create Department":"建立部门资料",
+		"View Department":"检视部门资料",
+		"Amend Department":"修改部门资料",
+		"Delete Department":"删除部门资料",
+		"Display In-line Message":"显示行内讯息",
+		"Reusable Screen":"介面的重用",
+		"Data Import":"资料导入",
+		"Data Export":"资料导出",
+		"Data Processing":"资料客制化处理",
+		"Range Selection":"选取范围",
+		"Advance":"进阶使用",
+		"Create staff profile":"建立员工资料",
+		"Amend staff profile":"修改员工资料"
+	}
+}

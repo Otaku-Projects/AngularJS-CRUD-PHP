@@ -1,0 +1,146 @@
+<div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" ui-sref="Home">AngularJS-CRUD-PHP 2 Demonstration</a>
+</div>
+<!-- /.navbar-header -->
+
+<ul class="nav navbar-top-links navbar-right">
+    <li class="dropdown">
+        <a class="dropdown-toggle" href="../../doc/v2" lang="en">
+            <i class="fa fa-book fa-fw" aria-hidden="true"></i> Docs
+        </a>
+    </li>
+    <li class="dropdown">
+        <span lang="en">
+            <i class="fa fa-flask fa-fw" aria-hidden="true"></i> Demo
+        </span>
+    </li>
+    <li class="dropdown">
+        <a class="dropdown-toggle" href="https://github.com/Otaku-Projects/AngularJS-CRUD-PHP" target="_blank" lang="en">
+            <i class="fa fa-github fa-fw" aria-hidden="true"></i> View on GitHub
+        </a>
+    </li>
+    <li class="dropdown">
+        <a class="dropdown-toggle" href="https://github.com/dolphinotaku" target="_blank" lang="en">
+            <i class="fa fa-user fa-fw" aria-hidden="true"></i> Author
+        </a>
+    </li>
+    <!-- <li>
+        <button class="btn btn-link" ng-click="switchLanguage('en')">English
+        </button>
+    </li>
+    <li>
+        <button class="btn btn-link" ng-click="switchLanguage('zh-hant')">繁</button>
+    </li>
+    <li>
+        <button class="btn btn-link" ng-click="switchLanguage('zh-hans')">簡</button>
+    </li> -->
+    <!-- /.dropdown -->
+</ul>
+<!-- /.navbar-top-links -->
+
+<div class="navbar-default sidebar" role="navigation">
+    <div class="sidebar-nav navbar-collapse">
+        <ul class="nav" id="side-menu">
+            <li>
+                <a ui-sref="Home" lang="en"><i class="fa fa-sign-in fa-fw fa-lg" aria-hidden="true"></i> Introduction to the Demo</a>
+            </li>
+			<li><div style="padding-bottom: 10px; padding-right: 15px; padding-top: 10px; padding-left: 5px;">AngularJS Service</div></li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-lock fa-fw fa-lg" aria-hidden="true"></i> Security - User Authentication<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+					<li>
+						<a ui-sref="00login-logout" lang="en"><i class="fa fa-user-circle-o fa-fw fa-lg" aria-hidden="true"></i> Login, Logout, Redirect</a>
+					</li>
+                    <li>
+                        <a ui-sref="" class="btn disabled" role="button">Login Redirect</a>
+                    </li>
+                    <li>
+                        <a ui-sref="" class="btn disabled" role="button">Logout Redirect</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+			<li><div style="padding-bottom: 10px; padding-right: 15px; padding-top: 10px; padding-left: 5px;">AngularJS Directive</div></li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-battery-0 fa-fw fa-lg" aria-hidden="true"></i> Directive Usage<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref="21create-master-data">Create Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref="22view-master-data">View Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref="23amend-master-data">Amend Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref="24delete-master-data">Delete Department</a>
+                    </li>
+                    <li>
+                        <a ui-sref="25display-inline-message">Display In-line Message</a>
+                    </li>
+                    <li>
+                        <a ui-sref="26reusable-screen">Reusable Screen</a>
+                    </li>
+                    <li>
+                        <a ui-sref="27data-export.html" class="btn disabled" role="button">Data Export</a>
+                    </li>
+                    <li>
+                        <a ui-sref="28data-import.html" class="btn disabled" role="button">Data Import</a>
+                    </li>
+                    <li>
+                        <a ui-sref="29data-inquiry.html" class="btn disabled" role="button">Inquiry</a>
+                    </li>
+                    <li>
+
+                        <a ui-sref="30data-process.html" class="btn disabled" role="button">Data Processing</a>
+                    </li>
+                    <li>
+                        <a ui-sref="31range-selection">Range Selection</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+			<li><div style="padding-bottom: 10px; padding-right: 15px; padding-top: 10px; padding-left: 5px;">AngularJS Directive Combination</div></li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-battery-1 fa-fw fa-lg" aria-hidden="true"></i> Advance<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref="41create-staff-profile" lang="en">Create staff profile</a>
+                    </li>
+                    <li>
+                        <a ui-sref="43amend-staff-profile" lang="en">Amend staff profile</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+			<li><div style="padding-bottom: 10px; padding-right: 15px; padding-top: 10px; padding-left: 5px;">Third party</div></li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-battery-2 fa-fw fa-lg" aria-hidden="true"></i> Third party Visualization<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref="" lang="en">Empty</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+            <li>
+                <a href="#" lang="en"><i class="fa fa-battery-3 fa-fw fa-lg" aria-hidden="true"></i> Customization Theme<span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li>
+                        <a ui-sref="" lang="en">Empty</a>
+                    </li>
+                </ul>
+                <!-- /.nav-second-level -->
+            </li>
+        </ul>
+    </div>
+    <!-- /.sidebar-collapse -->
+</div>
+<!-- /.navbar-static-side -->
