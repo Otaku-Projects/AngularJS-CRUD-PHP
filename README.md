@@ -2,9 +2,9 @@
 
 ![](https://img.shields.io/github/license/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
 ![](https://img.shields.io/github/release/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
-[![Build Status](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/badges/build.png?b=master)](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/build-status/master)
+[![Build Status](https://scrutinizer-ci.com/g/Otaku-Projects/AngularJS-CRUD-PHP/badges/build.png?b=master)](https://scrutinizer-ci.com/g/Otaku-Projects/AngularJS-CRUD-PHP/build-status/master)
 [![codebeat badge](https://codebeat.co/badges/a02dfe82-6622-4c7b-8f9e-c8141b217d77)](https://codebeat.co/projects/github-com-keithbox-angularjs-crud-php-master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/keithbox/AngularJS-CRUD-PHP/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/Otaku-Projects/AngularJS-CRUD-PHP/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Otaku-Projects/AngularJS-CRUD-PHP/?branch=master)
 ![](https://img.shields.io/github/languages/top/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
 ![](https://img.shields.io/github/languages/count/keithbox/AngularJS-CRUD-PHP.svg?style=flat)
 
