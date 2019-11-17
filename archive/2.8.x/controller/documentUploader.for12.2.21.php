@@ -1,5 +1,6 @@
 <?php
-require_once '../model/config.php';
+require_once '../model/core.php';
+require_once '../config/config.php';
 //require_once '../model/ExcelManager.php';
 
 function Random_string($length = 30) {
@@ -96,7 +97,15 @@ if(isset($_FILES['file'])){
 		$fileExtension = pathinfo($filename, PATHINFO_EXTENSION);
 
 		//$destination = BASE_UPLOAD. $filenameWithoutExtension .'-'.date('Y-m-d_His') .'.'. $fileExtension;
+        
+		// 20191111, keithpoon
+		// fixed: create folder if not exists
+		if (!file_exists(BASE_UPLOAD)) {
+			mkdir(BASE_UPLOAD, 0777, true);
+		}
+        
 		$destination = BASE_UPLOAD.$filename;
+        
 		move_uploaded_file( $_FILES['file']['tmp_name'] , $destination );
 
 		$responseArray['movedTo'] = $destination;

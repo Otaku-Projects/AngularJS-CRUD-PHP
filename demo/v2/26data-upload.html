@@ -1,0 +1,124 @@
+<style>
+.drop-box {
+    text-align: center;
+    vertical-align: middle;
+    display: table-cell;
+    width: 300px;
+}
+</style>
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1>Upload File</h1>
+		</div>
+        <div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-body">
+				<fieldset>
+					<legend>Case Details:</legend>
+					<div class="row">
+						<div class="col-md-3">Subject:</div>
+						<div class="col-md-9">Directive upload - upload file</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Business Logic: </div>
+						<div class="col-md-9">
+							<ul>
+								<li>Define accepted file format</li>
+								<li>Files will upload to the webroot/temp/upload</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Procedures: </div>
+						<div class="col-md-9">
+							<ol>
+								<li>Click on the [upload] button</li>
+								<li>Select single file / multi-files</li>
+								<li>or Drag/Drop to the dropable container</li>
+							</ol>
+						</div>
+					</div>
+				</fieldset>
+			  </div>
+			</div>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+		<div class="col-lg-12">
+			<div style="max-width: 750px;">
+                <form class="form-horizontal" ng-submit="SubmitData()">
+                    <fieldset>
+                        <h4>Upload Components</h4>
+                        <div class="form-group">
+                            <label class="col-sm-4">Upload excel file: </label>
+                            <div class="col-sm-8">
+                                <upload ng-model="uploadExcelFileInfo">
+                                <button type="file" class="btn btn-default" ngf-select="UploadData($file)"
+                                    accept=".xls, .xlsx" ngf-max-size="10MB">Select Single Excel File</button><br>
+                                <div ng-repeat="(key, value) in uploadInfo track by $index">
+                                    File name: {{value.name}}<br>
+                                    Size: {{value.size}} ({{value.uploadProgress}}%)<br>
+                                    <div style="font-size: smaller; background: orange; width:{{value.uploadProgress}}%" ng-bind="value.uploadProgress + '%'"></div>
+                                    <span ng-if="value.uploadResult.error != '0'">Error Code ({{value.uploadResult.error}}): {{value.uploadResult.errorMsg}}</span><br>
+                                </div>
+                                </upload>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-4">Upload image file:</label>
+                            <div class="col-sm-8">
+                                <upload ng-model="uploadImageFileInfo">
+                                <button type="file" class="btn btn-default" ngf-select="UploadData($file)"
+                                    accept="image/*" ngf-max-size="10MB">Select Single Image File</button><br>
+                                <div ng-repeat="(key, value) in uploadInfo track by $index">
+                                    File name: {{value.name}}<br>
+                                    Size: {{value.size}} ({{value.uploadProgress}}%)<br>
+                                    <div style="font-size: smaller; background: orange; width:{{value.uploadProgress}}%" ng-bind="value.uploadProgress + '%'"></div>
+                                    <span ng-if="value.uploadResult.error != '0'">Error Code ({{value.uploadResult.error}}): {{value.uploadResult.errorMsg}}</span><br>
+                                </div>
+                                </upload>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-4">Upload multiple files:</label>
+                            <div class="col-sm-8">
+                                <upload ng-model="uploadImageFilesInfo">
+                                <button type="file" class="btn btn-default" ngf-select="UploadData($files)"
+                                    accept="image/*" ngf-max-size="10MB" multiple="multiple">Select Image Files</button><br>
+                                <div ng-repeat="(key, value) in uploadInfo track by $index">
+                                    File name: {{value.name}}<br>
+                                    Size: {{value.size}} ({{value.uploadProgress}}%)<br>
+                                    <div style="font-size: smaller; background: orange; width:{{value.uploadProgress}}%" ng-bind="value.uploadProgress + '%'"></div>
+                                    <span ng-if="value.uploadResult.error != '0'">Error Code ({{value.uploadResult.error}}): {{value.uploadResult.errorMsg}}</span><br>
+                                </div>
+                                </upload>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-4">Drag/Drop to Upload multiple files:</label>
+                            <div class="col-sm-8">
+                                <upload ng-model="uploadDropImageFilesInfo">
+                                <div class="panel panel-default" style="display:table;">
+                                    <div class="drop-box" ngf-drop="UploadData($files)" ngf-select="UploadData($files)"
+                                    ngf-drag-over-class="'panel-heading'" ngf-multiple="true" 
+                                    ngf-pattern="'image/*,application/pdf'" ngf-accept="'image/*,application/pdf'" style="height:200px;">Darg/Drop Image Files</div>
+                                    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+                                </div>
+                                    <div ng-repeat="(key, value) in uploadInfo track by $index">
+                                        File name: {{value.name}}<br>
+                                        Size: {{value.size}} ({{value.uploadProgress}}%)<br>
+                                        <div style="font-size: smaller; background: orange; width:{{value.uploadProgress}}%" ng-bind="value.uploadProgress + '%'"></div>
+                                        <span ng-if="value.uploadResult.error != '0'">Error Code ({{value.uploadResult.error}}): {{value.uploadResult.errorMsg}}</span><br>
+                                    </div>
+                                </upload>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+			</div>
+		</div>
+	</div>
+	<!-- /.row -->
+</div>

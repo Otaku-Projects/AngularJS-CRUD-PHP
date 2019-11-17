@@ -215,8 +215,8 @@ app.directive('entry', ['$rootScope',
             return tbResult;
         }
         function SetTableStructure(dataJson){
-            console.dir("entry SetTableStructure")
-            console.dir($scope.tableStructure)
+            //console.dir("entry SetTableStructure")
+            //console.dir($scope.tableStructure)
             $scope.tableStructure.DataColumns = dataJson.DataColumns;
             $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
             $scope.tableSchema = dataJson.TableSchema;
@@ -225,8 +225,8 @@ app.directive('entry', ['$rootScope',
             // 20190630,
             // bug:: sometime the table Structure will be updated by the child directive.
             // e.g time deposit entry's table Structure mandatory field will be turn into BankCode only
-            console.dir(dataJson)
-            console.dir($scope.tableStructure)
+            //console.dir(dataJson)
+            //console.dir($scope.tableStructure)
 
 
             if($ctrl.ngModel == null)
@@ -917,7 +917,7 @@ app.directive('entry', ['$rootScope',
         	}
         	updateObj.Header[1] = {};
             //updateObj.Header[1] = recordObj;
-            // updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
+            updateObj.Header[1] = ConvertEntryModelStrictWithSchema(recordObj, $scope.editMode);
 
         	var isRowEmpty = jQuery.isEmptyObject(updateObj.Header[1])
         	if(isRowEmpty){

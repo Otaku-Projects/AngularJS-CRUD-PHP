@@ -6,41 +6,37 @@ $data 			= array(); 		// array to pass back data
 $responseArray = array();
 
 function GetTableStructure(){
-	$departmentManager = new DepartmentManager();
-    //$departmentManager->Initialize("department");
+	$staffManager = new StaffManager();
     
-    return $departmentManager->selectPrimaryKeyList();
+    return $staffManager->selectPrimaryKeyList();
 }
 
 function CreateData($requestData){
-	$departmentManager = new SimpleTableManager();
-    $departmentManager->Initialize("department");
+	$staffManager = new StaffManager();
     
 	$createRows = new stdClass();
 	$createRows = $requestData->Data->Header;
 	foreach ($createRows as $keyIndex => $rowItem) {
-		// $departmentManager->Initialize();
 		foreach ($rowItem as $columnName => $value) {
-			$departmentManager->$columnName = $value;
+			$staffManager->$columnName = $value;
 		}
-		$responseArray = $departmentManager->insert();
+		$responseArray = $staffManager->insert();
 
 	}
 	return $responseArray;
 }
 
 function FindData($requestData){
-	$departmentManager = new SimpleTableManager();
-    $departmentManager->Initialize("department");
+	$staffManager = new StaffManager();
 
 	$updateRows = new stdClass();
 	$updateRows = $requestData->Data->Header;
     
 	foreach ($updateRows as $keyIndex => $rowItem) {
         foreach ($rowItem as $columnName => $value) {
-            $departmentManager->$columnName = $value;
+            $staffManager->$columnName = $value;
         }
-        $responseArray = $departmentManager->select();
+        $responseArray = $staffManager->select();
         break;
     }
     
@@ -48,50 +44,46 @@ function FindData($requestData){
 }
 
 function GetData($requestData){
-	$departmentManager = new SimpleTableManager();
-    $departmentManager->Initialize("department");
+	$staffManager = new StaffManager();
     
 	$offsetRecords = 0;
 	$offsetRecords = $requestData->Offset;
 	$pageNum = $requestData->PageNum;
 
-	$responseArray = $departmentManager->selectPage($offsetRecords);
+	$responseArray = $staffManager->selectPage($offsetRecords);
     
 	return $responseArray;
 
 }
 
 function UpdateData($requestData){
-	$departmentManager = new SimpleTableManager();
+	$staffManager = new StaffManager();
 
 	$updateRows = new stdClass();
 	$updateRows = $requestData->Data->Header;
 	foreach ($updateRows as $keyIndex => $rowItem) {
-        $departmentManager->Initialize("department");
 		foreach ($rowItem as $columnName => $value) {
-			$departmentManager->$columnName = $value;
+			$staffManager->$columnName = $value;
 		}
-		$responseArray = $departmentManager->update();
+		$responseArray = $staffManager->update();
 
 	}
 	return $responseArray;
 }
 
 function DeleteData($requestData){
-	$departmentManager = new SimpleTableManager();
+	$staffManager = new StaffManager();
 
 	$deleteRows = new stdClass();
 	$deleteRows = $requestData->Data->Header;
 	foreach ($deleteRows as $keyIndex => $rowItem) {
-        $departmentManager->Initialize("department");
 		foreach ($rowItem as $columnName => $value) {
-			$departmentManager->$columnName = $value;
+			$staffManager->$columnName = $value;
 		}
-		$responseArray = $departmentManager->delete();
+		$responseArray = $staffManager->delete();
 
 	}
 	return $responseArray;
 }
-
 
 ?>

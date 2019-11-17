@@ -1,0 +1,92 @@
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1>Export Department Records</h1>
+		</div>
+        <div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-body">
+				<fieldset>
+					<legend>Case Details:</legend>
+					<div class="row">
+						<div class="col-md-3">Subject:</div>
+						<div class="col-md-9">Directive export - export department records</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Business Logic: </div>
+						<div class="col-md-9">
+							<ul>
+								<li>Export format default as xlsx</li>
+								<li>Generate as template default as false</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Procedures: </div>
+						<div class="col-md-9">
+							<ol>
+								<li>Select export format .xlsx, .xls, .pdf radio button</li>
+								<li>Check [Generate as Template] checkbox (optional)</li>
+								<li>Click [Export] button</li>
+							</ol>
+						</div>
+					</div>
+				</fieldset>
+			  </div>
+			</div>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+		<div class="col-lg-12">
+			<div style="max-width: 750px;">
+				<export ng-model="exportModel" program-id="du01dp">
+                    <form class="form-horizontal" ng-submit="SubmitData()">
+                        <fieldset>
+                            <h4>Export Form</h4>
+                            <div class="form-group">
+                                <label class="col-sm-4">Export Format</label>
+                                <div class="col-sm-8">
+                                    <div class="radio">
+                                        <label>
+                                        <input type="radio" ng-model="exportCtrl.ExportFileTypeAs.selectedOption" ng-value="exportCtrl.ExportFileTypeAs.availableOptions[0]">
+                                        {{exportCtrl.ExportFileTypeAs.availableOptions[0].name}}
+                                        </label>
+                                    </div>
+                                    <div class="radio">
+                                        <label>
+                                        <input type="radio" ng-model="exportCtrl.ExportFileTypeAs.selectedOption" ng-value="exportCtrl.ExportFileTypeAs.availableOptions[1]">
+                                    {{exportCtrl.ExportFileTypeAs.availableOptions[1].name}}
+                                        </label>
+                                    </div>
+                                    <div class="radio">
+                                        <label>
+                                        <input type="radio" ng-model="exportCtrl.ExportFileTypeAs.selectedOption" ng-value="exportCtrl.ExportFileTypeAs.availableOptions[2]">
+                                    {{exportCtrl.ExportFileTypeAs.availableOptions[2].name}}
+                                        </label>
+                                    </div>
+                               </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-4" for="genTemplate">Generate as Template?</label>
+                                <div class="col-sm-8">
+                                    <div class="checkbox">
+                                        <label>
+                                        <input type="checkbox" id="genTemplate" ng-model="exportCtrl.IsTemplate">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-8 col-sm-offset-4">
+                                    <button type="submit" class="btn btn-default">Export</button>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+				</export>
+			</div>
+		</div>
+	</div>
+	<!-- /.row -->
+</div>

@@ -838,7 +838,7 @@ app.service('TableManager', ["$rootScope", "$log", "config", "$q", "Security", "
                 var tbPromise = DataAdapter.GetTableStructure(submitData);
                 tbPromise.then(function(responseObj) {
                     if(Core.GetConfig().debugLog.DirectiveFlow)
-                    	console.log("ProgramID: "+programId+", Table structure obtained.")
+                    	console.log("ProgramID: "+progID+", Table structure obtained.")
                     var structure = responseObj.table_schema;
                     table.SetTableStructure(progID, responseObj.TableSchema);
 
@@ -1111,7 +1111,7 @@ app.service('TemplateService', function($rootScope, $http, HttpRequeset){
 })
 
 // handle the input / output of the server API
-app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMySQL, Security, config){
+app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMySQL, Security, Upload, config){
 	var adapter = this;
 	var dAdapter = null;
 	var dPHP = DataAdapterMySQL;
@@ -1238,6 +1238,17 @@ app.service('DataAdapter', function($rootScope, $q, HttpRequeset, DataAdapterMyS
 				Security.HttpPromiseErrorCatch(e);
             });
 		})
+		return promise;
+	}
+	adapter.UploadData = function(opts){
+		var requestObj = dAdapter.UploadDataRequest(opts);
+		var url = $rootScope.serverHost;
+		var promise = Upload.upload({
+		  //url: 'https://angular-file-upload-cors-srv.appspot.com/upload',
+		  url: url+'/archive/2.8.x/controller/documentUploader.for12.2.21.php',
+		  data: {file: opts.file}
+		});
+        
 		return promise;
 	}
 	adapter.ImportData = function(opts){
@@ -1524,6 +1535,39 @@ app.service('DataAdapterMySQL', function($rootScope, Security, Core){
 
 		return massagedObj;
     }
+    dataMySQL.UploadDataRequest = function(opts){
+		var clientID = Security.GetSessionID();
+
+		var requestOptions = {
+			Session: clientID,
+			Table: opts.Table,
+			file: opts.file,
+			Action: "UploadData"
+		}
+		
+		// var requestOptions = Object.assign({}, requestOptions, opts);
+		var requestObject = {
+			method: 'POST',
+			data: JSON.stringify(requestOptions),
+		}
+		return requestObject;
+		
+    }
+	dataMySQL.UploadDataResponse = function(responseObj){
+		var data_or_JqXHR = responseObj.data;
+		var massagedObj = {
+			table_schema: data_or_JqXHR.ActionResult.table_schema,
+			data: data_or_JqXHR.data,
+			message: data_or_JqXHR.ActionResult.processed_message,
+			status: data_or_JqXHR.Status,
+			HTTP: {
+				statusCode: responseObj.status,
+				statusText: responseObj.statusText,
+			}
+		}
+
+		return massagedObj;
+	}
     dataMySQL.ImportDataRequest = function(opts){
 		var clientID = Security.GetSessionID();
 

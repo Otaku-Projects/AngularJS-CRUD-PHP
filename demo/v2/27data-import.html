@@ -1,0 +1,87 @@
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1>Import Department Records</h1>
+		</div>
+        <div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-body">
+				<fieldset>
+					<legend>Case Details:</legend>
+					<div class="row">
+						<div class="col-md-3">Subject:</div>
+						<div class="col-md-9">Directive import - import department records</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Business Logic: </div>
+						<div class="col-md-9">
+							<ul>
+								<li>Define accepted file format (.xlsx, .xls)</li>
+								<li>Files will upload to the webroot/temp/upload</li>
+								<li>Double click/select on record will trigger the CustomSelectedToRecord() function</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Procedures: </div>
+						<div class="col-md-9">
+							<ol>
+								<li>Click [Select Single File] button</li>
+								<li>Select a .xlsx or .xls file</li>
+								<li>Click [Import] button</li>
+							</ol>
+						</div>
+					</div>
+				</fieldset>
+			  </div>
+			</div>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+		<div class="col-lg-12">
+			<div style="max-width: 750px;">
+                <import ng-model="importModel" program-id="du01dp">
+                    <form class="form-horizontal">
+                        <fieldset>
+                            <h4>Import Form</h4>
+                            <div class="form-group">
+                                <label class="col-sm-4">Upload excel file:</label>
+                                <div class="col-sm-8">
+                                    <upload ng-model="uploadFileInfo">
+                                    <button type="file" class="btn btn-default" ngf-select="UploadData($file)"
+                                        accept=".xls, .xlsx" ngf-max-size="10MB">Select Single File</button><br>
+                                    <div ng-repeat="(key, value) in uploadInfo track by $index">
+                                        File name: {{value.name}}<br>
+                                        Size: {{value.size}} ({{value.uploadProgress}}%)<br>
+                                        <!-- <div style="font-size: smaller; background: orange; width:{{value.uploadProgress}}%" ng-bind="value.uploadProgress + '%'"></div> -->
+                                        <span ng-if="value.uploadResult.error != '0'">Error Code ({{value.uploadResult.error}}): {{value.uploadResult.errorMsg}}</span><br>
+                                    </div>
+                                    </upload>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-offset-4 col-sm-8">
+                                    <button class="btn btn-default" ng-click="SubmitData(uploadFileInfo)">Import</button>
+                                </div>
+                            </div>
+                            
+                        </fieldset>
+                    </form>
+                </import>
+                <h4>Import Results</h4>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">Process Message</div>
+                            <div class="panel-body">
+                            <message ng-model="processMsg" type="block">
+                                <div class="well well-sm" ng-if="msgCtrl.ngModel.length > 0">
+                                <div ng-repeat="dspMsg in msgCtrl.ngModel track by $index" ng-bind="dspMsg"></div>
+                                </div>
+                            </message>
+                            </div>
+                        </div>
+			</div>
+		</div>
+	</div>
+	<!-- /.row -->
+</div>

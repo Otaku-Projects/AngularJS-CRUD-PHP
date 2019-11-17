@@ -1,25 +1,13 @@
 <?php
-// require_once 'DatabaseManager.php';
-
 class WebuserManager extends DatabaseManager {
     protected $_ = array(
-		// this Array structure By Initialize()
-        // 'columnName1' => value,
-        // 'columnName2' => value,
     );
 	
 	protected $table = "webuser";
     
     function __construct() {
 		parent::__construct();
-        $this->Initialize();
     }
-	function Initialize(){
-		// set parent dataSchema
-		parent::setDataSchemaForSet();
-		// set construct _ index
-		parent::setArrayIndex();
-	}
 	function SetDefaultValue(){
 		parent::setDefaultValue();
 	}

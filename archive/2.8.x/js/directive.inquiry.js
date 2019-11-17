@@ -194,8 +194,8 @@ app.directive('inquiry', ['$rootScope',
             var submitPromise;
             var msg = "";
 
-				if(typeof $scope.InquiryData == "function"){
-	            	submitPromise = $scope.InquiryData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+				if(typeof $scope.CustomInquiryData == "function"){
+	            	submitPromise = $scope.CustomInquiryData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
 	            }else{
 	            	submitPromise = InquiryData($ctrl.ngModel);
 	            }
@@ -204,9 +204,6 @@ app.directive('inquiry', ['$rootScope',
                     httpResponseObj = responseObj;
                     var data_or_JqXHR = responseObj.data;
 
-                    
-                    
-                    // $ctrl.ngModel.Data = data_or_JqXHR;
                     $ctrl.ngModel.InquiryResult.Data = data_or_JqXHR;
                     MessageService.setMsg(httpResponseObj.message);
 

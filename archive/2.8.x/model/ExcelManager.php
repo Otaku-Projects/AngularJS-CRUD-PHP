@@ -582,7 +582,8 @@ class ExcelManager {
 		$objPHPExcel = new PHPExcel();
 		// Set the active Excel worksheet to sheet 0
 		//$objPHPExcel->setActiveSheetIndex(0);
-
+		
+		/*
 		$objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
 		->setLastModifiedBy("Maarten Balliauw")
 		->setTitle("Office 2007 XLSX Test Document")
@@ -590,6 +591,9 @@ class ExcelManager {
 		->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
 		->setKeywords("office 2007 openxml php")
 		->setCategory("Test result file");
+		*/
+		$objPHPExcel->getProperties()->setCreator("Dolphin Otaku")
+		->setLastModifiedBy("Dolphin Otaku");
 		
 		$objPHPExcel->removeSheetByIndex(0);
 
@@ -627,6 +631,13 @@ class ExcelManager {
 		$this->filenamePost = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
 
 		// $exportFilename = $this->filename.".".date('Ymd_His').".".$this->outputAsFileType;
+		
+		// 20191111, keithpoon
+		// fixed: create folder if not exists
+		if (!file_exists(BASE_EXPORT)) {
+			mkdir(BASE_EXPORT, 0777, true);
+		}
+		
 		$exportedPath = BASE_EXPORT.$this->filenamePost;
 
 		// echo $this->filenamePost;

@@ -185,238 +185,277 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 			}
 		}
 	}
-	var demo_01 = {
-		name: "01directive-entry",
-		url: "/01directive-entry",
-		views: {
-			"content@": {
-				templateUrl: '01directive-entry.html',
-			}
-		}
-	}
-	var demo_02 = {
-		name: "02directive-pageview",
-		url: "/02directive-pageview",
-		views: {
-			"content@": {
-				templateUrl: '02directive-pageview.html',
-			}
-		}
-	}
-	var demo_03 = {
-		name: "03directive-screen",
-		url: "/03directive-screen",
-		views: {
-			"content@": {
-				templateUrl: '03directive-screen.html',
-			}
-		}
-	}
-	var demo_04 = {
-		name: "04directive-editbox",
-		url: "/04directive-editbox",
-		views: {
-			"content@": {
-				templateUrl: '04directive-editbox.html',
-			}
-		}
-	}
-	var demo_05 = {
-		name: "05directive-message",
-		url: "/05directive-message",
-		views: {
-			"content@": {
-				templateUrl: '05directive-message.html',
-			}
-		}
-	}
-	var demo_06 = {
-		name: "06directive-export",
-		url: "/06directive-export",
-		views: {
-			"content@": {
-				templateUrl: '06directive-export.html',
-			}
-		}
-	}
-	var demo_07 = {
-		name: "07directive-upload",
-		url: "/07directive-upload",
-		views: {
-			"content@": {
-				templateUrl: '07directive-upload.html',
-			}
-		}
-	}
-	var demo_08 = {
-		name: "08directive-import",
-		url: "/08directive-import",
-		views: {
-			"content@": {
-				templateUrl: '08directive-import.html',
-			}
-		}
-	}
 	
-	var demo_10 = {
-		name: "10directive-inquiry",
-		url: "/10directive-inquiry",
-		views: {
-			"content@": {
-				templateUrl: '10directive-inquiry.html',
-			}
-		}
-	}
-	var demo_11 = {
-		name: "11directive-process",
-		url: "/11directive-process",
-		views: {
-			"content@": {
-				templateUrl: '11directive-process.html',
-			}
-		}
-	}
-	var demo_12 = {
-		name: "12directive-range",
-		url: "/12directive-range",
-		views: {
-			"content@": {
-				templateUrl: '12directive-range.html',
-			}
-		}
-	}
 	var demo_21 = {
-		name: "21create-master-data",
-		url: "/21create-master-data",
+		name: "21entry-create-master-data",
+		url: "/21entry-create-master-data",
 		views: {
 			"content@": {
-				templateUrl: '21create-master-data.html',
+				templateUrl: '21entry-create-master-data.html',
                 controller: 'createDepartmentController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/21create-master-data.js');
+				return $ocLazyLoad.load('./js/controller/21entry-create-master-data.js');
 			}]
 		}
 	}
 	var demo_22 = {
-		name: "22view-master-data",
-		url: "/22view-master-data",
+		name: "22pageview-view-master-data",
+		url: "/22pageview-view-master-data",
 		views: {
 			"content@": {
-				templateUrl: '22view-master-data.html',
+				templateUrl: '22pageview-view-master-data.html',
                 controller: 'viewDepartmentController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/22view-master-data.js');
+				return $ocLazyLoad.load('./js/controller/22pageview-view-master-data.js');
 			}]
 		}
 	}
 	var demo_23 = {
-		name: "23amend-master-data",
-		url: "/23amend-master-data",
+		name: "23reusable-screen",
+		url: "/23reusable-screen",
 		views: {
 			"content@": {
-				templateUrl: '23amend-master-data.html',
-                controller: 'amendDepartmentController'
-			}
-		},
-		resolve: {
-			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/23amend-master-data.js');
-			}]
-		}
-	}
-	var demo_24 = {
-		name: "24delete-master-data",
-		url: "/24delete-master-data",
-		views: {
-			"content@": {
-				templateUrl: '24delete-master-data.html',
-                controller: 'deleteDepartmentController'
-			}
-		},
-		resolve: {
-			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/24delete-master-data.js');
-			}]
-		}
-	}
-	var demo_25 = {
-		name: "25display-inline-message",
-		url: "/25display-inline-message",
-		views: {
-			"content@": {
-				templateUrl: '25display-inline-message.html',
-                controller: 'displayMessageController'
-			}
-		},
-		resolve: {
-			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/25display-inline-message.js');
-			}]
-		}
-	}
-	var demo_26 = {
-		name: "26reusable-screen",
-		url: "/26reusable-screen",
-		views: {
-			"content@": {
-				templateUrl: '26reusable-screen.html',
+				templateUrl: '23reusable-screen.html',
                 controller: 'reuseController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/26reusable-screen.js');
+				return $ocLazyLoad.load('./js/controller/23reusable-screen.js');
 			}]
 		}
 	}
-	var demo_30 = {
-		name: "31range-selection",
-		url: "/31range-selection",
+	var demo_24 = {
+		name: "24editbox",
+		url: "/24editbox",
 		views: {
 			"content@": {
-				templateUrl: '31range-selection.html',
+				templateUrl: '24editbox.html',
+                controller: 'editboxController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/24editbox.js');
+			}]
+		}
+	}
+	
+	
+	var demo_25 = {
+		name: "25data-export",
+		url: "/25data-export",
+		views: {
+			"content@": {
+				templateUrl: '25data-export.html',
+                controller: 'exportController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/25data-export.js');
+			}]
+		}
+	}
+	var demo_26 = {
+		name: "26data-upload",
+		url: "/26data-upload",
+		views: {
+			"content@": {
+				templateUrl: '26data-upload.html',
+                controller: 'uploadController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/26data-upload.js');
+			}]
+		}
+	}
+	var demo_27 = {
+		name: "27data-import",
+		url: "/27data-import",
+		views: {
+			"content@": {
+				templateUrl: '27data-import.html',
+                controller: 'importController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/27data-import.js');
+			}]
+		}
+	}
+	var demo_28 = {
+		name: "28display-inline-message",
+		url: "/28display-inline-message",
+		views: {
+			"content@": {
+				templateUrl: '28display-inline-message.html',
+                controller: 'displayMessageController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/28display-inline-message.js');
+			}]
+		}
+	}
+	var demo_29 = {
+		name: "29range-selection",
+		url: "/29range-selection",
+		views: {
+			"content@": {
+				templateUrl: '29range-selection.html',
                 controller: 'rangeController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/31range-selection.js');
+				return $ocLazyLoad.load('./js/controller/29range-selection.js');
 			}]
 		}
 	}
-	var demo_41 = {
-		name: "41create-staff-profile",
-		url: "/41create-staff-profile",
+	var demo_30 = {
+		name: "30data-inquiry",
+		url: "/30data-inquiry",
 		views: {
 			"content@": {
-				templateUrl: '41create-staff-profile.html',
+				templateUrl: '30data-inquiry.html',
+                controller: 'inquiryController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/30data-inquiry.js');
+			}]
+		}
+	}
+	var demo_31 = {
+		name: "31data-process",
+		url: "/31data-process",
+		views: {
+			"content@": {
+				templateUrl: '31data-process.html',
+                controller: 'processController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/31data-process.js');
+			}]
+		}
+	}
+	
+	var demo_41 = {
+		name: "41list-and-view-master-data",
+		url: "/41list-and-view-master-data",
+		views: {
+			"content@": {
+				templateUrl: '41list-and-view-master-data.html',
+                controller: 'viewDepartmentController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/41list-and-view-master-data.js');
+			}]
+		}
+	}
+	var demo_42 = {
+		name: "42list-and-amend-master-data",
+		url: "/42list-and-amend-master-data",
+		views: {
+			"content@": {
+				templateUrl: '42list-and-amend-master-data.html',
+                controller: 'amendDepartmentController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/42list-and-amend-master-data.js');
+			}]
+		}
+	}
+	var demo_43 = {
+		name: "43list-and-delete-master-data",
+		url: "/43list-and-delete-master-data",
+		views: {
+			"content@": {
+				templateUrl: '43list-and-delete-master-data.html',
+                controller: 'deleteDepartmentController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/43list-and-delete-master-data.js');
+			}]
+		}
+	}
+	var demo_44 = {
+		name: "44create-staff-profile",
+		url: "/44create-staff-profile",
+		views: {
+			"content@": {
+				templateUrl: '44create-staff-profile.html',
                 controller: 'staffProfileCreateController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/41create-staff-profile.js');
+				return $ocLazyLoad.load('./js/controller/44create-staff-profile.js');
 			}]
 		}
 	}
-	var demo_43 = {
-		name: "43amend-staff-profile",
-		url: "/43amend-staff-profile",
+	var demo_45 = {
+		name: "46list-and-view-staff-profile",
+		url: "/46list-and-view-staff-profile",
 		views: {
 			"content@": {
-				templateUrl: '43amend-staff-profile.html',
+				templateUrl: '46list-and-view-staff-profile.html',
+                controller: 'staffProfileViewController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/46list-and-view-staff-profile.js');
+			}]
+		}
+	}
+	var demo_46 = {
+		name: "46list-and-amend-staff-profile",
+		url: "/46list-and-amend-staff-profile",
+		views: {
+			"content@": {
+				templateUrl: '46list-and-amend-staff-profile.html',
                 controller: 'staffProfileAmendController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/43amend-staff-profile.js');
+				return $ocLazyLoad.load('./js/controller/46list-and-amend-staff-profile.js');
+			}]
+		}
+	}
+	var demo_47 = {
+		name: "47list-and-delete-staff-profile",
+		url: "/47list-and-delete-staff-profile",
+		views: {
+			"content@": {
+				templateUrl: '47list-and-delete-staff-profile.html',
+                controller: 'staffProfileDeleteController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/47list-and-delete-staff-profile.js');
 			}]
 		}
 	}
@@ -424,25 +463,24 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 	$stateProvider.state(spec_01);
 	$stateProvider.state(spec_02);
 	$stateProvider.state(demo_00);
-	$stateProvider.state(demo_01);
-	$stateProvider.state(demo_02);
-	$stateProvider.state(demo_03);
-	$stateProvider.state(demo_04);
-	$stateProvider.state(demo_05);
-	$stateProvider.state(demo_06);
-	$stateProvider.state(demo_07);
-	$stateProvider.state(demo_08);
-	$stateProvider.state(demo_10);
-	$stateProvider.state(demo_11);
-	$stateProvider.state(demo_12);
+	
 	$stateProvider.state(demo_21);
 	$stateProvider.state(demo_22);
 	$stateProvider.state(demo_23);
 	$stateProvider.state(demo_24);
 	$stateProvider.state(demo_25);
 	$stateProvider.state(demo_26);
+	$stateProvider.state(demo_27);
+	$stateProvider.state(demo_28);
+	$stateProvider.state(demo_29);
 	$stateProvider.state(demo_30);
+	$stateProvider.state(demo_31);
+	
 	$stateProvider.state(demo_41);
+	$stateProvider.state(demo_42);
 	$stateProvider.state(demo_43);
+	$stateProvider.state(demo_44);
+	//$stateProvider.state(demo_45);
+	$stateProvider.state(demo_46);
 
 }]);

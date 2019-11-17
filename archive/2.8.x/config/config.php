@@ -10,8 +10,8 @@ date_default_timezone_set('Asia/Hong_Kong');
  * DB_USER: user for your database. the user needs to have rights for SELECT, UPDATE, DELETE and INSERT.
  * DB_PASS: the password of the above user
  */
-define("_DB_HOST", "127.0.0.1", true);
-define("_DB_NAME", "acgni308_keithbox", true);
+define("_DB_HOST", "192.168.0.190", true);
+define("_DB_NAME", "acgni308_demo_v2", true);
 define("_DB_USER", "acgni308_kbuser", true);
 define("_DB_PASS", "Demo-DB3.2", true);
 

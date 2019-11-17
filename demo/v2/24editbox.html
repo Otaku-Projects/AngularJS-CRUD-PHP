@@ -1,0 +1,84 @@
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1>Select Record in Editbox</h1>
+		</div>
+        <div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-body">
+				<fieldset>
+					<legend>Case Details:</legend>
+					<div class="row">
+						<div class="col-md-3">Subject:</div>
+						<div class="col-md-9">Directive editbox - select reference key on entry</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Business Logic: </div>
+						<div class="col-md-9">
+							<ul>
+								<li>Single click/touch on record will trigger the CustomPointedToRecord() function</li>
+								<li>Double click/select on record will trigger the CustomSelectedToRecord() function</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Procedures: </div>
+						<div class="col-md-9">
+							<ol>
+								<li>Click on the <span class="glyphicon glyphicon glyphicon-th-list" aria-hidden="true"></span> button</li>
+								<li>Double click on the record to select it</li>
+								<li>or Single click on the record and click [Select] button to select it</li>
+								<li>Click on the <span class="glyphicon glyphicon glyphicon-th-list" aria-hidden="true"></span> button</li>
+								<li>Single click/touch on the record</li>
+								<li>Click outside pageview or [back] button to close the pageview</li>
+							</ol>
+						</div>
+					</div>
+				</fieldset>
+			  </div>
+			</div>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+		<div class="col-lg-12">
+			<div style="max-width: 750px;">
+				<entry ng-model="entryForm" program-id="he01sm" edit-mode="create">
+					<form class="form-horizontal" ng-submit="SubmitData()">
+                      <h4>Editbox Component</h4>
+					  <div class="form-group">
+						<label class="col-sm-2 control-label" for="inputDeptCode">Department</label>
+						<div class="col-sm-10">
+						  <editbox ng-model="deptEditBox" program-id="dw01dp">
+							<div class="input-group">
+							  <input type="text" class="form-control" id="inputDeptCode" ng-model="entryForm.DeptCode" readonly>
+							  <span class="input-group-btn">
+								<button type="button" class="btn btn-default" aria-label="Edit List" ng-click="OpenPageView()">
+								  <span class="glyphicon glyphicon glyphicon-th-list" aria-hidden="true"></span>
+								</button>
+							  </span>
+							  <input type="text" class="form-control" ng-model="deptEditBox.Description" readonly>
+							</div>
+						  </editbox>
+						</div>
+					  </div>
+					</form>
+				</entry>
+                <h4>Record Pointed or Selected Event</h4>
+				<div class="panel panel-default">
+				  <div class="panel-heading">Previous Pointed Record</div>
+				  <div class="panel-body"> 
+				  {{previousPointedRecord | json}}
+				  </div>
+				</div>
+				<div class="panel panel-default">
+				  <div class="panel-heading">Previous Selected Record</div>
+				  <div class="panel-body"> 
+				  {{previousSelectedRecord | json}}
+				  </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- /.row -->
+</div>

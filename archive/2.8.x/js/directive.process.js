@@ -123,6 +123,49 @@ app.directive('process', ['$rootScope',
         $scope.InitScope = function(){
             InitializeProcess();
         }
+        
+        $scope.PointedToRecord = function(pRecord, event, rowScope){
+            $scope.pointedRecord = pRecord;
+
+            // remove all background color
+            angular.element(event.currentTarget).parent().find("tr").removeClass("active");
+
+            // change the background color
+            angular.element(event.currentTarget).addClass("active");
+
+            if(typeof $scope.CustomPointedToRecord == "function"){
+                $scope.CustomPointedToRecord(pRecord, rowScope, $scope, $element, $ctrl);
+            }else{
+                Core.SysLog.Print("CustomPointedToRecordNotFound", $scope.programId, $element[0].tagName, "CustomPointedToRecordNotFound");
+            }
+        }
+
+        $scope.SelectedToRecord = function(sRecord, event, rowScope){
+            $scope.selectedRecord = jQuery.extend({}, $scope.pointedRecord);
+            if(
+                    (
+                        typeof($scope.pointedRecord) == "undefined" || $.isEmptyObject($scope.pointedRecord)
+                    )
+                    && 
+                    (
+                        typeof(sRecord) == "undefined" || $.isEmptyObject(sRecord)
+                    )
+                ){
+                    $scope.DisplayMessage = "Please select a record"
+                    return;
+            }
+            var sRecord = $scope.selectedRecord;
+
+            $scope.pointedRecord = {};
+            
+            if(typeof $scope.CustomSelectedToRecord == "function"){
+                $scope.CustomSelectedToRecord(sRecord, rowScope, $scope, $element, $ctrl);
+            }else{
+                Core.SysLog.Print("CustomSelectedToRecordNotFound", $scope.programId, $element[0].tagName, "CustomSelectedToRecordNotFound");
+            }
+            if(typeof $scope.ClosePageView == "function")
+                $scope.ClosePageView();
+        }
         $scope.DefaultInitDirective = function(){
             TryToCallSetDefaultValue();
         }
@@ -136,7 +179,59 @@ app.directive('process', ['$rootScope',
                 return;
             }
             $scope.ShowLoadModal();
-            InquiryData();
+            
+            var httpResponseObj = {};
+            var submitPromise;
+            var msg = "";
+
+				if(typeof $scope.CustomInquiryData == "function"){
+	            	submitPromise = $scope.CustomInquiryData($ctrl.ngModel, $scope, $element, $attrs, $ctrl);
+	            }else{
+	            	submitPromise = InquiryData($ctrl.ngModel);
+	            }
+
+                submitPromise.then(function(responseObj) {
+                    httpResponseObj = responseObj;
+                    var data_or_JqXHR = responseObj.data;
+                    //console.dir(responseObj)
+                    $ctrl.ngModel.InquiryResult.Data = data_or_JqXHR;
+                    MessageService.setMsg(httpResponseObj.message);
+
+                }, function(reason) {
+                  console.error(tagName + ":"+$scope.programId + " - Fail in InquiryData()")
+                  throw reason;
+                });
+
+
+            submitPromise.catch(function(e){
+                // handle errors in processing or in error.
+                console.log("Submit data error catch in process");
+                Security.HttpPromiseFail(e);
+            }).finally(function() {
+                // Always execute unlock on both error and success
+                $scope.UnLockAllControls();
+                $timeout(function() {
+                    $scope.HideLoadModal();
+                }, 200);
+
+                if(msg.length > 0)
+                    MessageService.addMsg(msg);
+                SubmitDataResult(httpResponseObj, httpResponseObj.status);
+
+                if(typeof $scope.CustomInquiryDataResult == "function"){
+                    $scope.CustomInquiryDataResult(httpResponseObj,
+                        httpResponseObj.status,
+                        $scope,
+                        $element,
+                        $attrs,
+                        $ctrl);
+                }
+            }).catch(function(e){
+                // handle errors in processing or in error.
+                console.warn(e)
+            })
+
+            return submitPromise;
         }
 		
         $scope.SubmitData = function(){
@@ -168,7 +263,20 @@ app.directive('process', ['$rootScope',
 
             return isValid;
         }
-        function InquiryData(){
+        function InquiryData(recordObj){
+        	var clientID = Security.GetSessionID();
+            var programId = $scope.programId.toLowerCase();
+            
+			var submitData = {
+				"Table": programId,
+				"InquiryCriteria": recordObj.InquiryCriteria,
+				"InquiryRecord": recordObj.Record
+			};
+
+            var request = DataAdapter.InquiryData(submitData);
+            return request;
+        }
+        function InquiryData20191114(){
             var httpResponseObj = {};
             var submitPromise;
             var msg = "";
@@ -283,10 +391,8 @@ app.directive('process', ['$rootScope',
 
 			var submitData = {
                 "Table": programId,
-                "InquiryData": {
-				    "Record": ngModelObj.Record,
-				    "CriteriaData": ngModelObj.InquiryCriteria
-                }
+				"InquiryCriteria": ngModelObj.InquiryCriteria,
+				"InquiryRecord": ngModelObj.Record
 			};
 
             var request = DataAdapter.InquiryData(submitData);
@@ -298,10 +404,8 @@ app.directive('process', ['$rootScope',
 
 			var submitData = {
 				"Table": programId,
-				"ProcessData": {
-				    "ProcessRecord": ngModelObj.ProcessRecord,
-				    "CriteriaData": ngModelObj.ProcessCriteria
-                },
+				"ProcessCriteria": ngModelObj.ProcessCriteria,
+				"ProcessRecord": ngModelObj.ProcessRecord
 			};
 
             var request = DataAdapter.ProcessData(submitData);
@@ -429,7 +533,7 @@ app.directive('process', ['$rootScope',
 
         }
     
-        // $scope.Initialize();
+        $scope.Initialize();
     }
 
     function templateFunction(tElement, tAttrs) {
@@ -481,7 +585,7 @@ app.directive('process', ['$rootScope',
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
                     })
-                    scope.Initialize();
+                    //scope.Initialize();
 		        }
 		    }
 		},

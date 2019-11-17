@@ -24,6 +24,11 @@ app.directive('screen', ['Core', 'Security', '$rootScope', '$timeout', function(
     			programId = tAttrs.programId;
     		}
     	}
+    	if(typeof(tAttrs.screenId) != "undefined"){
+    		if(tAttrs.screenId != ""){
+    			programId = tAttrs.screenId;
+    		}
+    	}
 
     	templateURL = $rootScope.screenTemplate + programId.toLowerCase() + ".html";
 
@@ -65,14 +70,23 @@ app.directive('screen', ['Core', 'Security', '$rootScope', '$timeout', function(
                         if(typeof(iAttrs.programId) != undefined){
                             if(iAttrs.programId != null && iAttrs.programId !=""){
                                 isProgramIdFound = true;
+								programId = iAttrs.programId;
+                            }
+                        }
+                        if(typeof(iAttrs.screenId) != undefined){
+                            if(iAttrs.screenId != null && iAttrs.screenId !=""){
+                                isProgramIdFound = true;
+								programId = iAttrs.screenId;
                             }
                         }
                         // assign parent programId if programId attribute not found
                         if(isProgramIdFound){
-                            programId = iAttrs.programId;
+							
                         }
-                        else
+                        else{
+							//console.dir(scope.$parent)
                             programId = scope.$parent.programId.toLowerCase();
+						}
 
                         scope.screenURL = $rootScope.screenTemplate + programId.toLowerCase() + ".html";
                     });

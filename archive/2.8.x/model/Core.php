@@ -1,5 +1,5 @@
 <?php
-define("BASE_ROOT", dirname(__FILE__)."/../");
+define("BASE_ROOT", dirname(__FILE__)."/../../../");
 
 define("BASE_RESOURSE", BASE_ROOT."resourse/");
 define("BASE_CONTROLLER", BASE_ROOT."controller/");

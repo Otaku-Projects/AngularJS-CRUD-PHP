@@ -1,0 +1,56 @@
+<div id="page-wrapper">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1>Reusble Screen</h1>
+		</div>
+        <div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-body">
+				<fieldset>
+					<legend>Case Details:</legend>
+					<div class="row">
+						<div class="col-md-3">Subject:</div>
+						<div class="col-md-9">Directive screen - customize the screen with same function on different pages</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Business Logic: </div>
+						<div class="col-md-9">
+							<ul>
+								<li>Using the parent program-id to define the screen-id</li>
+								<li>Override the parent program-id by the screen-id</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Procedures: </div>
+						<div class="col-md-9">
+							<ol>
+								<li>Default load the screen via parent program-id</li>
+								<li>Override the program-id by screen-id</li>
+								<li>Auto shows data on page loaded</li>
+								<li>Click the navigation buttons to navigate to pages</li>
+							</ol>
+						</div>
+					</div>
+				</fieldset>
+			  </div>
+			</div>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+		<div class="col-lg-12">
+			<div style="max-width: 750px;">
+				<h4>Default use parent program-id dw01dp as the screen template</h4>
+				<pageview ng-model="deptDataList" program-id="dw01dp">
+				  <screen></screen>
+				</pageview>
+				<h4>Override the parent program-id, use screen-id dw02dp as the screen template</h4>
+				<pageview ng-model="deptDataList2" program-id="dw01dp">
+				  <screen screen-id="dw02dp"></screen>
+				</pageview>
+			</div>
+		</div>
+	</div>
+	<!-- /.row -->
+</div>

@@ -15,6 +15,8 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
         var $ctrl = $scope.editboxCtrl;
 
     	function InitializeEditBox() {
+            $scope.editboxTableStructure = {};
+			
             $scope.editboxDataList = [];
             if(typeof($ctrl.ngModel) == "undefined" || $ctrl.ngModel == null)
                 $ctrl.ngModel = {};
@@ -71,10 +73,31 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
                 if(isRangeValuePropery){
                     // cannot assign ALL to $attrs.rangeValue, it will break the binding between $attrs.rangeValue <--> expression
                     // the ALL should assign in the range directive
+                    
+                    //  Use $observe when you need to observe/watch a DOM attribute that contains interpolation (i.e., {{}}'s). 
                     $attrs.$observe('rangeValue', function(interpolatedValue){
-                        $scope.rangeValue = interpolatedValue;
+                        
+                        //console.dir("interpolatedValue:"+interpolatedValue)
                         if(typeof ($scope.$parent.SetRange) == "function"){
-                            $scope.$parent.SetRange($scope.range, interpolatedValue)
+							$scope.SetStartOrEndBound($scope.range);
+                            if($scope.range == "start"){ 
+                                $scope.rangeValue = "ALL";
+                                console.dir("in editbox range is start");
+                                console.dir("$scope.rangeValue"+$scope.rangeValue)
+                            }
+                            //console.dir($scope.$parent.rangeCtrl.ngModel)
+                            $scope.rangeValue = interpolatedValue;
+                            
+                            // 20191117, keithpoon
+                            // the interpolatedValue always return empty on first time
+                            // 
+                            if(typeof interpolatedValue != "undefined" && interpolatedValue != null && interpolatedValue !=""){
+                                $scope.$parent.SetRange($scope.range, interpolatedValue);
+                                //console.dir("after setrange");
+                            }
+                            
+                            //console.dir($scope.$parent.rangeCtrl.ngModel)
+							
                         }
                     })
                 }
@@ -102,8 +125,8 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
 		}
 
         function SetNgModel(dataJson){
-            var dataColumns = $scope.tableStructure.DataColumns;
-            var keyColumns = $scope.tableStructure.KeyColumns;
+            var dataColumns = $scope.editboxTableStructure.DataColumns;
+            var keyColumns = $scope.editboxTableStructure.KeyColumns;
 
             // var dataRecord = dataJson.ActionResult.data[0];
             var dataRecord = dataJson;
@@ -184,14 +207,14 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
         }
         function SetTableStructure(dataJson){
             // console.dir("editbox SetTableStructure")
-            // console.dir($scope.tableStructure)
-            $scope.tableStructure.DataColumns = dataJson.DataColumns;
-            $scope.tableStructure.KeyColumns = dataJson.KeyColumns;
+            // console.dir($scope.editboxTableStructure)
+            $scope.editboxTableStructure.DataColumns = dataJson.DataColumns;
+            $scope.editboxTableStructure.KeyColumns = dataJson.KeyColumns;
             $scope.tableSchema = dataJson.TableSchema;
-            var itemsColumn = $scope.tableStructure.DataColumns;
+            var itemsColumn = $scope.editboxTableStructure.DataColumns;
             
             // console.dir(dataJson)
-            // console.dir($scope.tableStructure)
+            // console.dir($scope.editboxTableStructure)
 
             if($ctrl.ngModel == null)
                 $ctrl.ngModel = {};
@@ -255,7 +278,7 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
             var isKeyValid = true;
             var upperRecordObj = {};
 
-            var tbStructure = $scope.tableStructure;
+            var tbStructure = $scope.editboxTableStructure;
             var itemsColumn = tbStructure.DataColumns;
 
             if(typeof(itemsColumn) == "undefined"){
@@ -496,7 +519,7 @@ app.directive('editbox', ['Core', 'Security', '$rootScope', '$compile', 'ThemeSe
         }
 
         function IsKeyInDataRow(recordObj){
-            var tbStructure = $scope.tableStructure;
+            var tbStructure = $scope.editboxTableStructure;
             var itemsColumn = tbStructure.DataColumns;
             var keyColumn = tbStructure.KeyColumns;
 

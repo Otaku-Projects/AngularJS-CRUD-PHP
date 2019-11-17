@@ -18,7 +18,6 @@ class SimpleTableManager extends DatabaseManager {
     }
 	function Initialize($tableName=""){
 		$this->table = $tableName;
-//		$this->debug = true;
         
 		parent::Initialize();
 	}

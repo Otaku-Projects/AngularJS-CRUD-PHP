@@ -8,7 +8,8 @@ app.directive('upload', [
     'Security',
     'LockManager',
     'Upload',
-    'MessageService', function($rootScope, $timeout, Core, Security, LockManager, Upload, MessageService) {
+    'MessageService',
+    'DataAdapter',    function($rootScope, $timeout, Core, Security, LockManager, Upload, MessageService, DataAdapter) {
     function UploadConstructor($scope, $element, $attrs) {
         var constructor = this;
         var $ctrl = $scope.uploadCtrl;
@@ -92,12 +93,21 @@ app.directive('upload', [
               "errorMsg": ""
             }
             */
-
+            
+            /*
                 var uploadAction = $scope.uploadInstance = Upload.upload({
                   //url: 'https://angular-file-upload-cors-srv.appspot.com/upload',
-                  url: url+'/controller/documentUploader.for12.2.21.php',
+                  url: url+'/archive/2.8.x/controller/documentUploader.for12.2.21.php',
                   data: {file: file},
                 });
+                */
+				var submitData = {
+					"Table": "",
+					"file": file
+				};
+				var uploadAction = DataAdapter.UploadData(submitData);
+                
+                
                 // http://api.jquery.com/deferred.then/#deferred-then-doneCallbacks-failCallbacks
                 // deferred.then( doneCallbacks, failCallbacks [, progressCallbacks ] )
                 uploadAction.then(function (response) {
@@ -120,10 +130,6 @@ app.directive('upload', [
                 });
 
                 return uploadAction;
-
-
-            // if(typeof callback == "function")
-            //     callback($scope.uploadInfo[recordCount]);
         }
 
         $scope.UploadData = function(files){

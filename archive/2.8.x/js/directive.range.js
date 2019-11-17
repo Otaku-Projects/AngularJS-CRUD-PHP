@@ -5,6 +5,8 @@ app.directive('range', ['$rootScope',
     'Security',
     'MessageService', function($rootScope, $timeout, Core, Security, MessageService) {
     function RangeConstructor($scope, $element, $attrs) {
+		if(Core.GetConfig().debugLog.DirectiveFlow)
+			console.log("1 Range - RangeConstructor()");
         var constructor = this;
         var $ctrl = $scope.rangeCtrl;
         var tagName = $element[0].tagName.toLowerCase();
@@ -43,6 +45,7 @@ app.directive('range', ['$rootScope',
             console.log("scope.$id:"+$scope.$id+", may implement $scope.InitDirective() function in webapge");
         }
 
+		// this getter only for editbox
         $scope.IsRange = function()
         {
             return true;
@@ -56,10 +59,12 @@ app.directive('range', ['$rootScope',
 
         function InitializeRange() {
             DirectiveProperties.getMultiable();
-
-            var range = {start: "ALL", end: "", isAll: false};
-            $ctrl.ngModel = jQuery.extend({}, range);
-            // $ctrl.ngModel.isAll = true;
+            var range = {start: "ALL", end: "", isAll: true};
+            $ctrl.ngModel = jQuery.extend(true, {}, range);
+			
+			$scope.isStartBound = false;
+			$scope.isEndBound = false;
+			$scope.isActivatedByEditbox = false;
         }
         $scope.Initialize = function(){
             $scope.InitScope();
@@ -142,14 +147,52 @@ app.directive('range', ['$rootScope',
           }
           return false;
         }
-
+		
+		$scope.ToggleRangeInAll = function(){
+			$scope.SetInAllRange($ctrl.ngModel.isAll);
+		}
+		
+		$scope.SetStartOrEndBound = function(setRange){
+            if(setRange == "start"){
+				$scope.isStartBound = true;
+			}else if(setRange == "end"){
+				$scope.isEndBound = true;
+			}
+		}
+		
+		$scope.GetIsStartEndBound = function(){
+			return $scope.GetIsStartBound() && $scope.GetIsEndBound();
+		}
+		
+		$scope.GetIsStartBound = function(){
+			return $scope.isStartBound;
+		}
+		
+		$scope.GetIsEndBound = function(){
+			return $scope.isEndBound;
+		}
+		
+		$scope.GetIsActivate = function(){
+			return $scope.isActivatedByEditbox;
+		}
+		
+		$scope.SetIsActivate = function(){
+			$scope.isActivatedByEditbox = true;
+		}
+		
+		$scope.SetInAllRange = function(isCheckAll){
+			$ctrl.ngModel.isAll = isCheckAll;
+		}
+		
+		// this setter only for editbox
         $scope.SetRange = function(rangeType, value){
+            console.dir("rangeType:"+rangeType)
+            console.dir("value:"+value)
             if(rangeType == "start"){
                 $ctrl.ngModel.start = value;
             }else if(rangeType == "end"){
                 $ctrl.ngModel.end = value;
             }
-            
             RangeStringChange(rangeType, $ctrl.ngModel)
         }
 
@@ -179,7 +222,10 @@ app.directive('range', ['$rootScope',
           function() { return $ctrl.ngModel.isAll; },
           function(newValue, oldValue) {
               var isCheckAll = newValue;
-              
+			  console.trace()
+              console.dir($ctrl.ngModel)
+              console.dir("newValue:"+newValue)
+              console.dir("oldValue:"+oldValue)
             if(isCheckAll){
                 $ctrl.ngModel.start = "ALL"
                 $ctrl.ngModel.end = ""
@@ -197,6 +243,8 @@ app.directive('range', ['$rootScope',
           },
           true
         );
+		
+		//$scope.Initialize();
     }
     function templateFunction(tElement, tAttrs) {
         var globalCriteria = $rootScope.globalCriteria;
@@ -223,10 +271,12 @@ app.directive('range', ['$rootScope',
         compile: function compile(tElement, tAttrs, transclude) {
             return {
                 pre: function preLink(scope, iElement, iAttrs, controller) {
-                    //console.log("range preLink() compile");
+					if(Core.GetConfig().debugLog.DirectiveFlow)
+						console.log("3 Range - compile preLink()");
                 },
                 post: function postLink(scope, iElement, iAttrs, controller) {
-                    //console.log("range postLink() compile");
+					if(Core.GetConfig().debugLog.DirectiveFlow)
+						console.log("4 Range - compile postLink()");
 
                     transclude(scope, function (clone, scope) {
                         iElement.find('.custom-transclude').append(clone);
@@ -234,6 +284,7 @@ app.directive('range', ['$rootScope',
                     
                     scope.Initialize();
                     iElement.ready(function() {
+						scope.SetInAllRange(true);
                         scope.rangeCtrl.ngModel.start = "ALL";
                         scope.rangeCtrl.ngModel.isAll = true;
                     })
