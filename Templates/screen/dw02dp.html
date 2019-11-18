@@ -1,0 +1,17 @@
+<div class="table-responsive">
+	Customize you content in other screen, such as remove the description column
+	<table class="table table-condensed table-hover">
+	  <thead>
+		<tr>
+			<th>Department Code</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr ng-repeat="deptRow in pageviewCtrl.ngModel" 
+		ng-click="PointedToRecord(deptRow, $event, this)"
+		ng-dblclick="SelectedToRecord(deptRow, $event, this)">
+		  <td>{{deptRow.DepartmentCode}}</td>
+		</tr>
+	  </tbody>
+	</table>
+</div>

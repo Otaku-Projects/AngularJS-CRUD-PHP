@@ -1,0 +1,22 @@
+<div class="table-responsive">
+	<table class="table table-condensed table-hover">
+	  <thead>
+		<tr>
+			<th>#</th>
+			<th>Name</th>
+			<th>Department</th>
+			<th>Employment Date</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr ng-repeat="deptRow in pageviewCtrl.ngModel" 
+		ng-click="PointedToRecord(deptRow, $event, this)"
+		ng-dblclick="SelectedToRecord(deptRow, $event, this)">
+		  <td>{{deptRow.StaffID}}</td>
+		  <td>{{deptRow.FirstName}} {{deptRow.LastName}}</td>
+		  <td>{{deptRow.DeptCode}}</td>
+		  <td>{{deptRow.EmploymentDate | date : 'yyyy-MM-dd'}}</td>
+		</tr>
+	  </tbody>
+	</table>
+</div>

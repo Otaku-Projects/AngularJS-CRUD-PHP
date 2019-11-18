@@ -3,10 +3,47 @@
 		<div class="col-lg-12">
 			<h1 class="page-header">Create Staff Profile</h1>
 		</div>
-		<div class="col-lg-12">
-			By default, using the parent to find the program id<br>
-			or you may override the screen by prorgam id
-		</div>
+        <div class="col-lg-12">
+			<div class="panel panel-default">
+			  <div class="panel-body">
+				<fieldset>
+					<legend>Case Details:</legend>
+					<div class="row">
+						<div class="col-md-3">Subject:</div>
+						<div class="col-md-9">Directive entry, editbox - list, create staff record</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Business Logic:</div>
+						<div class="col-md-9">
+							<ul>
+								<li>Editbox auto loads the department records</li>
+								<li>Select to the department record on pageview</li>
+								<li>The selected department record will shows</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">Procedures: </div>
+						<div class="col-md-9">
+							<ol>
+								<li>Input the Staff ID</li>
+								<li>Input the Surname (optional)</li>
+								<li>Input the Given Name (optional)</li>
+								<li>Input the Chinese Name (optional)</li>
+								<li>Select the Department (optional)</li>
+								<li>Select the Date of Birth (optional)</li>
+								<li>Select the Employment Date (optional)</li>
+								<li>Click the [Create] button</li>
+							</ol>
+						</div>
+					</div>
+				</fieldset>
+			  </div>
+			</div>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
 		<div class="col-lg-12">
 			<div style="max-width: 750px;">
 				<div class="panel panel-default">
@@ -49,7 +86,7 @@
 							  <input type="text" class="form-control" id="inputDeptCode" ng-model="entryForm.DeptCode" readonly>
 							  <span class="input-group-btn">
 								<button type="button" class="btn btn-default" aria-label="Edit List" ng-click="OpenPageView()">
-								  <span class="glyphicon glyphicon glyphicon-th-list" aria-hidden="true"></span>
+								  <i class="fa fa-bars"></i>
 								</button>
 							  </span>
 							  <input type="text" class="form-control" ng-model="deptEditBox.Description" readonly>
@@ -60,13 +97,13 @@
 					  <div class="form-group">
 						<label class="col-sm-2 control-label" for="inputDateOfBirth">Date of Birth</label>
 						<div class="col-sm-10">
-						  <input type="date" class="form-control" id="inputDateOfBirth" ng-model="entryForm.Birthday">
+						  <input type="date" class="form-control" id="inputDateOfBirth" ng-model="entryForm.DateOfBirth">
 						</div>
 					  </div>
 					  <div class="form-group">
-						<label class="col-sm-2 control-label" for="inputEmployeeDate">Employee Date</label>
+						<label class="col-sm-2 control-label" for="inputEmploymentDate">Employment Date</label>
 						<div class="col-sm-10">
-						  <input type="date" class="form-control" id="inputEmployeeDate" ng-model="entryForm.EmploymentDate">
+						  <input type="date" class="form-control" id="inputEmploymentDate" ng-model="entryForm.EmploymentDate">
 						</div>
 					  </div>
 					  <div class="form-group">

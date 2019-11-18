@@ -3,10 +3,8 @@ app.controller('viewDepartmentController', ['$scope', function ($scope, $rootSco
 	$scope.deptDataList = [];
 	function Initialize(){
 		var entryForm = {};
-		var entryForm2 = {};
 
 		$scope.entryForm = entryForm;
-		$scope.entryForm2 = entryForm;
 	}
 	Initialize();
 
@@ -24,30 +22,22 @@ app.controller('viewDepartmentController', ['$scope', function ($scope, $rootSco
 	}
 
 	$scope.SetDefaultValue = function(scope, iElement, iAttrs, controller){
-		console.log("<"+iElement[0].tagName+">" +" Directive overried SetDefaultValue()");
-
-//		controller.ngModel.gender = "M";
 	}
 
 	$scope.StatusChange = function(fieldName, newValue, newObj, scope, iElement, iAttrs, controller){
-		console.log("<"+iElement[0].tagName+">" +" Directive overried StatusChange()");
-
 		if(fieldName == "departmentCode")
 			newObj.DepartmentCode = newObj.DepartmentCode.toUpperCase(); 
 	}
 
 	$scope.ValidateBuffer = function(scope, iElement, iAttrs, controller){
-		console.log("<"+iElement[0].tagName+">" +" Directive overried ValidateBuffer()");
 		return true;
 	}
 
 	$scope.CustomPointedToRecord = function(pRecord, rowScope, scope, iElement, controller){
-		console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
 		$scope.entryForm = pRecord;
 	}
 
 	$scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
-		console.log("<"+iElement[0].tagName+">" +" Directive overried CustomPointedToRecord()");
 		$scope.entryForm2 = sRecord;
 	}
 }]);

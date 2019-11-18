@@ -1,0 +1,60 @@
+<fieldset>
+    <h4>Search Results</h4>
+    <div ng-show="processCtrl.ngModel.InquiryResult.Data.length > 0">Total {{processCtrl.ngModel.InquiryResult.Data.length}} records matched</div>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover">
+          <thead>
+            <tr>
+                <th>Reset Pwd</th>
+                <th>User ID</th>
+                <th>Login ID</th>
+                <th>Status</th>
+                <th>Is Disabled</th>
+                <th>Activate Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="webuserRow in processCtrl.ngModel.InquiryResult.Data | orderBy : sorterFunc:true" 
+            ng-click="PointedToRecord(webuserRow, $event, this)"
+            ng-dblclick="SelectedToRecord(webuserRow, $event, this)">
+              <td>
+                  <button type="button" class="btn btn-default" ng-click="AddUserResetPwdBtn(webuserRow)"><i class="fa fa-arrow-down" aria-hidden="true"></i></button>
+              </td>
+              <td>{{webuserRow.UserID}}</td>
+              <td>{{webuserRow.LoginID}}</td>
+              <td>{{webuserRow.Status}}</td>
+              <td>{{webuserRow.IsDisabled}}</td>
+              <td>{{webuserRow.ActivateDate}}</td>
+            </tr>
+          </tbody>
+        </table>
+    </div>
+
+</fieldset>
+<fieldset>
+    <h4>Reset Password</h4>
+    <div ng-show="processCtrl.ngModel.InquiryResult.Data.length > 0">Total {{ResetUserPwdList.length}} user(s) password need to be reset</div>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover">
+          <thead>
+            <tr>
+                <th>Cancel</th>
+                <th>User ID</th>
+                <th>Login ID</th>
+                <th>Status</th>
+                <th>Is Disabled</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="webuserRow in ResetUserPwdList | orderBy : sorterFunc:true">
+              <td>
+                  <button type="button" class="btn btn-default" ng-click="RemoveUserResetPwdBtn(webuserRow)"><i class="fa fa-times" aria-hidden="true"></i></button>
+              </td>
+              <td>{{webuserRow.UserID}}</td>
+              <td>{{webuserRow.LoginID}}</td>
+              <td>{{webuserRow.Status}}</td>
+              <td>{{webuserRow.IsDisabled}}</td>
+            </tr>
+          </tbody>
+        </table>
+    </div>
