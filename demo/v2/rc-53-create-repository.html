@@ -1,0 +1,81 @@
+<div id="page-wrapper">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1>Create - Repository</h1>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+        <div class="col-lg-12">
+			<message ng-model="processMsg" auto-close></message>
+        </div>
+        <div class="col-lg-12">
+            <div style="max-width: 750px;">
+				<button type="button" class="btn btn-link" ng-click="BackToParentState()">Back to List</button>
+				<entry ng-model="entryForm" program-id="ds52ry" edit-mode="create">
+					<form class="form-horizontal" ng-submit="SubmitData()">
+					  <fieldset>
+						  <h4>Repository Entry</h4>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputShortForm">Repository Name</label>
+							<div class="col-sm-8">
+							  <input type="text" class="form-control" id="inputShortForm" ng-model="entryCtrl.ngModel.Name">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputFullName">Commit Date</label>
+							<div class="col-sm-8">
+							  <input type="date" class="form-control" id="inputFullName" ng-model="entryCtrl.ngModel.CommitDate">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputFullName">Github Release ID</label>
+							<div class="col-sm-8">
+							  <input type="text" class="form-control" id="inputFullName" ng-model="entryCtrl.ngModel.GithubReleaseID">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputFullName">Release Date</label>
+							<div class="col-sm-8">
+							  <input type="date" class="form-control" id="inputFullName" ng-model="entryCtrl.ngModel.ReleaseDate">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputVersion">Version</label>
+							<div class="col-sm-8">
+							  <input type="text" class="form-control" id="inputVersion" ng-model="entryCtrl.ngModel.Version">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputVersion">Release Statge</label>
+							<div class="col-sm-8">
+                                <div class="checkbox">
+                                    <label>
+                                    <input type="checkbox" id="genTemplate" ng-model="entryCtrl.ngModel.IsAlpha"> Alpha
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                    <input type="checkbox" id="genTemplate" ng-model="entryCtrl.ngModel.IsBeta"> Beta
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                    <input type="checkbox" id="genTemplate" ng-model="entryCtrl.ngModel.IsPreRelease"> Pre Release
+                                    </label>
+                                </div>
+							</div>
+						  </div>
+						  <div class="form-group">
+							<div class="col-sm-offset-4 col-sm-8">
+								<button type="submit" class="btn btn-default">Create</button>
+							</div>
+						  </div>
+					  </fieldset>
+					</form>
+				</entry>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+</div>

@@ -1,0 +1,22 @@
+<div class="table-responsive">
+	<table class="table table-condensed table-hover">
+	  <thead>
+		<tr>
+			<th>Repository ID</th>
+			<th>Name</th>
+			<th>Version</th>
+			<th>Release Date</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr ng-repeat="repositoryRow in pageviewCtrl.ngModel" 
+		ng-click="PointedToRecord(repositoryRow, $event, this)"
+		ng-dblclick="SelectedToRecord(repositoryRow, $event, this)">
+		  <td>{{repositoryRow.RepositoryID}}</td>
+		  <td>{{repositoryRow.Name}}</td>
+		  <td>{{repositoryRow.Version}}</td>
+		  <td>{{repositoryRow.ReleaseDate | date : "yyyy-MM-dd"}}</td>
+		</tr>
+	  </tbody>
+	</table>
+</div>

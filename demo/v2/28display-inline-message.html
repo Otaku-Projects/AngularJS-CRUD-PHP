@@ -1,7 +1,7 @@
 <div id="page-wrapper">
 	<div class="row">
 		<div class="col-lg-12">
-			<h1 class="page-header">Display In-line Message</h1>
+			<h1>Display In-line Message</h1>
 		</div>
         <div class="col-lg-12">
 			<div class="panel panel-default">
@@ -10,7 +10,9 @@
 					<legend>Case Details:</legend>
 					<div class="row">
 						<div class="col-md-3">Subject:</div>
-						<div class="col-md-9">Directive message - shows inline message</div>
+						<div class="col-md-9">
+							<p>Directive message - shows inline message</p>
+						</div>
 					</div>
 					<div class="row">
 						<div class="col-md-3">Business Logic:</div>
@@ -46,6 +48,7 @@
 				<pageview ng-model="deptDataList" program-id="dw01dp">
 				  <screen></screen>
 				</pageview>
+				<br>
 				<h4>Amend Department on Entry</h4>
 				<entry ng-model="entryForm" program-id="ds01dp" edit-mode="amend">
 				  <form ng-submit="SubmitData()">

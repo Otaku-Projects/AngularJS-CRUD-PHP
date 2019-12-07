@@ -10,7 +10,9 @@
 					<legend>Case Details:</legend>
 					<div class="row">
 						<div class="col-md-3">Subject:</div>
-						<div class="col-md-9">Directive screen - customize the screen with same function on different pages</div>
+						<div class="col-md-9">
+							<p>Directive screen - customize the screen with same function on different pages</p>
+						</div>
 					</div>
 					<div class="row">
 						<div class="col-md-3">Business Logic: </div>
@@ -45,6 +47,7 @@
 				<pageview ng-model="deptDataList" program-id="dw01dp">
 				  <screen></screen>
 				</pageview>
+				<br>
 				<h4>Override the parent program-id, use screen-id dw02dp as the screen template</h4>
 				<pageview ng-model="deptDataList2" program-id="dw01dp">
 				  <screen screen-id="dw02dp"></screen>

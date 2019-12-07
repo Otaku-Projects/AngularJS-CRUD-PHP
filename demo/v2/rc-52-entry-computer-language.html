@@ -1,0 +1,52 @@
+<div id="page-wrapper">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1>Entry - Computer Language</h1>
+        </div>
+        <div class="col-lg-12">
+		<hr><br>
+        </div>
+        <div class="col-lg-12">
+			<message ng-model="processMsg" auto-close></message>
+        </div>
+        <div class="col-lg-12">
+            <div style="max-width: 750px;">
+				<button type="button" class="btn btn-link" ng-click="BackToParentState()">Back to List</button>
+				<entry ng-model="entryForm" program-id="ds51cl" edit-mode="create">
+					<form class="form-horizontal">
+					  <fieldset>
+						  <h4>Computer Language Entry</h4>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputShortForm">Computer Language ID</label>
+							<div class="col-sm-8">
+							  <input type="text" class="form-control" id="inputShortForm" ng-model="entryCtrl.ngModel.LanguageID" readonly>
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputShortForm">Computer Language Short Form</label>
+							<div class="col-sm-8">
+							  <input type="text" class="form-control" id="inputShortForm" ng-model="entryCtrl.ngModel.ShortForm">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-sm-4 control-label" for="inputFullName">Full Name</label>
+							<div class="col-sm-8">
+							  <input type="text" class="form-control" id="inputFullName" ng-model="entryCtrl.ngModel.FullName">
+							</div>
+						  </div>
+						  <div class="form-group">
+							<div class="col-sm-offset-4 col-sm-4">
+								<button type="button" class="btn btn-primary" ng-click="UpdateData()"><i class="fa fa-floppy-o" aria-hidden="true"></i> Save</button>
+							</div>
+							<div class="col-sm-4">
+								<button type="button" class="btn btn-danger" ng-click="DeleteData()"><i class="fa fa-trash-o" aria-hidden="true"></i> Delete</button>
+							</div>
+						  </div>
+					  </fieldset>
+					</form>
+				</entry>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+</div>

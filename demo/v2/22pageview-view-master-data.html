@@ -10,13 +10,17 @@
 					<legend>Case Details:</legend>
 					<div class="row">
 						<div class="col-md-3">Subject:</div>
-						<div class="col-md-9">Directive pageview - view master data</div>
+						<div class="col-md-9">
+							<p>Directive pageview - view master data</p>
+						</div>
 					</div>
 					<div class="row">
 						<div class="col-md-3">Business Logic:</div>
 						<div class="col-md-9">
 							<ul>
-								<li>Shows data in page view</li>
+								<li>Pageview auto loads the department records on start</li>
+								<li>Single click/touch on record will trigger the CustomPointedToRecord() function</li>
+								<li>Double click/select on record will trigger the CustomSelectedToRecord() function</li>
 								<li>Maximum data default as 10 records each page</li>
 							</ul>
 						</div>
@@ -25,8 +29,9 @@
 						<div class="col-md-3">Procedures: </div>
 						<div class="col-md-9">
 							<ol>
-								<li>Auto shows data on page loaded</li>
-								<li>Click the navigation buttons to navigate to pages</li>
+								<li>Double click on the record to select it</li>
+								<li>or Single click on the record and click [Select] button to select it</li>
+								<li>Click the arrow buttons to navigate to pages</li>
 							</ol>
 						</div>
 					</div>
@@ -60,6 +65,20 @@
 					</table>
 				  </div>
 				</pageview>
+				<br>
+                <h4>Record Pointed or Selected Event</h4>
+				<div class="panel panel-default">
+				  <div class="panel-heading">Previous Pointed Record</div>
+				  <div class="panel-body"> 
+				  {{previousPointedRecord | json}}
+				  </div>
+				</div>
+				<div class="panel panel-default">
+				  <div class="panel-heading">Previous Selected Record</div>
+				  <div class="panel-body"> 
+				  {{previousSelectedRecord | json}}
+				  </div>
+				</div>
 			</div>
 		</div>
 	</div>

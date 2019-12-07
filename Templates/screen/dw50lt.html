@@ -1,0 +1,20 @@
+<div class="table-responsive">
+	<table class="table table-condensed table-hover">
+	  <thead>
+		<tr>
+			<th>License ID</th>
+			<th>Short Form</th>
+			<th>Full Name</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr ng-repeat="licenseRow in pageviewCtrl.ngModel" 
+		ng-click="PointedToRecord(licenseRow, $event, this)"
+		ng-dblclick="SelectedToRecord(licenseRow, $event, this)">
+		  <td>{{licenseRow.LicenseID}}</td>
+		  <td>{{licenseRow.ShortForm}}</td>
+		  <td>{{licenseRow.FullName}}</td>
+		</tr>
+	  </tbody>
+	</table>
+</div>

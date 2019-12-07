@@ -415,17 +415,17 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 		}
 	}
 	var demo_45 = {
-		name: "46list-and-view-staff-profile",
-		url: "/46list-and-view-staff-profile",
+		name: "45list-and-view-staff-profile",
+		url: "/45list-and-view-staff-profile",
 		views: {
 			"content@": {
-				templateUrl: '46list-and-view-staff-profile.html',
+				templateUrl: '45list-and-view-staff-profile.html',
                 controller: 'staffProfileViewController'
 			}
 		},
 		resolve: {
 			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
-				return $ocLazyLoad.load('./js/controller/46list-and-view-staff-profile.js');
+				return $ocLazyLoad.load('./js/controller/45list-and-view-staff-profile.js');
 			}]
 		}
 	}
@@ -459,6 +459,233 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 			}]
 		}
 	}
+	
+	var real_11_create = {
+		name: "rc-51-create-license-terms",
+		url: "/rc-license/Create",
+		views: {
+			"content@": {
+				templateUrl: 'rc-51-create-license-terms.html',
+                controller: 'licenseCreateController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-51-create-license-terms.js');
+			}]
+		}
+	}
+	var real_11_list = {
+		name: "rc-51-list-license-terms",
+		url: "/rc-license/View",
+		views: {
+			"content@": {
+				templateUrl: 'rc-51-list-license-terms.html',
+                controller: 'licenseListController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-51-list-license-terms.js');
+			}]
+		}
+	}
+	
+	var real_11_entry = {
+		name: "rc-51-list-license-terms.rc-51-entry-license-terms",
+		url: "/rc-license/View/{licenseID}",
+		views: {
+			"content@": {
+				templateUrl: 'rc-51-entry-license-terms.html',
+                controller: 'licenseEntryController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-51-entry-license-terms.js');
+			}]
+		}
+	}
+	var real_12_create = {
+		name: "rc-52-create-computer-language",
+		url: "/rc-computer-language/Create",
+		views: {
+			"content@": {
+				templateUrl: 'rc-52-create-computer-language.html',
+                controller: 'computerLanguageCreateController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-52-create-computer-language.js');
+			}]
+		}
+	}
+	var real_12_list = {
+		name: "rc-52-list-computer-language",
+		url: "/rc-computer-language/View",
+		views: {
+			"content@": {
+				templateUrl: 'rc-52-list-computer-language.html',
+                controller: 'computerLanguageListController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-52-list-computer-language.js');
+			}]
+		}
+	}
+	var real_12_entry = {
+		name: "rc-52-list-computer-language.rc-52-entry-computer-language",
+		url: "/rc-computer-language/View/{languageID}",
+		views: {
+			"content@": {
+				templateUrl: 'rc-52-entry-computer-language.html',
+                controller: 'computerLanguageEntryController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-52-entry-computer-language.js');
+			}]
+		}
+	}
+	var real_13_create = {
+		name: "rc-53-create-repository",
+		url: "/rc-repository/Create",
+		views: {
+			"content@": {
+				templateUrl: 'rc-53-create-repository.html',
+                controller: 'repositoryCreateController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-53-create-repository.js');
+			}]
+		}
+	}
+	var real_13_list = {
+		name: "rc-53-list-repository",
+		url: "/rc-repository/View",
+		views: {
+			"content@": {
+				templateUrl: 'rc-53-list-repository.html',
+                controller: 'repositoryListController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-53-list-repository.js');
+			}]
+		}
+	}
+	var real_13_entry = {
+		name: "rc-53-list-repository.rc-53-entry-repository",
+		url: "/rc-repository/View/{repositoryID}",
+		views: {
+			"content@": {
+				templateUrl: 'rc-53-entry-repository.html',
+                controller: 'repositoryEntryController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-53-entry-repository.js');
+			}]
+		}
+	}
+	var real_14_create = {
+		name: "rc-54-create-third-party",
+		url: "/rc-third-party/Create",
+		views: {
+			"content@": {
+				templateUrl: 'rc-54-create-third-party.html',
+                controller: 'thirdPartyCreateController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-54-create-third-party.js');
+			}]
+		}
+	}
+	var real_14_list = {
+		name: "rc-54-list-third-party",
+		url: "/rc-third-party/View",
+		views: {
+			"content@": {
+				templateUrl: 'rc-54-list-third-party.html',
+                controller: 'thirdPartyListController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-54-list-third-party.js');
+			}]
+		}
+	}
+	var real_14_entry = {
+		name: "rc-54-list-third-party.rc-54-entry-third-party",
+		url: "/rc-third-party/View/{thirdPartyID}",
+		views: {
+			"content@": {
+				templateUrl: 'rc-54-entry-third-party.html',
+                controller: 'thirdPartyEntryController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-54-entry-third-party.js');
+			}]
+		}
+	}
+	var real_15_create = {
+		name: "rc-55-create-third-party",
+		url: "/rc-third-party-entry2/Create",
+		views: {
+			"content@": {
+				templateUrl: 'rc-55-create-third-party.html',
+                controller: 'thirdPartyEntry2CreateController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-55-create-third-party.js');
+			}]
+		}
+	}
+	var real_15_list = {
+		name: "rc-55-list-third-party",
+		url: "/rc-third-party-entry2/View",
+		views: {
+			"content@": {
+				templateUrl: 'rc-55-list-third-party.html',
+                controller: 'thirdPartyEntry2ListController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-55-list-third-party.js');
+			}]
+		}
+	}
+	var real_15_entry = {
+		name: "rc-55-list-third-party.rc-55-entry-third-party",
+		url: "/rc-third-party-entry2/View/{thirdPartyID}",
+		views: {
+			"content@": {
+				templateUrl: 'rc-55-entry-third-party.html',
+                controller: 'thirdPartyEntry2EntryController'
+			}
+		},
+		resolve: {
+			loadMyCtrl: ['$ocLazyLoad', function($ocLazyLoad) {
+				return $ocLazyLoad.load('./js/controller/rc-55-entry-third-party.js');
+			}]
+		}
+	}
 	$stateProvider.state(homeState);
 	$stateProvider.state(spec_01);
 	$stateProvider.state(spec_02);
@@ -480,7 +707,25 @@ function(config, $httpProvider, $locationProvider, $controllerProvider, $compile
 	$stateProvider.state(demo_42);
 	$stateProvider.state(demo_43);
 	$stateProvider.state(demo_44);
-	//$stateProvider.state(demo_45);
+	$stateProvider.state(demo_45);
 	$stateProvider.state(demo_46);
-
+	
+	// real case master
+	$stateProvider.state(real_11_create);
+	$stateProvider.state(real_11_list);
+	$stateProvider.state(real_11_entry);
+	$stateProvider.state(real_12_create);
+	$stateProvider.state(real_12_list);
+	$stateProvider.state(real_12_entry);
+	$stateProvider.state(real_13_create);
+	$stateProvider.state(real_13_list);
+	$stateProvider.state(real_13_entry);
+	$stateProvider.state(real_14_create);
+	$stateProvider.state(real_14_list);
+	$stateProvider.state(real_14_entry);
+	
+	// real case entry
+	$stateProvider.state(real_15_create);
+	$stateProvider.state(real_15_list);
+	$stateProvider.state(real_15_entry);
 }]);

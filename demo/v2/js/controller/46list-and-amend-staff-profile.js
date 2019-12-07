@@ -3,7 +3,7 @@ app.controller('staffProfileAmendController', ['$scope', '$element', function($s
     function Initialize() {
         var entryForm = {};
         $scope.entryForm = entryForm;
-        $scope.directiveDict = {};
+        $scope.directiveScopeDict = {};
 
         $scope.deptEditBox = {};
         $scope.sectionEditBox = {};
@@ -33,7 +33,7 @@ app.controller('staffProfileAmendController', ['$scope', '$element', function($s
         var tagName = iElement[0].tagName.toLowerCase();
         var prgmID = scope.programId.toLowerCase();
 
-        if (prgmID == "hw01sm") {
+        if (prgmID == "dw02sp") {
             // asign the selected record to ng-model
             $.extend(true, $scope.entryForm, sRecord)
         }
@@ -41,8 +41,6 @@ app.controller('staffProfileAmendController', ['$scope', '$element', function($s
         if (prgmID == "dw01dp") {
             // asign the selected record to ng-model
             $scope.entryForm.DeptCode = sRecord.DepartmentCode;
-        } else if (prgmID == "dw02se") {
-            $scope.entryForm.SectionCode = sRecord.SectionCode;
         }
 
     }

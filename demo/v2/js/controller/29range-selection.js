@@ -32,6 +32,6 @@ app.controller('rangeController', ['$scope', 'Security', function ($scope, Secur
     $scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
     }
 
-    $scope.CustomSubmitDataResult = function(responseObj, httpStatusCode, scope, element, attrs, ctrl){
+    $scope.CustomSubmitDataResult = function(responseObj, httpStatusCode, scope, iElement, attrs, ctrl){
     }
 }]);

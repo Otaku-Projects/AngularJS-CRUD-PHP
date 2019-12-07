@@ -1,0 +1,20 @@
+<div class="table-responsive">
+	<table class="table table-condensed table-hover">
+	  <thead>
+		<tr>
+			<th>Language ID</th>
+			<th>Program Short Form</th>
+			<th>Program Name</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr ng-repeat="programLangRow in pageviewCtrl.ngModel" 
+		ng-click="PointedToRecord(programLangRow, $event, this)"
+		ng-dblclick="SelectedToRecord(programLangRow, $event, this)">
+		  <td>{{programLangRow.LanguageID}}</td>
+		  <td>{{programLangRow.ShortForm}}</td>
+		  <td>{{programLangRow.FullName}}</td>
+		</tr>
+	  </tbody>
+	</table>
+</div>

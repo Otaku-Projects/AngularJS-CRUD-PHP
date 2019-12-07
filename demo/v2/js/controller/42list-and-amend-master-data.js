@@ -39,7 +39,7 @@
             $scope.entryForm = sRecord;
         }
 
-        $scope.CustomSubmitDataResult = function(responseObj, httpStatusCode, scope, element, attrs, ctrl){
+        $scope.CustomSubmitDataResult = function(responseObj, httpStatusCode, scope, iElement, attrs, ctrl){
             var prgmID = scope.programId;
             if(prgmID == "ds01dp"){
               $scope.directiveScopeDict["dw01dp"].ClearNRefreshData();

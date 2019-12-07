@@ -1,7 +1,7 @@
 <div id="page-wrapper">
 	<div class="row">
 		<div class="col-lg-12">
-			<h1 class="page-header">List and Delete Department</h1>
+			<h1>List and Delete Department</h1>
 		</div>
         <div class="col-lg-12">
 			<div class="panel panel-default">
@@ -10,16 +10,18 @@
 					<legend>Case Details:</legend>
 					<div class="row">
 						<div class="col-md-3">Subject:</div>
-						<div class="col-md-9">Directive pageview, entry - list, delete department record</div>
+						<div class="col-md-9">
+							<p>Directive pageview, entry - list, delete department record</p>
+						</div>
 					</div>
 					<div class="row">
 						<div class="col-md-3">Business Logic:</div>
 						<div class="col-md-9">
 							<ul>
-								<li>Select department record on start</li>
-								<li>Shows department records if exits</li>
-								<li>Select to the department record on pageview</li>
+								<li>Pageview auto loads the department records on start</li>
+								<li>Select the department record on pageview</li>
 								<li>Entry display the selected record</li>
+								<li>Form controls is readonly and value are not allow edit</li>
 								<li>Refresh the pageview after deleted the record</li>
 							</ul>
 						</div>
@@ -45,12 +47,12 @@
         </div>
 		<div class="col-lg-12">
 			<div style="max-width: 750px;">
-				<h3>Select a Department on Pageview</h3>
+				<h4>Select a Department on Pageview</h4>
 				<pageview ng-model="deptDataList" program-id="dw01dp">
 				  <screen></screen>
 				</pageview>
-				<br><br>
-				<h3>Delete Department on Entry</h3>
+				<br>
+				<h4>Delete Department on Entry</h4>
 				<entry ng-model="entryForm" program-id="ds01dp" edit-mode="delete">
 				  <form ng-submit="SubmitData()">
 					<fieldset>

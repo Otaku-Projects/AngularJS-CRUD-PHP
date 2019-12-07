@@ -1,0 +1,18 @@
+<div class="table-responsive">
+	<table class="table table-condensed table-hover">
+	  <thead>
+		<tr>
+			<th>Third Party ID</th>
+			<th>Name</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr ng-repeat="repositoryRow in pageviewCtrl.ngModel" 
+		ng-click="PointedToRecord(repositoryRow, $event, this)"
+		ng-dblclick="SelectedToRecord(repositoryRow, $event, this)">
+		  <td>{{repositoryRow.ThirdPartyID}}</td>
+		  <td>{{repositoryRow.Name}}</td>
+		</tr>
+	  </tbody>
+	</table>
+</div>

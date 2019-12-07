@@ -1,5 +1,8 @@
 "use strict";
 app.controller('viewDepartmentController', ['$scope', 'Security', function ($scope, Security, $rootScope) {
+	$scope.previousSelectedRecord = {};
+	$scope.previousPointedRecord = {};
+	
     function Initialize(){
         var entryForm = {};
 
@@ -23,5 +26,17 @@ app.controller('viewDepartmentController', ['$scope', 'Security', function ($sco
 
     $scope.ValidateBuffer = function(scope, iElement, iAttrs, controller){
         return true;
+    }
+
+    $scope.CustomSelectedToRecord = function(sRecord, rowScope, scope, iElement, controller){
+        // asign the selected record to ng-model
+        $scope.entryForm.DeptCode = sRecord.DepartmentCode;
+		$scope.previousSelectedRecord = sRecord;
+    }
+
+    $scope.CustomPointedToRecord = function(sRecord, rowScope, scope, iElement, controller){
+		// asign the pointed record to ng-model
+		$scope.entryForm.DeptCode = sRecord.DepartmentCode;
+		$scope.previousPointedRecord = sRecord;
     }
 }]);
