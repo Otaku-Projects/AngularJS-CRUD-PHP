@@ -71,8 +71,6 @@ class ComposerStaticInit9d84fb1313fba6943729fcfe2b080ab2
     public static $prefixLengthsPsr4 = array (
         'Z' => 
         array (
-            'Zend\\Validator\\' => 15,
-            'Zend\\Stdlib\\' => 12,
             'Zend\\Escaper\\' => 13,
         ),
         'P' => 
@@ -98,14 +96,6 @@ class ComposerStaticInit9d84fb1313fba6943729fcfe2b080ab2
     );
 
     public static $prefixDirsPsr4 = array (
-        'Zend\\Validator\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-validator/src',
-        ),
-        'Zend\\Stdlib\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/zendframework/zend-stdlib/src',
-        ),
         'Zend\\Escaper\\' => 
         array (
             0 => __DIR__ . '/..' . '/zendframework/zend-escaper/src',
@@ -145,13 +135,6 @@ class ComposerStaticInit9d84fb1313fba6943729fcfe2b080ab2
     );
 
     public static $prefixesPsr0 = array (
-        'P' => 
-        array (
-            'PHPExcel' => 
-            array (
-                0 => __DIR__ . '/..' . '/phpoffice/phpexcel/Classes',
-            ),
-        ),
         'M' => 
         array (
             'Monolog' => 
