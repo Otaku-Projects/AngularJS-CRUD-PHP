@@ -8,6 +8,6 @@
         "phpoffice/phpword":"0.17.0",
         "phpoffice/phpspreadsheet":"1.8.0",
         "peppeocchi/php-cron-scheduler": "2.4",
-        "adodb/adodb-php": "5.20.14"
+        "adodb/adodb-php": "5.20.21"
     }
 }
