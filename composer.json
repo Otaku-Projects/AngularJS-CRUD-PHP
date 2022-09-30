@@ -2,7 +2,7 @@
     "require": {
         "monolog/monolog": "1.0.*",
         "components/flag-icon-css": "3.0.0",
-        "dompdf/dompdf":"0.6.2",
+        "dompdf/dompdf":"2.0.1",
         "mpdf/mpdf":"6.1.0",
         "tecnickcom/tcpdf":"6.2.12",
         "phpoffice/phpword":"0.17.0",
